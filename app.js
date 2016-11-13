@@ -1,3 +1,5 @@
+require('dotenv').config({silent: true});
+
 const pogobuf       = require('./pogobuf/pogobuf/pogobuf');
 const POGOProtos    = require('node-pogo-protos');
 const EventEmitter  = require('events');
@@ -8,13 +10,10 @@ const APIHelper = require("./apihelper");
 
 logger.level = "debug";
 
-// blablabekkk0,so0hz835
-// blablabekkk2,gc1gds4h
-
 var config = {
     credentials: {
-        user: "blablabekkk0",
-        password: "so0hz835"
+        user: process.env.PTC_LOGIN,
+        password: process.env.PTC_PASSWORD
     }
 };
 

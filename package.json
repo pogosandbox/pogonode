@@ -6,6 +6,7 @@
   "author": "niico",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^2.0.0",
     "events": "^1.1.1",
     "node-pogo-protos": "^2.1.0",
     "pogobuf": "^1.8.0",
