@@ -6,32 +6,31 @@ const EventEmitter  = require('events');
 const logger        = require('winston');
 const fs            = require("fs");
 const yaml          = require('js-yaml');
+const Promise       = require('bluebird');
 
 const APIHelper = require("./apihelper");
 
 var config = {
     credentials: {
-        user: process.env.PTC_LOGIN,
-        password: process.env.PTC_PASSWORD
+        user: "",
+        password: ""
     },
     pos: {
         lat: 48.8456222,
         lng: 2.3364526
     },
-    deviceId: 0,
+    device: { id: 0 },
     loglevel: "debug"
 };
 
 var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
-Object.assign(config, loaded);
+config = Object.assign(config, loaded);
 
-if (!config.deviceId) {
-    config.deviceId = (new Array(40)).fill(0).map(i => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
+if (!config.device.id) {
+    config.device.id = (new Array(40)).fill(0).map(i => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
 }
 
 fs.writeFile("data/config.yaml", yaml.dump(config), (err) => {});
-
-process.exit();
 
 logger.level = config.loglevel;
 
@@ -53,9 +52,10 @@ var apihelper = new APIHelper(state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
+
 client.setSignatureInfos({
     device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
-        device_id: "3d65919ca1c2ec3a8e2bd7cc3f975c34",
+        device_id: config.device.id,
         device_brand: "Apple",
         device_model: "iPhone",
         device_model_boot: "iPhone8,2",
@@ -68,24 +68,15 @@ client.setSignatureInfos({
 
 logger.info("App starting...");
 
-// logRequests = function(obj) {
-//     if (obj.hasOwnProperty("requests")) {
-//         var req = obj.requests.filter(r => r.name != "");
-//         req.forEach(logger.debug);
-//     } else if (obj.hasOwnProperty("responses")) {
-//         var res = obj.responses.filter(r => r.name != "Get Asset Digest" && r.name != "Get Item Templates");
-//         res.forEach(logger.debug);
-//     }
-// }
-
 login.login(config.credentials.user, config.credentials.password).then(token => {
     client.setAuthInfo('ptc', token);
     client.setPosition(state.pos.lat, state.pos.lng);
 
-    // client.on('request', logRequests);
-    // client.on('response', logRequests);
+    // client.on('request', console.log);
+    // client.on('response', console.log);
 
     return client.init();
+
 }).then(responses => {
     apihelper.parse(responses);
 
@@ -96,23 +87,47 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     batch.downloadRemoteConfigVersion("IOS", state.api.version);
     apihelper.always(batch);
     return batch.batchCall();
+
 }).then(responses => {
     apihelper.parse(responses);
 
     var batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +state.api.version)
+    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +state.api.version);
     apihelper.always(batch);
     return batch.batchCall();
+
 }).then(responses => {
     apihelper.parse(responses);
 
-    // check if item_templates need download
+    // check if isytem_templates need download
+    var last = 0;
+    if (fs.existsSync("data/item_templates.json")) {
+        var json = fs.readFileSync("data/item_templates.json");
+        var itemTemplates = JSON.parse(json);
+        last = itemTemplates.timestamp_ms;
+    }
 
+    if (last < state.api.item_templates_timestamp) {
+        var batch = client.batchStart();
+        batch.downloadItemTemplates();
+        apihelper.always(batch);
+        batch.batchCall().then(resp => {
+            apihelper.parse(resp);
+            // save item templates
+            return;
+        })
+    } else {
+        // put item templates in state
+        return;
+    }
+
+}).then(() => {
     App.emit("apiReady");
+
 });
 
 App.on("apiReady", () => {
     logger.info("App ready");
 
-    fs.writeFile("data/state.json", JSON.stringify(state), (err) => {});
+    fs.writeFile("data/state.json", JSON.stringify(state, null, 4), (err) => {});
 });
