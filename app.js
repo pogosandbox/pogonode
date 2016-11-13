@@ -5,22 +5,40 @@ const POGOProtos    = require('node-pogo-protos');
 const EventEmitter  = require('events');
 const logger        = require('winston');
 const fs            = require("fs");
+const yaml          = require('js-yaml');
 
 const APIHelper = require("./apihelper");
-
-logger.level = "debug";
 
 var config = {
     credentials: {
         user: process.env.PTC_LOGIN,
         password: process.env.PTC_PASSWORD
-    }
-};
-
-var state = {
+    },
     pos: {
         lat: 48.8456222,
         lng: 2.3364526
+    },
+    deviceId: 0,
+    loglevel: "debug"
+};
+
+var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
+Object.assign(config, loaded);
+
+if (!config.deviceId) {
+    config.deviceId = (new Array(40)).fill(0).map(i => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
+}
+
+fs.writeFile("data/config.yaml", yaml.dump(config), (err) => {});
+
+process.exit();
+
+logger.level = config.loglevel;
+
+var state = {
+    pos: {
+        lat: config.pos.lat,
+        lng: config.pos.lng
     },
     player: {},
     api: {
