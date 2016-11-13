@@ -1,0 +1,14 @@
+{
+  "name": "pogonode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "author": "niico",
+  "license": "MIT",
+  "dependencies": {
+    "events": "^1.1.1",
+    "node-pogo-protos": "^2.1.0",
+    "pogobuf": "^1.8.0",
+    "winston": "^2.3.0"
+  }
+}
