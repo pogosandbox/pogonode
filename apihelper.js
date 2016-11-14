@@ -20,6 +20,8 @@ APIHelper.prototype.parse = function(responses) {
             this.state.player = r.player_data;
             this.state.player.banned = r.banned;
             this.state.player.warn = r.warn;
+            if (r.banned) logger.error("Account Banned");
+            if (r.warn) logger.error("Ban warning.");
 
         } else if (r.egg_km_walked) {
             // getHatchedEggs()
@@ -79,6 +81,10 @@ APIHelper.prototype.parse = function(responses) {
         } else if (r.item_templates) {
             // downloadItemTemplates()
             this.state.item_templates = r.item_templates;
+
+        } else if (r.map_cells) {
+            // getMapObjects
+            this.state.map_cells = r.map_cells;
 
         } else {
             logger.warn("unhandled");

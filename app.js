@@ -7,7 +7,6 @@ const logger        = require('winston');
 const fs            = require("fs");
 const yaml          = require('js-yaml');
 const Promise       = require('bluebird');
-Promise.promisifyAll(fs);
 
 const APIHelper = require("./apihelper");
 
@@ -130,6 +129,23 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 
 App.on("apiReady", () => {
     logger.info("App ready");
-
-    fs.writeFile("data/state.json", JSON.stringify(state, null, 4), (err) => {});
+    App.emit("saveState");
+    setTimeout(() => App.emit("mapRefresh"), 10*1000);
 });
+
+App.on("mapRefresh", () => {
+    logger.info("Map Refresh", { pos: state.pos });
+    var cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
+
+    var batch = client.batchStart();
+    batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
+    apihelper.always(batch);
+    batch.batchCall().then(responses => {
+        apihelper.parse(responses);
+        App.emit("saveState");
+    });
+});
+
+App.on("saveState", () => {
+    fs.writeFile("data/state.json", JSON.stringify(state, null, 4), (err) => {});
+})
