@@ -7,6 +7,7 @@ const logger        = require('winston');
 const fs            = require("fs");
 const yaml          = require('js-yaml');
 const Promise       = require('bluebird');
+Promise.promisifyAll(fs);
 
 const APIHelper = require("./apihelper");
 
@@ -53,17 +54,19 @@ var apihelper = new APIHelper(state);
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
 
-client.setSignatureInfos({
-    device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
-        device_id: config.device.id,
-        device_brand: "Apple",
-        device_model: "iPhone",
-        device_model_boot: "iPhone8,2",
-        hardware_manufacturer: "Apple",
-        hardware_model: "N66AP",
-        firmware_brand: "iPhone OS",
-        firmware_type: "9.3.5"
-    })
+client.setSignatureInfos(function() {
+    return {
+        device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
+            device_id: config.device.id,
+            device_brand: "Apple",
+            device_model: "iPhone",
+            device_model_boot: "iPhone8,2",
+            hardware_manufacturer: "Apple",
+            hardware_model: "N66AP",
+            firmware_brand: "iPhone OS",
+            firmware_type: "9.3.5"
+        })
+    };
 });
 
 logger.info("App starting...");
@@ -99,26 +102,25 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 }).then(responses => {
     apihelper.parse(responses);
 
-    // check if isytem_templates need download
+    // check if item_templates need download
     var last = 0;
     if (fs.existsSync("data/item_templates.json")) {
-        var json = fs.readFileSync("data/item_templates.json");
-        var itemTemplates = JSON.parse(json);
-        last = itemTemplates.timestamp_ms;
+        var json = fs.readFileSync("data/item_templates.json", { encoding: "utf8" });
+        state.item_templates = JSON.parse(json);
+        last = state.item_templates.timestamp_ms;
     }
 
     if (last < state.api.item_templates_timestamp) {
         var batch = client.batchStart();
         batch.downloadItemTemplates();
         apihelper.always(batch);
-        batch.batchCall().then(resp => {
-            apihelper.parse(resp);
-            // save item templates
-            return;
-        })
+        return batch.batchCall().then(resp => {
+                apihelper.parse(resp);
+               }).then(() => {
+                   fs.writeFile("data/item_templates.json", JSON.stringify(state.item_templates), (err) => {});
+               });
     } else {
-        // put item templates in state
-        return;
+        return Promise.resolve();
     }
 
 }).then(() => {
