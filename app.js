@@ -125,12 +125,15 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 }).then(() => {
     App.emit("apiReady");
 
+}).catch(e => {
+    logger.error(e);
+
 });
 
 App.on("apiReady", () => {
     logger.info("App ready");
     App.emit("saveState");
-    setTimeout(() => App.emit("mapRefresh"), 10*1000);
+    setInterval(() => App.emit("mapRefresh"), 10*1000);
 });
 
 App.on("mapRefresh", () => {

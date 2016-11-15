@@ -1,5 +1,5 @@
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
-const logger = require('winston');
+const logger  = require('winston');
 
 function APIHelper(state) {
     this.state = state;
@@ -25,13 +25,15 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.egg_km_walked) {
             // getHatchedEggs()
-            //if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || r.experience_awarded.length > 0)
-            console.dir(r, { depth: 4 });
+            if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || 
+                r.experience_awarded.length > 0 || rpokemon_id.length > 0) {
+                console.dir(r, { depth: 4 });
+            }
             for(var stardust in r.stardust_awarded) {
                 //this.state.inventory.player.
             }
             for (var xp in r.experience_awarded) {
-                this.state.inventory.player.experience += xp;
+                //this.state.inventory.player.experience += xp;
             }
             for (var candy in r.candy_awarded) {
                 
@@ -88,7 +90,22 @@ APIHelper.prototype.parse = function(responses) {
             }
         } else if (r.map_cells) {
             // getMapObjects
-            this.state.map_cells = r.map_cells;
+            var forts = r.map_cells.reduce((all, c) => { return all.concat(c.forts); }, []);
+            var pokestops = forts.filter(f => f.type == 1);
+            var gyms = forts.filter(f => f.type == 2);
+            var wild_pokemons = r.map_cells.reduce((all, c) => { return all.concat(c.wild_pokemons); }, []);
+            var catchable_pokemons = r.map_cells.reduce((all, c) => { return all.concat(c.catchable_pokemons); }, []);
+            var nearby_pokemons = r.map_cells.reduce((all, c) => { return all.concat(c.nearby_pokemons); }, []);
+            var spawn_points = r.map_cells.reduce((all, c) => { return all.concat(c.spawn_points); }, []);
+
+            this.state.map = {
+                pokestops: pokestops,
+                gyms: gyms,
+                wild_pokemons: wild_pokemons,
+                catchable_pokemons: catchable_pokemons,
+                nearby_pokemons: nearby_pokemons,
+                spawn_points: spawn_points
+            }
 
         } else {
             logger.warn("unhandled");

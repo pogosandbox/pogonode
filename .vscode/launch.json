@@ -17,14 +17,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch with Proxy",
-            "program": "${workspaceRoot}\\app.js",
+            "name": "Launch Debug",
+            "program": "${workspaceRoot}\\debug.js",
             "cwd": "${workspaceRoot}",
             "env": {
-				"NODE_ENV": "development",
-				"HTTP_PROXY": "http://localhost:8888",
-				"HTTPS_PROXY": "http://localhost:8888",
-				"NODE_TLS_REJECT_UNAUTHORIZED": "0"
+				"NODE_ENV": "development"
             }
         }
     ]
