@@ -26,7 +26,7 @@ APIHelper.prototype.parse = function(responses) {
         } else if (r.egg_km_walked) {
             // getHatchedEggs()
             if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || 
-                r.experience_awarded.length > 0 || rpokemon_id.length > 0) {
+                r.experience_awarded.length > 0 || r.pokemon_id.length > 0) {
                 console.dir(r, { depth: 4 });
             }
             for(var stardust in r.stardust_awarded) {
@@ -71,6 +71,10 @@ APIHelper.prototype.parse = function(responses) {
         } else if (r.hash) {
             // downloadSettings()
             this.state.api.settings_hash = r.hash;
+            if (r.settings) {
+                this.state.download_settings = r.settings;
+                //this.state.download_settings.map_settings.google_maps_api_key
+            }
 
         } else if (r.item_templates_timestamp_ms) {
             // downloadRemoteConfigVersion()
