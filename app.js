@@ -114,7 +114,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
         batch.downloadItemTemplates();
         apihelper.always(batch);
         return batch.batchCall().then(resp => {
-                apihelper.parse(resp);
+                   apihelper.parse(resp);
                }).then(() => {
                    fs.writeFile("data/item_templates.json", JSON.stringify(state.item_templates), (err) => {});
                });

@@ -25,6 +25,7 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.egg_km_walked) {
             // getHatchedEggs()
+            if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || r.experience_awarded.length > 0)
             console.dir(r, { depth: 4 });
             for(var stardust in r.stardust_awarded) {
                 //this.state.inventory.player.
@@ -61,7 +62,9 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.awarded_badges) {
             // checkAwardedBadges()
-            console.dir(r, { depth: 4 });
+            if (r.awarded_badges.length > 0 || r.awarded_badge_levels > 0) {
+                console.dir(r, { depth: 4 });
+            }
 
         } else if (r.hash) {
             // downloadSettings()
