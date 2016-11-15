@@ -25,7 +25,7 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.egg_km_walked) {
             // getHatchedEggs()
-            if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || r.experience_awarded.length > 0)
+            //if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || r.experience_awarded.length > 0)
             console.dir(r, { depth: 4 });
             for(var stardust in r.stardust_awarded) {
                 //this.state.inventory.player.
@@ -83,8 +83,9 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.item_templates) {
             // downloadItemTemplates()
-            this.state.item_templates = r.item_templates;
-
+            if (r.item_templates.length > 0) {
+                this.state.item_templates = r.item_templates;
+            }
         } else if (r.map_cells) {
             // getMapObjects
             this.state.map_cells = r.map_cells;
