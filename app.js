@@ -59,20 +59,22 @@ var apihelper = new APIHelper(state);
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
 
-client.setSignatureInfos(function() {
-    return {
-        device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
-            device_id: config.device.id,
-            device_brand: "Apple",
-            device_model: "iPhone",
-            device_model_boot: "iPhone8,2",
-            hardware_manufacturer: "Apple",
-            hardware_model: "N66AP",
-            firmware_brand: "iPhone OS",
-            firmware_type: "9.3.5"
-        })
-    };
-});
+if (client.hasOwnProperty("setSignatureInfos")) {
+    client.setSignatureInfos(function() {
+        return {
+            device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
+                device_id: config.device.id,
+                device_brand: "Apple",
+                device_model: "iPhone",
+                device_model_boot: "iPhone8,2",
+                hardware_manufacturer: "Apple",
+                hardware_model: "N66AP",
+                firmware_brand: "iPhone OS",
+                firmware_type: "9.3.5"
+            })
+        };
+    });
+}
 
 logger.info("App starting...");
 

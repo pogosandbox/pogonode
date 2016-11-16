@@ -82,7 +82,10 @@ APIHelper.prototype.parse = function(responses) {
 
         } else if (r.hasOwnProperty("show_challenge")) {
             // checkChallenge()
-            if (r.show_challenge) logger.error("Challenge!", { challenge_url: r.challenge_url });
+            if (r.show_challenge) {
+                logger.error("Challenge!", { challenge_url: r.challenge_url });
+                throw Error(`Challenge detected: ${r.challenge_url}`);
+            }
 
         } else if (r.hasOwnProperty("digest")) {
             // getAssetDigest()
