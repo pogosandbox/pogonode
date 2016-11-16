@@ -23,16 +23,22 @@ var config = {
     loglevel: "debug"
 };
 
-var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
-config = Object.assign(config, loaded);
+if (fs.existsSync("data/config.yaml")) {
+    var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
+    config = Object.assign(config, loaded);
+}
+logger.level = config.loglevel;
 
 if (!config.device.id) {
     config.device.id = (new Array(40)).fill(0).map(i => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
 }
 
-fs.writeFile("data/config.yaml", yaml.dump(config), (err) => {});
+fs.writeFileSync("data/config.yaml", yaml.dump(config));
 
-logger.level = config.loglevel;
+if (!config.credentials.user) {
+    logger.error("Invalid credentials. Please fill data/config.yaml.")
+    process.exit();
+}
 
 var state = {
     pos: {
