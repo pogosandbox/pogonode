@@ -24,47 +24,39 @@ module.exports.register = function(config, client) {
                     firmware_type: "9.3.5"
                 }),
 
+                location_fix: [new POGOProtos.Networking.Envelopes.Signature.LocationFix({
+                    provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
+                    latitude: client.playerLatitude,
+                    longitude: client.playerLongitude,
+                    altitude: random.triangular(300, 400, 350),
+                    provider_status: 3,
+                    location_type: 1
+                })],
+
                 activity_status: new POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
                     stationary: true
                 }),
 
-                // sensor_info: new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
+                // sensor_info: [new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
                 //     timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
-                    // linear_acceleration_x: random.triangular(-3, 1, 0),
-                    // linear_acceleration_y: random.triangular(-2, 3, 0),
-                    // linear_acceleration_z: random.triangular(-4, 2, 0),
-                    // magnetic_field_x: random.triangular(-50, 50, 0),
-                    // magnetic_field_y: random.triangular(-60, 50, -5),
-                    // magnetic_field_z: random.triangular(-60, 40, -30),
-                    // magnetic_field_accuracy: [-1, 1, 1, 2, 2, 2, 2][Math.floor(Math.random()*7)],
-                    // attitude_pitch: random.triangular(-1.5, 1.5, 0.2),
-                    // attitude_yaw: random.uniform(-3, 3),
-                    // attitude_roll: random.triangular(-2.8, 2.5, 0.25),
-                    // rotation_rate_x: random.triangular(-6, 4, 0),
-                    // rotation_rate_y: random.triangular(-5.5, 5, 0),
-                    // rotation_rate_z: random.triangular(-5, 3, 0),
-                    // gravity_x: random.triangular(-1, 1, 0.15),
-                    // gravity_y: random.triangular(-1, 1, -.2),
-                    // gravity_z: random.triangular(-1, .7, -0.8),
-                    // status: 3
-
-                    // magnetometer_x: random.triangular(-3, 1, 0),
-                    // magnetometer_y: random.triangular(-2, 3, 0),
-                    // magnetometer_z: random.triangular(-4, 2, 0),
-                    // angle_normalized_x: random.triangular(-50, 50, 0),
-                    // angle_normalized_y: random.triangular(-60, 50, -5),
-                    // angle_normalized_z: random.triangular(-60, 40, -30),
-                    // accel_raw_x: random.triangular(-1.5, 1.5, 0.2),
-                    // accel_raw_y: random.uniform(-3, 3),
-                    // accel_raw_z: random.triangular(-2.8, 2.5, 0.25),
-                    // gyroscope_raw_x: random.triangular(-6, 4, 0),
-                    // gyroscope_raw_y: random.triangular(-5.5, 5, 0),
-                    // gyroscope_raw_z: random.triangular(-5, 3, 0),
-                    // accel_normalized_x: random.triangular(-1, 1, 0.15),
-                    // accel_normalized_y: random.triangular(-1, 1, -.2),
-                    // accel_normalized_z: random.triangular(-1, .7, -0.8),
-                    // accelerometer_axes: 3
-                // })
+                //     linear_acceleration_x: random.triangular(-3, 1, 0),
+                //     linear_acceleration_y: random.triangular(-2, 3, 0),
+                //     linear_acceleration_z: random.triangular(-4, 2, 0),
+                //     magnetic_field_x: random.triangular(-50, 50, 0),
+                //     magnetic_field_y: random.triangular(-60, 50, -5),
+                //     magnetic_field_z: random.triangular(-60, 40, -30),
+                //     magnetic_field_accuracy: [-1, 1, 1, 2, 2, 2, 2][Math.floor(Math.random()*7)],
+                //     attitude_pitch: random.triangular(-1.5, 1.5, 0.2),
+                //     attitude_yaw: random.uniform(-3, 3),
+                //     attitude_roll: random.triangular(-2.8, 2.5, 0.25),
+                //     rotation_rate_x: random.triangular(-6, 4, 0),
+                //     rotation_rate_y: random.triangular(-5.5, 5, 0),
+                //     rotation_rate_z: random.triangular(-5, 3, 0),
+                //     gravity_x: random.triangular(-1, 1, 0.15),
+                //     gravity_y: random.triangular(-1, 1, -.2),
+                //     gravity_z: random.triangular(-1, .7, -0.8),
+                //     status: 3
+                // })]
             };
         });
     }
