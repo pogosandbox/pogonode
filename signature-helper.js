@@ -10,7 +10,7 @@ var getRandomInt = function(min, max) {
 
 module.exports.register = function(config, client) {
     if (client.hasOwnProperty("setSignatureInfos")) {        
-        client.setSignatureInfos(function() {
+        client.setSignatureInfos(function(envelope) {
             var timestamp_ms_since_start = new Date().getTime() - start;
             return {
                 device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
