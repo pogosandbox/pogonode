@@ -24,6 +24,10 @@ module.exports.register = function(config, client) {
                     firmware_type: "9.3.5"
                 }),
 
+                activity_status: new POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
+                    stationary: true
+                }),
+
                 // sensor_info: new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
                 //     timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
                     // linear_acceleration_x: random.triangular(-3, 1, 0),
