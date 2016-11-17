@@ -59,7 +59,7 @@ var apihelper = new APIHelper(state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
-signaturehelper.register(config, client);
+//signaturehelper.register(config, client);
 
 logger.info("App starting...");
 
@@ -80,16 +80,14 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     // download config version like the real app
     var batch = client.batchStart();
     batch.downloadRemoteConfigVersion("IOS", state.api.version);
-    apihelper.always(batch);
-    return batch.batchCall();
+    return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
 
     var batch = client.batchStart();
     batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +state.api.version);
-    apihelper.always(batch);
-    return batch.batchCall();
+    return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
@@ -105,17 +103,28 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     if (last < state.api.item_templates_timestamp) {
         var batch = client.batchStart();
         batch.downloadItemTemplates();
-        apihelper.always(batch);
-        return batch.batchCall().then(resp => {
-                   apihelper.parse(resp);
-               }).then(() => {
-                   fs.writeFile("data/item_templates.json", JSON.stringify(state.item_templates), (err) => {});
-               });
+        return apihelper.alwaysinit(batch)
+                .batchCall().then(resp => {
+                    apihelper.parse(resp);
+                }).then(() => {
+                    fs.writeFile("data/item_templates.json", JSON.stringify(state.item_templates), (err) => {});
+                });
     } else {
         return Promise.resolve();
     }
-
 }).then(() => {
+    var batch = client.batchStart();
+    batch.getPlayerProfile();
+    return apihelper.always(batch).batchCall();
+
+}).then(responses => {
+    apihelper.parse(responses);
+    var batch = client.batchStart();
+    batch.levelUpRewards(state.inventory.player.level);
+    return apihelper.always(batch).batchCall();
+ 
+}).then(responses => {
+    apihelper.parse(responses);
     App.emit("apiReady");
 
 }).catch(e => {
@@ -135,8 +144,7 @@ App.on("mapRefresh", () => {
 
     var batch = client.batchStart();
     batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
-    apihelper.always(batch);
-    batch.batchCall().then(responses => {
+    apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
         App.emit("saveState");
     });

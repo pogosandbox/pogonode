@@ -5,12 +5,21 @@ function APIHelper(state) {
     this.state = state;
 }
 
-APIHelper.prototype.always = function(batch) {
+APIHelper.prototype.alwaysinit = function(batch) {
     return batch.checkChallenge()
                 .getHatchedEggs()
                 .getInventory(this.state.api.inventory_timestamp)
                 .checkAwardedBadges()
                 .downloadSettings(this.state.api.settings_hash);
+}
+
+APIHelper.prototype.always = function(batch) {
+    return batch.checkChallenge()
+                .getHatchedEggs()
+                .getInventory(this.state.api.inventory_timestamp)
+                .checkAwardedBadges()
+                .downloadSettings(this.state.api.settings_hash)
+                .getBuddyWalked();
 }
 
 APIHelper.prototype.parse = function(responses) {
@@ -95,6 +104,22 @@ APIHelper.prototype.parse = function(responses) {
             if (r.item_templates.length > 0) {
                 this.state.item_templates = r.item_templates;
             }
+
+        } else if (r.items_awarded) {
+            // levelUpRewards
+            if (r.items_awarded.length > 0 || r.items_unlocked.length > 0) {
+                console.dir(r, { depth: 4 });
+            }
+
+        } else if (r.hasOwnProperty("candy_earned_count")) {
+            // getBuddyWalked
+            if (r.family_candy_id || r.candy_earned_count) {
+                console.dir(r, { depth: 4 });
+            }
+
+        } else if (r.badges) {
+            // getPlayerProfile
+
         } else if (r.map_cells) {
             // getMapObjects
             var forts = r.map_cells.reduce((all, c) => { return all.concat(c.forts); }, []);
