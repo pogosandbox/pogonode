@@ -1,12 +1,13 @@
 require('dotenv').config({silent: true});
 
-const pogobuf       = require('./pogobuf/pogobuf/pogobuf');
-const POGOProtos    = require('node-pogo-protos');
-const EventEmitter  = require('events');
-const logger        = require('winston');
-const fs            = require("fs");
-const yaml          = require('js-yaml');
-const Promise       = require('bluebird');
+const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
+const pogoSignature   = require('./node-pogo-signature');
+const POGOProtos      = require('node-pogo-protos');
+const EventEmitter    = require('events');
+const logger          = require('winston');
+const fs              = require("fs");
+const yaml            = require('js-yaml');
+const Promise         = require('bluebird');
 
 const APIHelper       = require("./apihelper");
 const signaturehelper = require("./signature-helper");
@@ -21,6 +22,12 @@ var config = {
         lng: 2.3364526
     },
     device: { id: 0 },
+    api: {
+        version: "4500",
+        country: "US",
+        language: "en",
+        timezone: 'Europe/Paris'
+    },
     loglevel: "debug"
 };
 
@@ -46,10 +53,9 @@ var state = {
         lat: config.pos.lat,
         lng: config.pos.lng
     },
-    player: {},
     api: {
-        version: "4500"
-    }
+    },
+    player: {}
 };
 
 class AppEvents extends EventEmitter {}
@@ -59,7 +65,8 @@ var apihelper = new APIHelper(state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
-//signaturehelper.register(config, client);
+signaturehelper.register(config, client);
+state.client = client;
 
 logger.info("App starting...");
 
@@ -70,7 +77,17 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     // client.on('request', console.log);
     // client.on('response', console.log);
 
-    return client.init();
+}).then(() => {
+    // custom init, first api call is empty
+    client.signatureBuilder = new pogoSignature.Builder();
+    client.lastMapObjectsCall = 0;
+    client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+    return client.batchStart().batchCall();
+
+}).then(() => {
+    return client.batchStart()
+                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
+                 .batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
@@ -79,14 +96,14 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     
     // download config version like the real app
     var batch = client.batchStart();
-    batch.downloadRemoteConfigVersion("IOS", state.api.version);
+    batch.downloadRemoteConfigVersion("IOS", config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
 
     var batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +state.api.version);
+    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
@@ -96,8 +113,8 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     var last = 0;
     if (fs.existsSync("data/item_templates.json")) {
         var json = fs.readFileSync("data/item_templates.json", { encoding: "utf8" });
-        state.item_templates = JSON.parse(json);
-        last = state.item_templates.timestamp_ms;
+        state.api.item_templates = JSON.parse(json);
+        last = state.api.item_templates.timestamp_ms;
     }
 
     if (last < state.api.item_templates_timestamp) {
@@ -107,11 +124,12 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
                 .batchCall().then(resp => {
                     apihelper.parse(resp);
                 }).then(() => {
-                    fs.writeFile("data/item_templates.json", JSON.stringify(state.item_templates), (err) => {});
+                    fs.writeFile("data/item_templates.json", JSON.stringify(state.api.item_templates), (err) => {});
                 });
     } else {
         return Promise.resolve();
     }
+
 }).then(() => {
     var batch = client.batchStart();
     batch.getPlayerProfile();
@@ -135,7 +153,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 App.on("apiReady", () => {
     logger.info("App ready");
     App.emit("saveState");
-    setInterval(() => App.emit("mapRefresh"), 10*1000);
+    setInterval(() => App.emit("mapRefresh"), 10*1000); // 10s when moving, 30s if static
 });
 
 App.on("mapRefresh", () => {
@@ -147,9 +165,15 @@ App.on("mapRefresh", () => {
     apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
         App.emit("saveState");
+
+    }).catch(e => {
+        logger.error(e);
+        // e.status_code == 102
+        // detect token expiration
+
     });
 });
 
 App.on("saveState", () => {
     fs.writeFile("data/state.json", JSON.stringify(state, null, 4), (err) => {});
-})
+});

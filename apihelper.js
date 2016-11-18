@@ -5,6 +5,25 @@ function APIHelper(state) {
     this.state = state;
 }
 
+APIHelper.prototype.register = function(client) {
+    client.custominit = function() {
+        this.signatureBuilder = new pogoSignature.Builder();
+        this.lastMapObjectsCall = 0;
+
+        /*
+            The response to the first RPC call does not contain any response messages even though
+            the envelope includes requests, technically it wouldn't be necessary to send the
+            requests but the app does the same. The call will then automatically be resent to the
+            new API endpoint by callRPC().
+        */
+        this.endpoint = INITIAL_ENDPOINT;
+
+        return this.batchStart()
+                .batchCall()
+                .then(self.processInitialData);
+    };
+}
+
 APIHelper.prototype.alwaysinit = function(batch) {
     return batch.checkChallenge()
                 .getHatchedEggs()
@@ -23,6 +42,9 @@ APIHelper.prototype.always = function(batch) {
 }
 
 APIHelper.prototype.parse = function(responses) {
+    if (!responses || responses.length == 0) return;
+    if (!(responses instanceof Array)) responses = [responses];
+
     responses.forEach(r => {
         if (r.player_data) {
             // getPlayer()
@@ -82,6 +104,7 @@ APIHelper.prototype.parse = function(responses) {
             this.state.api.settings_hash = r.hash;
             if (r.settings) {
                 this.state.download_settings = r.settings;
+                this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                 //this.state.download_settings.map_settings.google_maps_api_key
             }
 
