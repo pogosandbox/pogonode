@@ -86,7 +86,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     apihelper.parse(responses);
 
     var batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, "Apple", "iPhone", "en", +state.api.version);
+    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +state.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
