@@ -12,32 +12,45 @@ module.exports.register = function(config, client) {
     if (client.hasOwnProperty("setSignatureInfos")) {        
         client.setSignatureInfos(function(envelope) {
             var timestamp_ms_since_start = new Date().getTime() - start;
-            return {
-                device_info: new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
-                    device_id: config.device.id,
-                    device_brand: "Apple",
-                    device_model: "iPhone",
-                    device_model_boot: "iPhone8,2",
-                    hardware_manufacturer: "Apple",
-                    hardware_model: "N66AP",
-                    firmware_brand: "iPhone OS",
-                    firmware_type: "9.3.5"
-                }),
+            
+            var infos = {};
 
-                location_fix: [new POGOProtos.Networking.Envelopes.Signature.LocationFix({
-                    provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
-                    latitude: client.playerLatitude,
-                    longitude: client.playerLongitude,
-                    altitude: random.triangular(300, 400, 350),
-                    provider_status: 3,
-                    location_type: 1
-                })],
+            infos.device_info = new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
+                                    device_id: config.device.id,
+                                    device_brand: "Apple",
+                                    device_model: "iPhone",
+                                    device_model_boot: "iPhone8,2",
+                                    hardware_manufacturer: "Apple",
+                                    hardware_model: "N66AP",
+                                    firmware_brand: "iPhone OS",
+                                    firmware_type: "9.3.5"
+                                });
 
-                activity_status: new POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
-                    stationary: true
-                }),
+            var loc = {
+                          provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
+                          latitude: client.playerLatitude,
+                          longitude: client.playerLongitude,
+                          altitude: random.triangular(300, 400, 350),
+                          provider_status: 3,
+                          location_type: 1
+                      };
+            if (envelope.accuracy >= 65) {
+                loc.vertical_accuracy = random.triangular(35, 100, 65);
+                loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66,80), 200][Math.floor(Math.random()*5)];
+            } else if (envelope.accuracy > 10) {
+                loc.horizontal_accuracy = envelope.accuracy;
+                loc.vertical_accuracy = [24, 32, 48, 48, 64, 64, 96, 128][Math.floor(Math.random()*8)];
+            } else {
+                loc.horizontal_accuracy = envelope.accuracy;
+                loc.vertical_accuracy = [3, 4, 6, 6, 8, 12, 24][Math.floor(Math.random()*8)];
+            }
+            infos.location_fix = [new POGOProtos.Networking.Envelopes.Signature.LocationFix(loc)];
 
-                // sensor_info: [new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
+            infos.activity_status = new POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
+                                        stationary: true
+                                    });
+
+                // infos.sensor_info = [new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
                 //     timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
                 //     linear_acceleration_x: random.triangular(-3, 1, 0),
                 //     linear_acceleration_y: random.triangular(-2, 3, 0),
@@ -57,7 +70,8 @@ module.exports.register = function(config, client) {
                 //     gravity_z: random.triangular(-1, .7, -0.8),
                 //     status: 3
                 // })]
-            };
+            
+            return infos;
         });
     }
 }
