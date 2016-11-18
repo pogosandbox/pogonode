@@ -6,4 +6,6 @@ certs
 build
 .publish
 data
+
 pogobuf
+node-pogo-signature
