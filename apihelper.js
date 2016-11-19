@@ -24,6 +24,10 @@ APIHelper.prototype.register = function(client) {
     };
 }
 
+APIHelper.prototype.getRandomInt = function(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 APIHelper.prototype.alwaysinit = function(batch) {
     return batch.checkChallenge()
                 .getHatchedEggs()

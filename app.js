@@ -77,13 +77,10 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     // client.on('response', console.log);
 
 }).then(() => {
-    // custom init, first api call is empty
+    // custom init, client.init() is not exactly what app is doing
     client.signatureBuilder = new pogoSignature.Builder({ protos: client.POGOProtos });
     client.lastMapObjectsCall = 0;
     client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
-    return client.batchStart().batchCall();
-
-}).then(() => {
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
                  .batchCall();
@@ -152,7 +149,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 App.on("apiReady", () => {
     logger.info("App ready");
     App.emit("saveState");
-    setInterval(() => App.emit("mapRefresh"), 10*1000); // 10s when moving, 30s if static
+    setTimeout(() => App.emit("mapRefresh"), (Math.random()*5 + 7)*1000); // first call after 7 to 12s
 });
 
 App.on("mapRefresh", () => {
@@ -169,6 +166,12 @@ App.on("mapRefresh", () => {
         logger.error(e);
         // e.status_code == 102
         // detect token expiration
+
+    }).finally(() => {
+        var timeout = 1000*(Math.random()*20+10);
+        setTimeout(() => {
+            App.emit("mapRefresh");
+        }, timeout); // 10s when moving, 30s if static
 
     });
 });
