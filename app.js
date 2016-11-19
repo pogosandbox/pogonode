@@ -2,7 +2,6 @@ require('dotenv').config({silent: true});
 
 const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
 const pogoSignature   = require('./node-pogo-signature');
-const POGOProtos      = require('node-pogo-protos');
 const EventEmitter    = require('events');
 const logger          = require('winston');
 const fs              = require("fs");
@@ -26,7 +25,7 @@ var config = {
         version: "4500",
         country: "US",
         language: "en",
-        timezone: 'Europe/Paris'
+        //timezone: 'Europe/Paris'
     },
     loglevel: "debug"
 };
@@ -79,7 +78,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 
 }).then(() => {
     // custom init, first api call is empty
-    client.signatureBuilder = new pogoSignature.Builder();
+    client.signatureBuilder = new pogoSignature.Builder({ protos: client.POGOProtos });
     client.lastMapObjectsCall = 0;
     client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
     return client.batchStart().batchCall();
@@ -103,7 +102,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     apihelper.parse(responses);
 
     var batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
+    batch.getAssetDigest(client.POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {

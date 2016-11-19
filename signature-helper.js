@@ -1,4 +1,3 @@
-const POGOProtos    = require('node-pogo-protos');
 const Random        = require("simjs-random");
 
 var start = new Date().getTime();
@@ -34,9 +33,9 @@ module.exports.register = function(config, client) {
                 loc.vertical_accuracy = [3, 4, 6, 6, 8, 12, 24][Math.floor(Math.random()*8)];
             }
 
-            infos.location_fix = [new POGOProtos.Networking.Envelopes.Signature.LocationFix(loc)];
+            infos.location_fix = [new client.POGOProtos.Networking.Envelopes.Signature.LocationFix(loc)];
 
-            infos.device_info = new POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
+            infos.device_info = new client.POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
                                     device_id: config.device.id,
                                     device_brand: "Apple",
                                     device_model: "iPhone",
@@ -47,11 +46,11 @@ module.exports.register = function(config, client) {
                                     firmware_type: "9.3.5"
                                 });
 
-            infos.activity_status = new POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
+            infos.activity_status = new client.POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
                                         stationary: true
                                     });
 
-            infos.sensor_info = [new POGOProtos.Networking.Envelopes.Signature.SensorInfo({
+            infos.sensor_info = [new client.POGOProtos.Networking.Envelopes.Signature.SensorInfo({
                 timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
                 linear_acceleration_x: random.triangular(-3, 1, 0),
                 linear_acceleration_y: random.triangular(-2, 3, 0),
