@@ -1,11 +1,12 @@
 const Random        = require("simjs-random");
 
-var start = new Date().getTime();
-var random = new Random();
-
 var getRandomInt = function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+var start = new Date().getTime();
+var random = new Random();
+var course = course = random.uniform(0, 360);
 
 module.exports.register = function(config, client) {
     if (client.hasOwnProperty("setSignatureInfos")) {        
@@ -22,6 +23,14 @@ module.exports.register = function(config, client) {
                           provider_status: 3,
                           location_type: 1
                       };
+            if (Math.random() > 0.95) {
+                loc.course = -1;
+                loc.speed = -1;
+            } else {
+                loc.course = random.triangular(0, 360, course);
+                loc.speed = random.triangular(0.2, 4.25, 1);
+                course = loc.course;
+            }
             if (envelope.accuracy >= 65) {
                 loc.vertical_accuracy = random.triangular(35, 100, 65);
                 loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66,80), 200][Math.floor(Math.random()*5)];
