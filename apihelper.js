@@ -1,7 +1,9 @@
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 const logger  = require('winston');
+const vercmp  = require('semver-compare');
 
-function APIHelper(state) {
+function APIHelper(config, state) {
+    this.config = config;
     this.state = state;
 }
 
@@ -107,6 +109,9 @@ APIHelper.prototype.parse = function(responses) {
             // downloadSettings()
             this.state.api.settings_hash = r.hash;
             if (r.settings) {
+                if (vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
+                    throw new Error("Minimum client version=" + r.settings.minimum_client_version);
+                }
                 this.state.download_settings = r.settings;
                 this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                 //this.state.download_settings.map_settings.google_maps_api_key

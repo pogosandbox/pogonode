@@ -7,6 +7,7 @@ const logger          = require('winston');
 const fs              = require("fs");
 const yaml            = require('js-yaml');
 const Promise         = require('bluebird');
+const _               = require('lodash');
 
 const APIHelper       = require("./apihelper");
 const signaturehelper = require("./signature-helper");
@@ -23,6 +24,7 @@ var config = {
     device: { id: 0 },
     api: {
         version: "4500",
+        clientversion: "0.45.0",
         country: "US",
         language: "en",
         //timezone: 'Europe/Paris'
@@ -32,12 +34,12 @@ var config = {
 
 if (fs.existsSync("data/config.yaml")) {
     var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
-    config = Object.assign(config, loaded);
+    config = _.defaultsDeep(loaded, config);
 }
 logger.level = config.loglevel;
 
 if (!config.device.id) {
-    config.device.id = (new Array(40)).fill(0).map(i => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("");
+    config.device.id = _.times(40, () => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("")
 }
 
 fs.writeFileSync("data/config.yaml", yaml.dump(config));
@@ -52,15 +54,14 @@ var state = {
         lat: config.pos.lat,
         lng: config.pos.lng
     },
-    api: {
-    },
+    api: {},
     player: {}
 };
 
 class AppEvents extends EventEmitter {}
 const App = new AppEvents();
 
-var apihelper = new APIHelper(state);
+var apihelper = new APIHelper(config, state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
