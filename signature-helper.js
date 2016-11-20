@@ -1,4 +1,4 @@
-const Random        = require("simjs-random");
+const Random = require("simjs-random");
 
 var getRandomInt = function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -9,8 +9,8 @@ var random = new Random();
 var course = course = random.uniform(0, 360);
 
 module.exports.register = function(config, client) {
-    if (client.hasOwnProperty("setSignatureInfos")) {        
-        client.setSignatureInfos(function(envelope) {
+    if (client.hasOwnProperty("setSignatureInfo")) {        
+        client.setSignatureInfo(function(envelope) {
             var timestamp_ms_since_start = new Date().getTime() - start;
             
             var infos = {};
@@ -42,9 +42,9 @@ module.exports.register = function(config, client) {
                 loc.vertical_accuracy = [3, 4, 6, 6, 8, 12, 24][Math.floor(Math.random()*8)];
             }
 
-            infos.location_fix = [new client.POGOProtos.Networking.Envelopes.Signature.LocationFix(loc)];
+            infos.location_fix = [loc];
 
-            infos.device_info = new client.POGOProtos.Networking.Envelopes.Signature.DeviceInfo({
+            infos.device_info = {
                                     device_id: config.device.id,
                                     device_brand: "Apple",
                                     device_model: "iPhone",
@@ -53,13 +53,13 @@ module.exports.register = function(config, client) {
                                     hardware_model: "N66AP",
                                     firmware_brand: "iPhone OS",
                                     firmware_type: "9.3.5"
-                                });
+                                };
 
-            infos.activity_status = new client.POGOProtos.Networking.Envelopes.Signature.ActivityStatus({
+            infos.activity_status = {
                                         stationary: true
-                                    });
+                                    };
 
-            infos.sensor_info = [new client.POGOProtos.Networking.Envelopes.Signature.SensorInfo({
+            infos.sensor_info = [{
                 timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
                 linear_acceleration_x: random.triangular(-3, 1, 0),
                 linear_acceleration_y: random.triangular(-2, 3, 0),
@@ -78,7 +78,7 @@ module.exports.register = function(config, client) {
                 gravity_y: random.triangular(-1, 1, -.2),
                 gravity_z: random.triangular(-1, .7, -0.8),
                 status: 3
-            })];
+            }];
             
             return infos;
         });

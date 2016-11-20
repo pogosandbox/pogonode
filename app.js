@@ -2,6 +2,7 @@ require('dotenv').config({silent: true});
 
 const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
 const pogoSignature   = require('./node-pogo-signature');
+const POGOProtos      = require('node-pogo-protos');
 const EventEmitter    = require('events');
 const logger          = require('winston');
 const fs              = require("fs");
@@ -65,6 +66,8 @@ var apihelper = new APIHelper(config, state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
+
+apihelper.register(config, client);
 signaturehelper.register(config, client);
 state.client = client;
 
@@ -78,13 +81,11 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     // client.on('response', console.log);
 
 }).then(() => {
-    // custom init, client.init() is not exactly what app is doing
-    client.signatureBuilder = new pogoSignature.Builder({ protos: client.POGOProtos });
-    client.lastMapObjectsCall = 0;
-    client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
-    return client.batchStart()
-                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
-                 .batchCall();
+    return client.init(() => {
+        return client.batchStart()
+                     .getPlayer(config.api.country, config.api.language, config.api.timezone)
+                     .batchCall()
+    });
 
 }).then(responses => {
     apihelper.parse(responses);
@@ -100,7 +101,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     apihelper.parse(responses);
 
     var batch = client.batchStart();
-    batch.getAssetDigest(client.POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
+    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
@@ -150,7 +151,7 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 App.on("apiReady", () => {
     logger.info("App ready");
     App.emit("saveState");
-    setTimeout(() => App.emit("mapRefresh"), (Math.random()*5 + 7)*1000); // first call after 7 to 12s
+    setTimeout(() => App.emit("mapRefresh"), Math.random()*5*1000);
 });
 
 App.on("mapRefresh", () => {

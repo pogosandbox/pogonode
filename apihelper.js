@@ -7,23 +7,31 @@ function APIHelper(config, state) {
     this.state = state;
 }
 
-APIHelper.prototype.register = function(client) {
-    client.custominit = function() {
-        this.signatureBuilder = new pogoSignature.Builder();
-        this.lastMapObjectsCall = 0;
+APIHelper.prototype.register = function(config, client) {
+    // client.init = function() {
+    //     this.signatureBuilder = new pogoSignature.Builder();
+    //     this.lastMapObjectsCall = 0;
 
-        /*
-            The response to the first RPC call does not contain any response messages even though
-            the envelope includes requests, technically it wouldn't be necessary to send the
-            requests but the app does the same. The call will then automatically be resent to the
-            new API endpoint by callRPC().
-        */
-        this.endpoint = INITIAL_ENDPOINT;
+    //     /*
+    //         The response to the first RPC call does not contain any response messages even though
+    //         the envelope includes requests, technically it wouldn't be necessary to send the
+    //         requests but the app does the same. The call will then automatically be resent to the
+    //         new API endpoint by callRPC().
+    //     */
+    //     this.endpoint = INITIAL_ENDPOINT;
 
-        return this.batchStart()
-                .batchCall()
-                .then(self.processInitialData);
-    };
+    //     return this.batchStart()
+    //             .batchCall()
+    //             .then(self.processInitialData);
+
+
+    //     this.signatureBuilder = new pogoSignature.Builder({ protos: client.POGOProtos });
+    //     this.lastMapObjectsCall = 0;
+    //     this.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+    //     return client.batchStart()
+    //                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
+    //                 .batchCall();
+    // };
 }
 
 APIHelper.prototype.getRandomInt = function(min, max) {
