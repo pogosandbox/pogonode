@@ -26,6 +26,7 @@ var config = {
     api: {
         version: "4500",
         clientversion: "0.45.0",
+        checkversion: true,
         country: "US",
         language: "en",
         //timezone: 'Europe/Paris'
@@ -67,8 +68,7 @@ var apihelper = new APIHelper(config, state);
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
 
-apihelper.register(config, client);
-signaturehelper.register(config, client);
+//signaturehelper.register(config, client);
 state.client = client;
 
 logger.info("App starting...");
@@ -81,11 +81,12 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
     // client.on('response', console.log);
 
 }).then(() => {
-    return client.init(() => {
-        return client.batchStart()
-                     .getPlayer(config.api.country, config.api.language, config.api.timezone)
-                     .batchCall()
-    });
+    return client.init(false);
+
+}).then(() => {
+    return client.batchStart()
+                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
+                 .batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);

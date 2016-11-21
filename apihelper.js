@@ -7,33 +7,6 @@ function APIHelper(config, state) {
     this.state = state;
 }
 
-APIHelper.prototype.register = function(config, client) {
-    // client.init = function() {
-    //     this.signatureBuilder = new pogoSignature.Builder();
-    //     this.lastMapObjectsCall = 0;
-
-    //     /*
-    //         The response to the first RPC call does not contain any response messages even though
-    //         the envelope includes requests, technically it wouldn't be necessary to send the
-    //         requests but the app does the same. The call will then automatically be resent to the
-    //         new API endpoint by callRPC().
-    //     */
-    //     this.endpoint = INITIAL_ENDPOINT;
-
-    //     return this.batchStart()
-    //             .batchCall()
-    //             .then(self.processInitialData);
-
-
-    //     this.signatureBuilder = new pogoSignature.Builder({ protos: client.POGOProtos });
-    //     this.lastMapObjectsCall = 0;
-    //     this.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
-    //     return client.batchStart()
-    //                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
-    //                 .batchCall();
-    // };
-}
-
 APIHelper.prototype.getRandomInt = function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -65,7 +38,7 @@ APIHelper.prototype.parse = function(responses) {
             this.state.player = r.player_data;
             this.state.player.banned = r.banned;
             this.state.player.warn = r.warn;
-            if (r.banned) logger.error("Account Banned");
+            if (r.banned) throw new Error("Account Banned");
             if (r.warn) logger.error("Ban warning.");
 
         } else if (r.egg_km_walked) {
@@ -117,7 +90,7 @@ APIHelper.prototype.parse = function(responses) {
             // downloadSettings()
             this.state.api.settings_hash = r.hash;
             if (r.settings) {
-                if (vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
+                if (this.config.api.checkversion && vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
                     throw new Error("Minimum client version=" + r.settings.minimum_client_version);
                 }
                 this.state.download_settings = r.settings;
