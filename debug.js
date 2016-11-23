@@ -1,8 +1,14 @@
 const fs     = require("fs");
 const Random = require("simjs-random");
+const geolib = require("geolib");
+const _      = require('lodash');
+const logger = require('winston');
+
+logger.level = "debug";
+
+var state = JSON.parse(fs.readFileSync("data/state.json", 'utf8'));
 
 function Map() {
-    var state = JSON.parse(fs.readFileSync("data/state.json", 'utf8'));
     var cells = state.map_cells;
 
     var forts = cells.reduce((all, c) => { return all.concat(c.forts); }, []);
@@ -25,5 +31,19 @@ function Map() {
     fs.writeFileSync("data/map.json", JSON.stringify(map));
 }
 
-var random = new Random();
-console.log(random.triangular(-3, 1, 0));
+var pokestops = state.map.pokestops;
+logger.debug(pokestops.length);
+
+// pokestops = _.uniqBy(pokestops, pk => pk.id);
+// logger.debug(pokestops.length);
+
+var visited = state.visited_pokestops || [];
+
+// get pokestops not already visited
+pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms > 0);
+
+// order by distance
+_.each(pokestops, pk => pk.distance = geolib.getDistance(state.pos, pk));
+pokestops = _.orderBy(pokestops, "distance");
+
+fs.writeFileSync("data/pokestops.json", JSON.stringify(pokestops, null, 4));

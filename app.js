@@ -12,6 +12,7 @@ const _               = require('lodash');
 
 const APIHelper       = require("./apihelper");
 const signaturehelper = require("./signature-helper");
+const walker          = require("./walker");
 
 var config = {
     credentials: {
@@ -57,7 +58,11 @@ var state = {
         lng: config.pos.lng
     },
     api: {},
-    player: {}
+    player: {},
+    path: {
+        visited_pokestops: [],
+        waypoints: []
+    }
 };
 
 class AppEvents extends EventEmitter {}
@@ -153,7 +158,22 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 App.on("apiReady", () => {
     logger.info("App ready");
     App.emit("saveState");
+    setInterval(() => App.emit("updatePos"), 1000);
     setTimeout(() => App.emit("mapRefresh"), Math.random()*5*1000);
+});
+
+App.on("updatePos", () => {
+    if (state.path.waypoints.length == 0) {
+        if (state.path.target) {
+            // we arrive at target
+            state.path.target.done = true;
+            // todo: spin pokestop
+        }
+        // get a new target and path to go there
+        walker.generatePath(state);
+    }
+
+    
 });
 
 App.on("mapRefresh", () => {
@@ -172,7 +192,7 @@ App.on("mapRefresh", () => {
         // detect token expiration
 
     }).finally(() => {
-        var timeout = 1000*(Math.random()*20+10);
+        var timeout = 1000*(Math.random()*5+7);
         setTimeout(() => {
             App.emit("mapRefresh");
         }, timeout); // 10s when moving, 30s if static

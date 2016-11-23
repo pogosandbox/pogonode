@@ -8,6 +8,8 @@
   "dependencies": {
     "dotenv": "^2.0.0",
     "events": "^1.1.1",
+    "geolib": "^2.0.22",
+    "googlemaps": "^1.11.1",
     "js-yaml": "^3.7.0",
     "lodash": "^4.17.2",
     "node-pogo-protos": "^2.2.0",
