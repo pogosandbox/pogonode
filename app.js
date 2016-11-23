@@ -69,6 +69,7 @@ var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
 
 //signaturehelper.register(config, client);
+signaturehelper.registersimple(config, client);
 state.client = client;
 
 logger.info("App starting...");
