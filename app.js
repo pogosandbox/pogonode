@@ -1,7 +1,6 @@
 require('dotenv').config({silent: true});
 
 const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
-const pogoSignature   = require('./node-pogo-signature');
 const POGOProtos      = require('node-pogo-protos');
 const EventEmitter    = require('events');
 const logger          = require('winston');
@@ -11,8 +10,8 @@ const Promise         = require('bluebird');
 const _               = require('lodash');
 
 const APIHelper       = require("./apihelper");
+const Walker          = require("./walker");
 const signaturehelper = require("./signature-helper");
-const walker          = require("./walker");
 
 var config = {
     credentials: {
@@ -23,6 +22,7 @@ var config = {
         lat: 48.8456222,
         lng: 2.3364526
     },
+    gmapKey: "",
     device: { id: 0 },
     api: {
         version: "4500",
@@ -69,6 +69,7 @@ class AppEvents extends EventEmitter {}
 const App = new AppEvents();
 
 var apihelper = new APIHelper(config, state);
+var walker = new Walker(config, state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
@@ -163,17 +164,12 @@ App.on("apiReady", () => {
 });
 
 App.on("updatePos", () => {
-    if (state.path.waypoints.length == 0) {
-        if (state.path.target) {
-            // we arrive at target
-            state.path.target.done = true;
-            // todo: spin pokestop
-        }
-        // get a new target and path to go there
-        walker.generatePath(state);
-    }
+    walker
+        .checkPath()
+        .then(walker.walk)
+        .then(() => {
 
-    
+        });
 });
 
 App.on("mapRefresh", () => {

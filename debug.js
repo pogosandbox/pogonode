@@ -1,11 +1,15 @@
 const fs     = require("fs");
+const yaml   = require('js-yaml');
 const Random = require("simjs-random");
 const geolib = require("geolib");
 const _      = require('lodash');
 const logger = require('winston');
 
+const Walker = require("./walker");
+
 logger.level = "debug";
 
+var config = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
 var state = JSON.parse(fs.readFileSync("data/state.json", 'utf8'));
 
 function Map() {
@@ -31,19 +35,7 @@ function Map() {
     fs.writeFileSync("data/map.json", JSON.stringify(map));
 }
 
-var pokestops = state.map.pokestops;
-logger.debug(pokestops.length);
-
-// pokestops = _.uniqBy(pokestops, pk => pk.id);
-// logger.debug(pokestops.length);
-
-var visited = state.visited_pokestops || [];
-
-// get pokestops not already visited
-pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms > 0);
-
-// order by distance
-_.each(pokestops, pk => pk.distance = geolib.getDistance(state.pos, pk));
-pokestops = _.orderBy(pokestops, "distance");
-
-fs.writeFileSync("data/pokestops.json", JSON.stringify(pokestops, null, 4));
+var walker = new Walker(config, state);
+walker.generatePath(state).then(path => {
+    
+});
