@@ -188,7 +188,7 @@ App.on("mapRefresh", () => {
         // detect token expiration
 
     }).finally(() => {
-        var timeout = 1000*(Math.random()*5+7);
+        var timeout = 1000*(10+Math.random()*2);
         setTimeout(() => {
             App.emit("mapRefresh");
         }, timeout); // 10s when moving, 30s if static
