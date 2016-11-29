@@ -22,6 +22,7 @@ Walker.prototype.findNextPokestop = function() {
         pokestops = _.orderBy(pokestops, "distance");
     }
 
+    // take closest
     return pokestops[0];
 }
 
@@ -53,7 +54,6 @@ Walker.prototype.checkPath = function() {
         if (state.path.target) {
             // we arrive at target
             state.path.target.done = true;
-            // todo: spin pokestop
         }
         // get a new target and path to go there
         return walker.generatePath(state);

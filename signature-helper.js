@@ -48,11 +48,11 @@ module.exports.register = function(config, client) {
                                 device_id: config.device.id,
                                 device_brand: "Apple",
                                 device_model: "iPhone",
-                                device_model_boot: "iPhone8,2",
+                                device_model_boot: "iPhone8,1",
                                 hardware_manufacturer: "Apple",
-                                hardware_model: "N66AP",
+                                hardware_model: "N71AP",
                                 firmware_brand: "iPhone OS",
-                                firmware_type: "9.3.5"
+                                firmware_type: "10.1.1"
                             };
 
         infos.activity_status = {

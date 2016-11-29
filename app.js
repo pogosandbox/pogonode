@@ -29,10 +29,9 @@ var config = {
         clientversion: "0.45.0",
         checkversion: true,
         country: "US",
-        language: "en",
-        //timezone: 'Europe/Paris'
+        language: "en"
     },
-    loglevel: "debug"
+    loglevel: "info"
 };
 
 if (fs.existsSync("data/config.yaml")) {
@@ -42,7 +41,7 @@ if (fs.existsSync("data/config.yaml")) {
 logger.level = config.loglevel;
 
 if (!config.device.id) {
-    config.device.id = _.times(40, () => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("")
+    config.device.id = _.times(32, () => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("")
 }
 
 fs.writeFileSync("data/config.yaml", yaml.dump(config));
@@ -74,8 +73,8 @@ var walker = new Walker(config, state);
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
 
-//signaturehelper.register(config, client);
-signaturehelper.registersimple(config, client);
+signaturehelper.register(config, client);
+//signaturehelper.registersimple(config, client);
 state.client = client;
 
 logger.info("App starting...");
@@ -168,7 +167,10 @@ App.on("updatePos", () => {
         .checkPath()
         .then(walker.walk)
         .then(() => {
-
+            // spin pokestops
+        })
+        .then(() => {
+            //
         });
 });
 
@@ -181,6 +183,9 @@ App.on("mapRefresh", () => {
     apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
         App.emit("saveState");
+
+    }).then(() => {
+        // catch available pokemon
 
     }).catch(e => {
         logger.error(e);
