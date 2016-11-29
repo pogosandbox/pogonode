@@ -167,9 +167,6 @@ App.on("updatePos", () => {
         .checkPath()
         .then(walker.walk)
         .then(() => {
-            // spin pokestops
-        })
-        .then(() => {
             //
         });
 });
@@ -182,10 +179,15 @@ App.on("mapRefresh", () => {
     batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
     apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
-        App.emit("saveState");
+
+    }).then(() => {
+        // spin pokestop that are close enough
 
     }).then(() => {
         // catch available pokemon
+
+    }).then(() => {
+        App.emit("saveState");
 
     }).catch(e => {
         logger.error(e);
