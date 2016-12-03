@@ -26,6 +26,17 @@ Walker.prototype.findNextPokestop = function() {
     return pokestops[0];
 }
 
+Walker.prototype.findSpinnablePokestops = function() {
+    var pokestops = this.state.map.pokestops;
+
+    var range = this.state.download_settings.fort_settings.interaction_range_meters;
+    
+    // get pokestops not in cooldown that are close enough to spin it
+    pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && geolib.getDistance(this.state.pos, pk) < range);
+
+    return pokestops;
+}
+
 Walker.prototype.generatePath = function() {
     var state = this.state;
     var target = state.path.target = this.findNextPokestop(state);
@@ -56,7 +67,7 @@ Walker.prototype.checkPath = function() {
             state.path.target.done = true;
         }
         // get a new target and path to go there
-        return walker.generatePath(state);
+        return this.generatePath(state);
     }
     return Promise.resolve(state.path);
 }
