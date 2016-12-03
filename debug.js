@@ -5,12 +5,16 @@ const geolib = require("geolib");
 const _      = require('lodash');
 const logger = require('winston');
 
-const Walker = require("./walker");
-
 logger.level = "debug";
 
 var config = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
 var state = JSON.parse(fs.readFileSync("data/state.json", 'utf8'));
+
+const Walker = require("./walker");
+var walker = new Walker(config, state);
+
+const ProxyHelper = require("./proxy.helper");
+var proxyhelper = new ProxyHelper(config, state);
 
 function Map() {
     var cells = state.map_cells;
@@ -35,7 +39,16 @@ function Map() {
     fs.writeFileSync("data/map.json", JSON.stringify(map));
 }
 
-var walker = new Walker(config, state);
-walker.generatePath(state).then(path => {
-    
-});
+function testWalker() {
+    walker.generatePath(state).then(path => {
+        
+    });
+}
+
+function testProxies() {
+    proxyhelper.testProxy().then(valid => {
+        logger.info(valid);
+    })
+}
+
+testProxies();

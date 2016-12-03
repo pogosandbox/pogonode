@@ -11,7 +11,8 @@ const _               = require('lodash');
 
 const APIHelper       = require("./apihelper");
 const Walker          = require("./walker");
-const signaturehelper = require("./signature-helper");
+const ProxyHelper     = require("./proxy.helper");
+const signaturehelper = require("./signature.helper");
 
 var config = {
     credentials: {
@@ -44,7 +45,7 @@ if (!config.device.id) {
     config.device.id = _.times(32, () => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("")
 }
 
-fs.writeFileSync("data/config.yaml", yaml.dump(config));
+fs.writeFileSync("data/config.actual.yaml", yaml.dump(config));
 
 if (!config.credentials.user) {
     logger.error("Invalid credentials. Please fill data/config.yaml.")
@@ -69,17 +70,31 @@ const App = new AppEvents();
 
 var apihelper = new APIHelper(config, state);
 var walker = new Walker(config, state);
+var proxyhelper = new ProxyHelper(config, state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
+state.client = client;
 
 signaturehelper.register(config, client);
-//signaturehelper.registersimple(config, client);
-state.client = client;
 
 logger.info("App starting...");
 
-login.login(config.credentials.user, config.credentials.password).then(token => {
+proxyhelper.checkProxy().then(valid => {
+    if (config.proxy) {
+        if (valid) {
+            login.setProxy(proxyhelper.proxy);
+            client.setProxy(proxyhelper.proxy);
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 1;
+        } else {
+            throw new Error("Invalid proxy. Exiting.")
+        }
+    }
+    logger.info("Login...");
+    return login.login(config.credentials.user, config.credentials.password);
+
+}).then(token => {
+    logger.debug("Token: %s", token);
     client.setAuthInfo('ptc', token);
     client.setPosition(state.pos.lat, state.pos.lng);
 
@@ -97,7 +112,8 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 }).then(responses => {
     apihelper.parse(responses);
 
-    logger.info("Logged In");
+    logger.info("Logged In.");
+    logger.info("Starting initial flow...");
     
     // download config version like the real app
     var batch = client.batchStart();
@@ -152,23 +168,26 @@ login.login(config.credentials.user, config.credentials.password).then(token => 
 
 }).catch(e => {
     logger.error(e);
+    if (e.message.indexOf("tunneling socket could not be established") > 0) proxyhelper.badProxy();
 
 });
 
 App.on("apiReady", () => {
-    logger.info("App ready");
+    logger.info("Initial flow done.");
     App.emit("saveState");
     setInterval(() => App.emit("updatePos"), 1000);
-    setTimeout(() => App.emit("mapRefresh"), Math.random()*5*1000);
+    setTimeout(() => App.emit("mapRefresh"), Math.random()*2*1000);
 });
 
 App.on("updatePos", () => {
-    walker
-        .checkPath()
-        .then(walker.walk)
-        .then(() => {
-            //
-        });
+    if (state.map) {
+        walker
+            .checkPath()
+            .then(walker.walk)
+            .then(() => {
+                //
+            });
+    }
 });
 
 App.on("mapRefresh", () => {
@@ -182,9 +201,25 @@ App.on("mapRefresh", () => {
 
     }).then(() => {
         // spin pokestop that are close enough
+        var stops = walker.findSpinnablePokestops();
+        if (stops.length > 0) {
+            logger.debug("begin spin");
+            return Promise.map(stops, ps => {
+                batch = client.batchStart();
+                batch.fortSearch(ps.id, ps.latitude, ps.longitude);
+                return batch.batchCall().then(responses => {
+                    logger.debug("after spin");
+                    apihelper.parse(responses);
+                    return Promise.resolve();
+                }).delay(1500);
+            },  {concurrency: 1});
+        } else {
+            return Promise.resolve(0);
+        }
 
-    }).then(() => {
+    }).then(done => {
         // catch available pokemon
+        if (done) logger.debug("after all spin");
 
     }).then(() => {
         App.emit("saveState");
@@ -195,7 +230,7 @@ App.on("mapRefresh", () => {
         // detect token expiration
 
     }).finally(() => {
-        var timeout = 1000*(10+Math.random()*2);
+        var timeout = (state.download_settings.map_settings.get_map_objects_min_refresh_seconds + Math.random()*2)*1000
         setTimeout(() => {
             App.emit("mapRefresh");
         }, timeout); // 10s when moving, 30s if static

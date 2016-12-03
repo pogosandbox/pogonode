@@ -1,6 +1,7 @@
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 const logger  = require('winston');
 const vercmp  = require('semver-compare');
+const _       = require('lodash');
 
 function APIHelper(config, state) {
     this.config = config;
@@ -62,6 +63,8 @@ APIHelper.prototype.parse = function(responses) {
             this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
             if (!this.state.hasOwnProperty("inventory")) {
                 this.state.inventory = pogobuf.Utils.splitInventory(r);
+                this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
+                this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
             } else if (r.inventory_delta.inventory_items.length > 0) {
                 console.log("---");
                 console.dir(r.inventory_delta, { depth: 4 });
@@ -118,10 +121,34 @@ APIHelper.prototype.parse = function(responses) {
                 this.state.item_templates = r.item_templates;
             }
 
+        } else if (r.hasOwnProperty("cooldown_complete_timestamp_ms")) {
+            // fortSearch
+            if (r.result == 1) {
+                console.log("fortSearch");
+                console.dir(r, { depth: 4 });
+
+                _.each(r.items_awarded, i => {
+                    let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+                    if (item) item.count += i.item_count;
+                });
+
+                if (r.pokemon_data_egg) {
+                    this.state.inventory.eggs.push(r.pokemon_data_egg);
+                }
+
+                this.state.player.experience += r.experience_awarded;
+            } else {
+                logger.warn("fortSearch() returned %s", r.result);
+            }
+
         } else if (r.items_awarded) {
             // levelUpRewards
-            if (r.items_awarded.length > 0 || r.items_unlocked.length > 0) {
+            if (r.result == 1) {
                 console.dir(r, { depth: 4 });
+                _.each(r.items_awarded, i => {
+                    let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+                    if (item) item.count += i.item_count;
+                });
             }
 
         } else if (r.hasOwnProperty("candy_earned_count")) {
