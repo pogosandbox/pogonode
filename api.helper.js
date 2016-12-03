@@ -47,15 +47,16 @@ APIHelper.prototype.parse = function(responses) {
             if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 || 
                 r.experience_awarded.length > 0 || r.pokemon_id.length > 0) {
                 console.dir(r, { depth: 4 });
-            }
-            for(var stardust in r.stardust_awarded) {
-                //this.state.inventory.player.
-            }
-            for (var xp in r.experience_awarded) {
-                //this.state.inventory.player.experience += xp;
-            }
-            for (var candy in r.candy_awarded) {
-                
+
+                for(var stardust in r.stardust_awarded) {
+                    //this.state.inventory.player.
+                }
+                for (var xp in r.experience_awarded) {
+                    //this.state.inventory.player.experience += xp;
+                }
+                for (var candy in r.candy_awarded) {
+                    
+                }
             }
 
         } else if (r.inventory_delta) {
@@ -176,7 +177,7 @@ APIHelper.prototype.parse = function(responses) {
                 wild_pokemons: wild_pokemons,
                 catchable_pokemons: catchable_pokemons,
                 nearby_pokemons: nearby_pokemons,
-                spawn_points: spawn_points
+                //spawn_points: spawn_points
             }
 
         } else {

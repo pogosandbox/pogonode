@@ -18,7 +18,7 @@ Walker.prototype.findNextPokestop = function() {
 
     if (pokestops.length > 1) {
         // order by distance
-        _.each(pokestops, pk => pk.distance = geolib.getDistance(this.state.pos, pk));
+        _.each(pokestops, pk => pk.distance = this.distance(pk));
         pokestops = _.orderBy(pokestops, "distance");
     }
 
@@ -32,7 +32,7 @@ Walker.prototype.findSpinnablePokestops = function() {
     var range = this.state.download_settings.fort_settings.interaction_range_meters;
     
     // get pokestops not in cooldown that are close enough to spin it
-    pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && geolib.getDistance(this.state.pos, pk) < range);
+    pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
 
     return pokestops;
 }
@@ -73,9 +73,23 @@ Walker.prototype.checkPath = function() {
 }
 
 Walker.prototype.walk = function() {
+    // move towards next target
+    let speed = this.config.speed;
+    speed += (Math.random() - 0.5) * speed * 0.2;
+    logger.debug("Speed: %s", speed);
+    let speedms = speed / 3.6;
+    let dist = this.distance(this.state.path.waypoints[0]);
 
+
+    // if we get close to the next point, remove it from the targets
+    dist = this.distance(this.state.path.waypoints[0]);
+    logger.debug(dist);
+    
+    if (dist < 10) this.state.path.waypoints.shift();
 }
 
-Walker.prototype.distance = geolib.getDistance;
+Walker.prototype.distance = function(target) {
+    return geolib.getDistance(this.state.pos, target);
+}
 
 module.exports = Walker;

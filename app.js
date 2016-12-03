@@ -1,6 +1,7 @@
 require('dotenv').config({silent: true});
 
-const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
+//const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
+const pogobuf         = require('pogobuf');
 const POGOProtos      = require('node-pogo-protos');
 const EventEmitter    = require('events');
 const logger          = require('winston');
@@ -9,7 +10,7 @@ const yaml            = require('js-yaml');
 const Promise         = require('bluebird');
 const _               = require('lodash');
 
-const APIHelper       = require("./apihelper");
+const APIHelper       = require("./api.helper");
 const Walker          = require("./walker");
 const ProxyHelper     = require("./proxy.helper");
 const signaturehelper = require("./signature.helper");
@@ -23,6 +24,7 @@ var config = {
         lat: 48.8456222,
         lng: 2.3364526
     },
+    speed: 5,
     gmapKey: "",
     device: { id: 0 },
     api: {
@@ -164,6 +166,7 @@ proxyhelper.checkProxy().then(valid => {
  
 }).then(responses => {
     apihelper.parse(responses);
+    App.emit("saveState");
     App.emit("apiReady");
 
 }).catch(e => {
