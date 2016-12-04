@@ -8,7 +8,7 @@ let start = new Date().getTime();
 let random = new Random();
 let course = course = random.uniform(0, 360);
 
-letdule.exports.register = function(config, client) {
+module.exports.register = function(config, client) {
 
     client.setSignatureInfo(function(envelope) {
         let timestampSinceStart = new Date().getTime() - start;
