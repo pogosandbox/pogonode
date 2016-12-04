@@ -8,7 +8,7 @@
     },
     "rules": {
         "arrow-parens": 0,
-        "padded-blocks": "off",
+        "padded-blocks": 0,
         "max-len": [1, {
             "tabWidth": 4,
             "code": 120,
