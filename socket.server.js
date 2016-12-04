@@ -25,6 +25,10 @@ class SocketServer {
         this.io.on('connection', socket => {
             logger.debug('UI connected.');
             if (this.initialized) this.ready(socket);
+
+            socket.on("inventory_list", msg => this.sendInventory(socket));
+            socket.on("pokemon_list", msg => this.sendPokemons(socket));
+            socket.on("eggs_list", msg => this.sendEggs(socket));
         });
 
         return httpserver.listenAsync(process.env.PORT || 8000, "0.0.0.0").then(() => {
@@ -71,6 +75,24 @@ class SocketServer {
         this.io.emit("pokestop_visited", pokestop);
     }
 
+    sendInventory(client) {
+        client.emit("inventory_list", this.state.inventory.items);
+    }
+
+    sendPokemons(client) {
+        client.emit("pokemon_list", {
+            pokemon: this.state.inventory.pokemon,
+            candy: this.state.inventory.candies
+        });
+    }
+
+    sendEggs(client) {
+        client.emit("eggs_list", {
+            km_walked: this.state.inventory.player.km_walked,
+            egg_incubators: this.state.inventory.egg_incubators,
+            eggs: this.state.inventory.eggs
+        });
+    }
 }
 
 module.exports = SocketServer;

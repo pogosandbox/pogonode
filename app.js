@@ -1,7 +1,7 @@
 require('dotenv').config({silent: true});
 
-//const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
-const pogobuf         = require('pogobuf');
+const pogobuf         = require('./pogobuf/pogobuf/pogobuf');
+//const pogobuf         = require('pogobuf');
 const POGOProtos      = require('node-pogo-protos');
 const EventEmitter    = require('events');
 const logger          = require('winston');
@@ -45,6 +45,7 @@ if (fs.existsSync("data/config.yaml")) {
 }
 
 logger.level = config.loglevel;
+logger.add(logger.transports.File, { filename: 'pogonode.log', json: false });
 
 if (!config.device.id) {
     config.device.id = _.times(32, () => "0123456789abcdef"[Math.floor(Math.random()*16)]).join("")
@@ -89,7 +90,6 @@ logger.info("App starting...");
 proxyhelper.checkProxy().then(valid => {
     if (config.proxy) {
         if (valid) {
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
             login.setProxy(proxyhelper.proxy);
             client.setProxy(proxyhelper.proxy);
         } else {
@@ -248,15 +248,15 @@ function mapRefresh() {
         // spin pokestop that are close enough
         var stops = walker.findSpinnablePokestops();
         if (stops.length > 0) {
-            logger.debug("begin spin");
             return Promise.map(stops, ps => {
+                logger.debug("spin %s", ps.id);
                 batch = client.batchStart();
                 batch.fortSearch(ps.id, ps.latitude, ps.longitude);
                 return batch.batchCall().then(responses => {
-                    logger.debug("after spin");
-                    apihelper.parse(responses);
-                    var stop = _.find(state.map.pokestops, p => p.id == ps.id);
-                    if (stop) socket.sendVisitedPokestop(stop);
+                    let info = apihelper.parse(responses);
+                    let stop = _.find(state.map.pokestops, p => p.id == ps.id);
+                    stop.cooldown_complete_timestamp_ms = info.cooldown;
+                    socket.sendVisitedPokestop(stop);
                     return Promise.resolve();
                 }).delay(1500);
             },  {concurrency: 1});

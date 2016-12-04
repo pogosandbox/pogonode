@@ -39,8 +39,10 @@ APIHelper.prototype.parseInventoryDelta = function(items) {
 }
 
 APIHelper.prototype.parse = function(responses) {
-    if (!responses || responses.length == 0) return;
+    if (!responses || responses.length == 0) return null;
     if (!(responses instanceof Array)) responses = [responses];
+
+    var info = {};
 
     responses.forEach(r => {
         if (r.player_data) {
@@ -72,9 +74,11 @@ APIHelper.prototype.parse = function(responses) {
             // getInventory()
             this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
             if (!this.state.hasOwnProperty("inventory")) {
+                //console.dir(r.inventory_delta.inventory_items, { depth: 6 });
                 this.state.inventory = pogobuf.Utils.splitInventory(r);
                 this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
                 this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
+
             } else if (r.inventory_delta.inventory_items.length > 0) {
                 var split = pogobuf.Utils.splitInventory(r);
 
@@ -146,9 +150,6 @@ APIHelper.prototype.parse = function(responses) {
         } else if (r.hasOwnProperty("cooldown_complete_timestamp_ms")) {
             // fortSearch
             if (r.result == 1) {
-                console.log("fortSearch");
-                console.dir(r, { depth: 4 });
-
                 _.each(r.items_awarded, i => {
                     let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
                     if (item) item.count += i.item_count;
@@ -159,6 +160,8 @@ APIHelper.prototype.parse = function(responses) {
                 }
 
                 this.state.player.experience += r.experience_awarded;
+                info.cooldown = r.cooldown_complete_timestamp_ms;
+
             } else {
                 logger.warn("fortSearch() returned %s", r.result);
             }
@@ -166,6 +169,7 @@ APIHelper.prototype.parse = function(responses) {
         } else if (r.items_awarded) {
             // levelUpRewards
             if (r.result == 1) {
+                console.log("levelUpRewards()");
                 console.dir(r, { depth: 4 });
                 _.each(r.items_awarded, i => {
                     let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
@@ -207,6 +211,8 @@ APIHelper.prototype.parse = function(responses) {
             
         }
     });
+
+    return info;
 }
 
 module.exports = APIHelper;
