@@ -1,10 +1,10 @@
-const _         = require('lodash');
-const Promise   = require('bluebird');
-const request   = require('request');
-const logger    = require('winston');
-const cheerio   = require('cheerio');
-const fs        = require('fs');
-const moment    = require("moment");
+const _ = require('lodash');
+const Promise = require('bluebird');
+const request = require('request');
+const logger = require('winston');
+const cheerio = require('cheerio');
+const fs = require('fs');
+const moment = require('moment');
 
 Promise.promisifyAll(request);
 
@@ -13,35 +13,35 @@ function ProxyHelper(config, state) {
     this.state = state;
     this.badProxies = [];
 
-    if (fs.existsSync("data/bad.proxies.json")) {
+    if (fs.existsSync('data/bad.proxies.json')) {
         // we put all bad proxy in a file, and keep them for 5 days
-        let loaded = fs.readFileSync("data/bad.proxies.json", 'utf8');
+        let loaded = fs.readFileSync('data/bad.proxies.json', 'utf8');
         this.badProxies = JSON.parse(loaded);
         this.badProxies = _.filter(this.badProxies, p => {
             return moment(p.date).isAfter(moment().subtract(5, 'day'));
         });
-        fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies, null, 4));
+        fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));
     }
 }
 
 ProxyHelper.prototype.findProxy = function() {
-    if (this.config.proxy != "auto") return Promise.resolve(this.config.proxy);
+    if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy);
 
     badUrls = _.map(this.badProxies, p => p.proxy);
 
-    var url = "https://www.sslproxies.org/";
+    let url = 'https://www.sslproxies.org/';
     return request.getAsync(url).then(response => {
         let $ = cheerio.load(response.body);
-        var proxylist = $("#proxylisttable tr");
-        var proxy = _.find(proxylist, tr => {
-            let p = "http://" + $(tr).find("td").eq(0).text() + ":" + $(tr).find("td").eq(1).text();
-            return $(tr).find("td").eq(6).text() == "yes" && badUrls.indexOf(p) < 0;
+        let proxylist = $('#proxylisttable tr');
+        let proxy = _.find(proxylist, tr => {
+            let p = 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
+            return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(p) < 0;
         }, 1);
-        
+
         if (!proxy) return false;
-        else return "http://" + $(proxy).find("td").eq(0).text() + ":" + $(proxy).find("td").eq(1).text();
+        else return 'http://' + $(proxy).find('td').eq(0).text() + ':' + $(proxy).find('td').eq(1).text();
     });
-}
+};
 
 ProxyHelper.prototype.checkProxy = function() {
     if (!this.config || !this.config.proxy) {
@@ -52,37 +52,37 @@ ProxyHelper.prototype.checkProxy = function() {
         if (!proxy) return false;
 
         this.proxy = proxy;
-        logger.info("Using proxy: %s", proxy);
-        return request.getAsync("https://api.ipify.org/?format=json");
+        logger.info('Using proxy: %s', proxy);
+        return request.getAsync('https://api.ipify.org/?format=json');
 
     }).then(response => {
         if (!response) return false;
 
         this.clearIp = JSON.parse(response.body).ip;
-        logger.debug("Clear ip: " + this.clearIp);
+        logger.debug('Clear ip: ' + this.clearIp);
         return this.clearIp;
 
     }).then(ip => {
         if (!ip) return false;
-        return request.getAsync("https://api.ipify.org/?format=json", { proxy: this.proxy });
+        return request.getAsync('https://api.ipify.org/?format=json', {proxy: this.proxy});
 
     }).then(response => {
         if (!response) return false;
 
-        var ip = JSON.parse(response.body).ip;
-        logger.debug("Proxified ip: " + ip);
-        var valid = this.clearIp != ip;
+        let ip = JSON.parse(response.body).ip;
+        logger.debug('Proxified ip: ' + ip);
+        let valid = this.clearIp != ip;
         if (!valid) this.badProxy();
         return valid;
     });
-}
+};
 
 ProxyHelper.prototype.badProxy = function() {
     this.badProxies.push({
         proxy: this.proxy,
-        date: Date.now()
+        date: Date.now(),
     });
-    fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies, null, 4));
-}
+    fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));
+};
 
 module.exports = ProxyHelper;

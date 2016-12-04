@@ -1,8 +1,8 @@
 const GoogleMapsAPI = require('googlemaps');
-const geolib        = require("geolib");
-const logger        = require('winston');
-const _             = require('lodash');
-const Promise       = require('bluebird');
+const geolib = require('geolib');
+const _ = require('lodash');
+const Promise = require('bluebird');
+// const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
 
@@ -14,15 +14,16 @@ class Walker {
     }
 
     findNextPokestop() {
-        var pokestops = this.state.map.pokestops;
-        
+        let pokestops = this.state.map.pokestops;
+
         // get pokestops not already visited
-        pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms == 0 && this.state.path.visited_pokestops.indexOf(pk.id) < 0);
+        pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms == 0 &&
+                                              this.state.path.visited_pokestops.indexOf(pk.id) < 0);
 
         if (pokestops.length > 1) {
             // order by distance
             _.each(pokestops, pk => pk.distance = this.distance(pk));
-            pokestops = _.orderBy(pokestops, "distance");
+            pokestops = _.orderBy(pokestops, 'distance');
         }
 
         // take closest
@@ -31,10 +32,9 @@ class Walker {
     }
 
     findSpinnablePokestops() {
-        var pokestops = this.state.map.pokestops;
+        let pokestops = this.state.map.pokestops;
+        let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
 
-        var range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
-        
         // get pokestops not in cooldown that are close enough to spin it
         pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
 
@@ -42,42 +42,40 @@ class Walker {
     }
 
     generatePath() {
-        //logger.debug("Get new path.");
+        // logger.debug("Get new path.");
 
-        var state = this.state;
-        var target = state.path.target = this.findNextPokestop(state);
-        
+        let state = this.state;
+        let target = state.path.target = this.findNextPokestop(state);
+
         if (target) {
-            var gmAPI = new GoogleMapsAPI({
-                key: this.config.gmapKey
+            let gmAPI = new GoogleMapsAPI({
+                key: this.config.gmapKey,
             });
-            return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: "walking" })
+            return gmAPI.directionsAsync({origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking'})
                         .then(result => {
                             if (result.error_message) throw new Error(result.error_message);
                             state.path.waypoints = [];
                             if (result.routes.length > 0 && result.routes[0].legs) {
-                                var path = [];
                                 _.each(result.routes[0].legs, l => {
                                     _.each(l.steps, s => state.path.waypoints.push(s.end_location));
                                 });
                             }
-                            state.path.waypoints.push({ lat: target.latitude, lng: target.longitude });
+                            state.path.waypoints.push({lat: target.latitude, lng: target.longitude});
                             return state.path;
                         });
         } else {
-            throw new Error("No more available stops.");
+            throw new Error('No more available stops.');
         }
     }
 
     checkPath() {
-        var state = this.state;
-        if (state.path.waypoints.length == 0) {
-            if (state.path.target) {
+        if (this.state.path.waypoints.length == 0) {
+            if (this.state.path.target) {
                 // we arrive at target
-                state.path.target.done = true;
+                this.state.path.target.done = true;
             }
             // get a new target and path to go there
-            return this.generatePath(state);
+            return this.generatePath(this.state);
         }
         return Promise.resolve(false);
     }
@@ -94,7 +92,7 @@ class Walker {
         let newpos = {
             lat: this.state.pos.lat + (dest.lat - this.state.pos.lat)/step,
             lng: this.state.pos.lng + (dest.lng - this.state.pos.lng)/step,
-        }
+        };
         this.state.pos = this.fuzzedLocation(newpos);
 
         // if we get close to the next point, remove it from the targets
@@ -113,7 +111,7 @@ class Walker {
     fuzzedLocation(latlng) {
         return {
             lat: parseFloat((latlng.lat + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),
-            lng: parseFloat((latlng.lng + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10))
+            lng: parseFloat((latlng.lng + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),
         };
     }
 }

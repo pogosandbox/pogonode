@@ -1,27 +1,25 @@
-const Random = require("simjs-random");
+const Random = require('simjs-random');
 
-var getRandomInt = function(min, max) {
+let getRandomInt = function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+};
 
-var start = new Date().getTime();
-var random = new Random();
-var course = course = random.uniform(0, 360);
+let start = new Date().getTime();
+let random = new Random();
+let course = course = random.uniform(0, 360);
 
-module.exports.register = function(config, client) {
-    
+letdule.exports.register = function(config, client) {
+
     client.setSignatureInfo(function(envelope) {
-        var timestamp_ms_since_start = new Date().getTime() - start;
-        
-        var infos = {};
-
-        var loc = {
+        let timestampSinceStart = new Date().getTime() - start;
+        let infos = {};
+        let loc = {
                         provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
                         latitude: client.playerLatitude,
                         longitude: client.playerLongitude,
                         altitude: random.triangular(300, 400, 350),
                         provider_status: 3,
-                        location_type: 1
+                        location_type: 1,
                     };
         if (Math.random() > 0.95) {
             loc.course = -1;
@@ -33,7 +31,7 @@ module.exports.register = function(config, client) {
         }
         if (envelope.accuracy >= 65) {
             loc.vertical_accuracy = random.triangular(35, 100, 65);
-            loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66,80), 200][Math.floor(Math.random()*5)];
+            loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66, 80), 200][Math.floor(Math.random()*5)];
         } else if (envelope.accuracy > 10) {
             loc.horizontal_accuracy = envelope.accuracy;
             loc.vertical_accuracy = [24, 32, 48, 48, 64, 64, 96, 128][Math.floor(Math.random()*8)];
@@ -46,21 +44,21 @@ module.exports.register = function(config, client) {
 
         infos.device_info = {
                                 device_id: config.device.id,
-                                device_brand: "Apple",
-                                device_model: "iPhone",
-                                device_model_boot: "iPhone8,1",
-                                hardware_manufacturer: "Apple",
-                                hardware_model: "N71AP",
-                                firmware_brand: "iPhone OS",
-                                firmware_type: "10.1.1"
+                                device_brand: 'Apple',
+                                device_model: 'iPhone',
+                                device_model_boot: 'iPhone8,1',
+                                hardware_manufacturer: 'Apple',
+                                hardware_model: 'N71AP',
+                                firmware_brand: 'iPhone OS',
+                                firmware_type: '10.1.1',
                             };
 
         infos.activity_status = {
-                                    stationary: true
+                                    stationary: true,
                                 };
 
         infos.sensor_info = [{
-            timestamp_snapshot: getRandomInt(timestamp_ms_since_start - 5000, timestamp_ms_since_start - 100),
+            timestamp_snapshot: getRandomInt(timestampSinceStart - 5000, timestampSinceStart - 100),
             linear_acceleration_x: random.triangular(-3, 1, 0),
             linear_acceleration_y: random.triangular(-2, 3, 0),
             linear_acceleration_z: random.triangular(-4, 2, 0),
@@ -77,24 +75,24 @@ module.exports.register = function(config, client) {
             gravity_x: random.triangular(-1, 1, 0.15),
             gravity_y: random.triangular(-1, 1, -.2),
             gravity_z: random.triangular(-1, .7, -0.8),
-            status: 3
+            status: 3,
         }];
-        
+
         return infos;
     });
 
-}
+};
 
 module.exports.registersimple = function(config, client) {
-    
+
     client.setSignatureInfo(function(envelope) {
         return {
             location_fix: {
                 latitude: client.playerLatitude,
                 longitude: client.playerLongitude,
-                altitude: random.triangular(300, 400, 350)
-            }
+                altitude: random.triangular(300, 400, 350),
+            },
         };
     });
 
-}
+};

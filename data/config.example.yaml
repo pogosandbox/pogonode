@@ -42,5 +42,5 @@ api:
 # When free proxy are used, you probably have to set env NODE_TLS_REJECT_UNAUTHORIZED=0
 proxy: 
 
-# loglevel
+# loglevel (debug, info, warn, error)
 loglevel: debug
