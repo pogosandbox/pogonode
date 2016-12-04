@@ -43,6 +43,7 @@ if (fs.existsSync("data/config.yaml")) {
     var loaded = yaml.safeLoad(fs.readFileSync("data/config.yaml", 'utf8'));
     config = _.defaultsDeep(loaded, config);
 }
+
 logger.level = config.loglevel;
 
 if (!config.device.id) {
@@ -105,9 +106,6 @@ proxyhelper.checkProxy().then(valid => {
     logger.debug("Token: %s", token);
     client.setAuthInfo('ptc', token);
     client.setPosition(state.pos.lat, state.pos.lng);
-
-    // client.on('request', console.log);
-    // client.on('response', console.log);
 
 }).then(() => {
     return client.init(false);

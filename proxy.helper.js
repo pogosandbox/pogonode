@@ -20,7 +20,7 @@ function ProxyHelper(config, state) {
         this.badProxies = _.filter(this.badProxies, p => {
             return moment(p.date).isAfter(moment().subtract(5, 'day'));
         });
-        fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies));
+        fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies, null, 4));
     }
 }
 
