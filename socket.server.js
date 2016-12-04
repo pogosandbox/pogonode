@@ -55,12 +55,20 @@ class SocketServer {
         }
     }
 
-    sendPosition(pos) {
-        this.io.emit("position", { pos: this.state.pos });
+    sendPosition() {
+        this.io.emit("position", this.state.pos);
     }
 
     sendRoute(route) {
         this.io.emit("route", _.concat([ this.state.pos ], route));
+    }
+
+    sendPokestops() {
+        this.io.emit("pokestops", this.state.map.pokestops);
+    }
+
+    sendVisitedPokestop(pokestop) {
+        this.io.emit("pokestop_visited", pokestop);
     }
 
 }

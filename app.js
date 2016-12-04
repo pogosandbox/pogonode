@@ -176,8 +176,13 @@ proxyhelper.checkProxy().then(valid => {
     
 }).catch(e => {
     logger.error(e);
-    if (e.message.indexOf("tunneling socket could not be established") > 0) proxyhelper.badProxy();
 
+    if (e.message.indexOf("tunneling socket could not be established") >= 0) proxyhelper.badProxy(); // no connection
+    else if (e.message.indexOf("Unexpected response received from PTC login") >= 0) proxyhelper.badProxy(); // proxy block?
+    else if (e.message.indexOf("Status code 403") >= 0) proxyhelper.badProxy(); // ip probably banned
+
+    logger.error("Exiting.");
+    process.exit();
 });
 
 App.on("apiReady", () => {
@@ -198,6 +203,7 @@ App.on("updatePos", () => {
                 walker.walk();
             })
             .then(() => {
+                client.setPosition(state.pos.lat, state.pos.lng);
                 socket.sendPosition();
 
                 var max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
@@ -237,6 +243,10 @@ function mapRefresh() {
         apihelper.parse(responses);
 
     }).then(() => {
+        // send pokestop info to the ui
+        socket.sendPokestops();
+
+    }).then(() => {
         // spin pokestop that are close enough
         var stops = walker.findSpinnablePokestops();
         if (stops.length > 0) {
@@ -247,6 +257,8 @@ function mapRefresh() {
                 return batch.batchCall().then(responses => {
                     logger.debug("after spin");
                     apihelper.parse(responses);
+                    var stop = _.find(state.map.pokestops, p => p.id == ps.id);
+                    if (stop) socket.sendVisitedPokestop(stop);
                     return Promise.resolve();
                 }).delay(1500);
             },  {concurrency: 1});
