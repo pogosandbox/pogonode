@@ -6,7 +6,7 @@ let getRandomInt = function(min, max) {
 
 let start = new Date().getTime();
 let random = new Random();
-let course = course = random.uniform(0, 360);
+let course = random.uniform(0, 360);
 
 module.exports.register = function(config, client) {
 
