@@ -33,7 +33,7 @@ class Walker {
     findSpinnablePokestops() {
         var pokestops = this.state.map.pokestops;
 
-        var range = this.state.download_settings.fort_settings.interaction_range_meters;
+        var range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
         
         // get pokestops not in cooldown that are close enough to spin it
         pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
@@ -103,7 +103,7 @@ class Walker {
     }
 
     distance(target) {
-        return geolib.getDistance(this.state.pos, target);
+        return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 
     randGPSFloatBetween(min, max) {
