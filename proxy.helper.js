@@ -14,10 +14,11 @@ function ProxyHelper(config, state) {
     this.badProxies = [];
 
     if (fs.existsSync("data/bad.proxies.json")) {
+        // we put all bad proxy in a file, and keep them for 5 days
         let loaded = fs.readFileSync("data/bad.proxies.json", 'utf8');
         this.badProxies = JSON.parse(loaded);
         this.badProxies = _.filter(this.badProxies, p => {
-            return moment(p.date).isAfter(moment().subtract(1, 'day'));
+            return moment(p.date).isAfter(moment().subtract(5, 'day'));
         });
         fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies));
     }
@@ -81,7 +82,7 @@ ProxyHelper.prototype.badProxy = function() {
         proxy: this.proxy,
         date: Date.now()
     });
-    fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies));
+    fs.writeFileSync("data/bad.proxies.json", JSON.stringify(this.badProxies, null, 4));
 }
 
 module.exports = ProxyHelper;
