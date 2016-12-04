@@ -9,6 +9,7 @@
     "cheerio": "^0.22.0",
     "dotenv": "^2.0.0",
     "events": "^1.1.1",
+    "express": "^4.14.0",
     "geolib": "^2.0.22",
     "googlemaps": "^1.11.1",
     "js-yaml": "^3.7.0",
@@ -20,6 +21,7 @@
     "request": "^2.79.0",
     "semver-compare": "^1.0.0",
     "simjs-random": "^0.2.6",
+    "socket.io": "^1.7.1",
     "winston": "^2.3.0"
   }
 }

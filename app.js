@@ -9,11 +9,13 @@ const fs              = require("fs");
 const yaml            = require('js-yaml');
 const Promise         = require('bluebird');
 const _               = require('lodash');
+const moment          = require("moment");
 
 const APIHelper       = require("./api.helper");
 const Walker          = require("./walker");
 const ProxyHelper     = require("./proxy.helper");
 const signaturehelper = require("./signature.helper");
+const SocketServer    = require("./socket.server");
 
 var config = {
     credentials: {
@@ -50,7 +52,7 @@ if (!config.device.id) {
 fs.writeFileSync("data/config.actual.yaml", yaml.dump(config));
 
 if (!config.credentials.user) {
-    logger.error("Invalid credentials. Please fill data/config.yaml.")
+    logger.error("Invalid credentials. Please fill data/config.yaml, config.example.yaml or config.actual.yaml.")
     process.exit();
 }
 
@@ -73,6 +75,7 @@ const App = new AppEvents();
 var apihelper = new APIHelper(config, state);
 var walker = new Walker(config, state);
 var proxyhelper = new ProxyHelper(config, state);
+var socket = new SocketServer(config, state);
 
 var login = new pogobuf.PTCLogin();
 var client = new pogobuf.Client();
@@ -85,13 +88,16 @@ logger.info("App starting...");
 proxyhelper.checkProxy().then(valid => {
     if (config.proxy) {
         if (valid) {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
             login.setProxy(proxyhelper.proxy);
             client.setProxy(proxyhelper.proxy);
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 1;
         } else {
             throw new Error("Invalid proxy. Exiting.")
         }
     }
+    return socket.start();
+
+}).then(() => {
     logger.info("Login...");
     return login.login(config.credentials.user, config.credentials.password);
 
@@ -166,9 +172,8 @@ proxyhelper.checkProxy().then(valid => {
  
 }).then(responses => {
     apihelper.parse(responses);
-    App.emit("saveState");
     App.emit("apiReady");
-
+    
 }).catch(e => {
     logger.error(e);
     if (e.message.indexOf("tunneling socket could not be established") > 0) proxyhelper.badProxy();
@@ -178,28 +183,57 @@ proxyhelper.checkProxy().then(valid => {
 App.on("apiReady", () => {
     logger.info("Initial flow done.");
     App.emit("saveState");
-    setInterval(() => App.emit("updatePos"), 1000);
-    setTimeout(() => App.emit("mapRefresh"), Math.random()*2*1000);
+    socket.ready();
+    setTimeout(() => App.emit("updatePos"), 1000);
 });
 
 App.on("updatePos", () => {
     if (state.map) {
         walker
             .checkPath()
-            .then(walker.walk)
+            .then(path => {
+                if (path) socket.sendRoute(path.waypoints);
+            })
             .then(() => {
-                //
-            });
+                walker.walk();
+            })
+            .then(() => {
+                socket.sendPosition();
+
+                var max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
+                var min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
+                var mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
+                if (!state.api.last_gmo) {
+                    // no previous call, fire a getMapObjects
+                   return mapRefresh();
+                } else if (moment().subtract(max, "s").isAfter(state.api.last_gmo)) {
+                    // it's been enough time since last getMapObjects
+                    return mapRefresh();
+                } else if (moment().subtract(min, "s").isAfter(state.api.last_gmo)) {
+                    // if we travelled enough distance, fire a getMapObjects
+                    if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
+                }
+
+                return Promise.resolve();
+            })
+            .delay(1000)
+            .then(() => App.emit("updatePos"));
+    } else {
+        // we need a first getMapObjects to get some info about what is around us
+        return mapRefresh().delay(1000).then(() => App.emit("updatePos"));
     }
 });
 
-App.on("mapRefresh", () => {
+function mapRefresh() {
     logger.info("Map Refresh", { pos: state.pos });
     var cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
 
+    state.api.last_gmo = moment();
+    state.api.last_pos = { lat: state.pos.lat, lng: state.pos.lng };
+
     var batch = client.batchStart();
     batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
-    apihelper.always(batch).batchCall().then(responses => {
+    return apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
 
     }).then(() => {
@@ -232,15 +266,12 @@ App.on("mapRefresh", () => {
         // e.status_code == 102
         // detect token expiration
 
-    }).finally(() => {
-        var timeout = (state.download_settings.map_settings.get_map_objects_min_refresh_seconds + Math.random()*2)*1000
-        setTimeout(() => {
-            App.emit("mapRefresh");
-        }, timeout); // 10s when moving, 30s if static
-
     });
-});
+}
 
 App.on("saveState", () => {
-    fs.writeFile("data/state.json", JSON.stringify(state, null, 4), (err) => {});
+    let lightstate = _.cloneDeep(state);
+    lightstate.client = {};
+    lightstate.api.item_templates = []; 
+    fs.writeFile("data/state.json", JSON.stringify(lightstate, null, 4), (err) => {});
 });
