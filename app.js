@@ -173,14 +173,29 @@ proxyhelper.checkProxy().then(valid => {
     App.emit('apiReady');
 
 }).catch(e => {
-    logger.error(e);
+    if (e.name == 'ChallengeError') {
+        // Manually solve challenge using embeded Browser.
+        const CaptchaHelper = require('./captcha/captcha.helper');
+        let helper = new CaptchaHelper(config, state);
+        helper.solveCaptcha(e.url).then(token => {
+            let batch = client.batchStart();
+            batch.verifyChallenge(token);
+            return apihelper.always(batch).batchCall();
 
-    if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
-    else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
-    else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
+        }).then(responses => {
+            apihelper.parse(responses);
 
-    logger.error('Exiting.');
-    process.exit();
+        });
+    } else {
+        logger.error(e);
+
+        if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
+        else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
+        else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
+
+        logger.error('Exiting.');
+        process.exit();
+    }
 });
 
 App.on('apiReady', () => {

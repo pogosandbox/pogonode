@@ -3,6 +3,15 @@ const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
 
+function ChallengeError(url) {
+    this.name = 'ChallengeError';
+    this.url = url;
+    this.message = 'A challenged have been received: ' + url,
+    this.stack = (new Error()).stack;
+}
+ChallengeError.prototype = Object.create(Error.prototype);
+ChallengeError.prototype.constructor = ChallengeError;
+
 function APIHelper(config, state) {
     this.config = config;
     this.state = state;
@@ -137,7 +146,7 @@ APIHelper.prototype.parse = function(responses) {
             // checkChallenge()
             if (r.show_challenge) {
                 logger.error('Challenge!', {challenge_url: r.challenge_url});
-                throw Error(`Challenge detected: ${r.challenge_url}`);
+                throw new ChallengeError(r.challenge_url);
             }
 
         } else if (r.hasOwnProperty('digest')) {

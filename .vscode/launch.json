@@ -11,8 +11,26 @@
             "program": "${workspaceRoot}\\app.js",
             "cwd": "${workspaceRoot}",
             "env": {
-				"NODE_ENV": "development"
-            }
+				"NODE_ENV": "development",
+                "NODE_TLS_REJECT_UNAUTHORIZED": 0
+            },
+            "args": [
+                "--trace-warnings"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch  Captcha Helper",
+            "program": "${workspaceRoot}\\captcha\\app.js",
+            "cwd": "${workspaceRoot}",
+            "env": {
+				"NODE_ENV": "development",
+                "NODE_TLS_REJECT_UNAUTHORIZED": 0
+            },
+            "args": [
+                "--trace-warnings"
+            ]
         },
         {
             "type": "node",
@@ -22,7 +40,11 @@
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development"
-            }
+            },
+            "args": [
+                "--trace-warnings"
+            ]
+
         }
     ]
 }

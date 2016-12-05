@@ -52,6 +52,7 @@ ProxyHelper.prototype.checkProxy = function() {
         if (!proxy) return false;
 
         this.proxy = proxy;
+        this.state.proxy = proxy;
         logger.info('Using proxy: %s', proxy);
         return request.getAsync('https://api.ipify.org/?format=json');
 

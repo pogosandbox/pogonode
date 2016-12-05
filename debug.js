@@ -1,6 +1,7 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 const logger = require('winston');
+const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 
 logger.level = 'debug';
 
@@ -50,5 +51,3 @@ function testSocket() {
         }, 1000);
     });
 }
-
-testSocket();
