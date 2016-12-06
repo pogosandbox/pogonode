@@ -88,6 +88,9 @@ signaturehelper.register(config, client);
 logger.info('App starting...');
 
 proxyhelper.checkProxy().then(valid => {
+    // find a proxy if 'auto' is set in config
+    // then test if to be sure it works
+    // if ok, set proxy in api
     if (config.proxy) {
         if (valid) {
             login.setProxy(proxyhelper.proxy);
@@ -99,18 +102,22 @@ proxyhelper.checkProxy().then(valid => {
     return socket.start();
 
 }).then(() => {
+    // try login using PTC
     logger.info('Login...');
     return login.login(config.credentials.user, config.credentials.password);
 
 }).then(token => {
+    // yeah we have a token, set api and initial position
     logger.debug('Token: %s', token);
     client.setAuthInfo('ptc', token);
     client.setPosition(state.pos.lat, state.pos.lng);
 
 }).then(() => {
+    // init api (false = don't call anything yet')
     return client.init(false);
 
 }).then(() => {
+    // initial player state
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
                  .batchCall();
@@ -129,6 +136,7 @@ proxyhelper.checkProxy().then(valid => {
 }).then(responses => {
     apihelper.parse(responses);
 
+    // get asset digest (never use, but do it like the app)
     let batch = client.batchStart();
     batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
@@ -136,7 +144,7 @@ proxyhelper.checkProxy().then(valid => {
 }).then(responses => {
     apihelper.parse(responses);
 
-    // check if item_templates need download
+    // check if item_templates need to be downloaded based on current timestamp
     let last = 0;
     if (fs.existsSync('data/item_templates.json')) {
         let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
@@ -158,33 +166,30 @@ proxyhelper.checkProxy().then(valid => {
     }
 
 }).then(() => {
+    // like the actual app (not used later)
     let batch = client.batchStart();
     batch.getPlayerProfile();
     return apihelper.always(batch).batchCall();
 
 }).then(responses => {
+    // get any rewards if available
     apihelper.parse(responses);
     let batch = client.batchStart();
     batch.levelUpRewards(state.inventory.player.level);
     return apihelper.always(batch).batchCall();
 
 }).then(responses => {
+    // ok api is ready to go
     apihelper.parse(responses);
     App.emit('apiReady');
 
 }).catch(e => {
     if (e.name == 'ChallengeError') {
-        // Manually solve challenge using embeded Browser.
-        const CaptchaHelper = require('./captcha/captcha.helper');
-        let helper = new CaptchaHelper(config, state);
-        helper.solveCaptcha(e.url).then(token => {
-            let batch = client.batchStart();
-            batch.verifyChallenge(token);
-            return apihelper.always(batch).batchCall();
-
-        }).then(responses => {
+        resolveChallenge(e.url)
+        .then(responses => {
             apihelper.parse(responses);
-
+            logger.warn('Catcha send. Please restart.');
+            process.exit();
         });
     } else {
         logger.error(e);
@@ -197,6 +202,19 @@ proxyhelper.checkProxy().then(valid => {
         process.exit();
     }
 });
+
+function resolveChallenge(url) {
+    // Manually solve challenge using embeded Browser.
+    const CaptchaHelper = require('./captcha/captcha.helper');
+    let helper = new CaptchaHelper(config, state);
+    return helper
+            .solveCaptcha(url)
+            .then(token => {
+                let batch = client.batchStart();
+                batch.verifyChallenge(token);
+                return apihelper.always(batch).batchCall();
+            });
+}
 
 App.on('apiReady', () => {
     logger.info('Initial flow done.');
@@ -247,6 +265,7 @@ function mapRefresh() {
     logger.info('Map Refresh', {pos: state.pos});
     let cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
 
+    // save where and when, usefull to know when to call next getMapObjects
     state.api.last_gmo = moment();
     state.api.last_pos = {lat: state.pos.lat, lng: state.pos.lng};
 
@@ -287,14 +306,19 @@ function mapRefresh() {
         App.emit('saveState');
 
     }).catch(e => {
+        if (e.name == 'ChallengeError') {
+            return resolveChallenge(e.url);
+        }
+
         logger.error(e);
         // e.status_code == 102
         // detect token expiration
-
     });
 }
 
 App.on('saveState', () => {
+    // save current state to file (useful for debugging)
+    // clean up a little and remove non useful data
     let lightstate = _.cloneDeep(state);
     lightstate.client = {};
     lightstate.api.item_templates = [];

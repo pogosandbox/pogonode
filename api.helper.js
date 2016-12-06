@@ -2,6 +2,7 @@ const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
+const fs = require('fs');
 
 function ChallengeError(url) {
     this.name = 'ChallengeError';
@@ -38,11 +39,39 @@ APIHelper.prototype.always = function(batch) {
                 .getBuddyWalked();
 };
 
-APIHelper.prototype.parseInventoryDelta = function(items) {
+APIHelper.prototype.parseInventoryDelta = function(r) {
+    let split = pogobuf.Utils.splitInventory(r);
 
-    // _.each(r.inventory_delta.inventory_items)
+    console.log('---');
+    console.dir(r.inventory_delta, {depth: 4});
+    console.dir(split, {depth: 4});
+    console.log('---');
 
-    // if (r.inventory_delta.inventory_items)
+    if (split.player) this.state.inventory.player = split.player;
+    if (split.items.length > 0) {
+        // replace any modified item in inventory
+        _.each(split.items, i => {
+            let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+            if (item) {
+                item.count = i.count;
+                item.unseen = i.unseen;
+            } else {
+                this.state.inventory.items.push(i);
+            }
+        });
+    }
+    if (split.pokemon.length > 0) {
+        _.each(split.pokemon, pkm => {
+            // add new pokemon to inventory, removing it if already there (to be sure)
+            if (pkm.is_egg) {
+                this.state.inventory.eggs = _.filter(this.state.inventory.eggs, e => e.id != pkm.id);
+                this.state.inventory.eggs.push(pkm);
+            } else {
+                this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, e => e.id != pkm.id);
+                this.state.inventory.pokemon.push(pkm);
+            }
+        });
+    }
 };
 
 APIHelper.prototype.parse = function(responses) {
@@ -82,41 +111,14 @@ APIHelper.prototype.parse = function(responses) {
             this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
             if (!this.state.hasOwnProperty('inventory')) {
                 // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
+                fs.writeFileSync('data/inventory.json', JSON.stringify(r, null, 4));
                 this.state.inventory = pogobuf.Utils.splitInventory(r);
                 this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
                 this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
 
             } else if (r.inventory_delta.inventory_items.length > 0) {
-                let split = pogobuf.Utils.splitInventory(r);
-
-                console.log('---');
-                console.dir(r.inventory_delta, {depth: 4});
-                console.dir(split, {depth: 4});
-                console.log('---');
-
-                if (split.player) this.state.inventory.player = split.player;
-                if (split.items.length > 0) {
-                    _.each(split.items, i => {
-                        let item = _.find(this.state.inventory.items, it => it.id == i.id);
-                        if (item) {
-                            item.count = i.count;
-                            item.unseen = i.unseen;
-                        } else {
-                            this.state.inventory.items.push(i);
-                        }
-                    });
-                }
-                if (split.pokemon.length > 0) {
-                    _.each(split.pokemon, pkm => {
-                        if (pkm.is_egg) {
-                            this.state.inventory.eggs = _.filter(this.state.inventory.eggs, e => e.id != pkm.id);
-                            this.state.inventory.eggs.push(pkm);
-                        } else {
-                            this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, e => e.id != pkm.id);
-                            this.state.inventory.pokemon.push(pkm);
-                        }
-                    });
-                }
+                this.parseInventoryDelta(r);
+                
             }
 
         } else if (r.awarded_badges) {
