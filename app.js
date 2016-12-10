@@ -324,9 +324,9 @@ App.on('spinned', stop => {
     socket.sendVisitedPokestop(stop);
 });
 
-App.on('spinned', stop => {
+App.on('encounter', pokemon => {
     // send info to ui
-    socket.sendVisitedPokestop(stop);
+    // socket.sendVisitedPokestop(stop);
 });
 
 App.on('saveState', () => {

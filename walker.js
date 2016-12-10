@@ -121,7 +121,9 @@ class Walker {
                         } else {
                             // encounter success
                             this.state.encountered.push(pk.encounter_id);
+                            this.state.events.emit('encounter', info.pokemon);
                         }
+
                     }).delay(this.config.delay.encounter * 1000);
                 }, {concurrency: 1})
             .then(done => {
