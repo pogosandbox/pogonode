@@ -11,14 +11,26 @@ const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status
 
 const APIHelper = require('./api.helper');
 
+/**
+ * Helper class to deal with our walker.
+ */
 class Walker {
 
+    /**
+     * @constructor
+     * @param {object} config - global config object
+     * @param {object} state - global state object
+     */
     constructor(config, state) {
         this.config = config;
         this.state = state;
         this.apihelper = new APIHelper(config, state);
     }
 
+    /**
+     * Find our next pokestop to go to. We take the nearest we did not visited yet.
+     * @return {object} next pokestop to go to
+     */
     findNextPokestop() {
         let pokestops = this.state.map.pokestops;
 
@@ -37,6 +49,10 @@ class Walker {
         else return null;
     }
 
+    /**
+     * Find pokestop we can spin. Get only reachable one that are not in cooldown.
+     * @return {object} array of pokestop we can spin
+     */
     findSpinnablePokestops() {
         let pokestops = this.state.map.pokestops;
         let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
@@ -47,6 +63,11 @@ class Walker {
         return pokestops;
     }
 
+    /**
+     * Spin all pokestops in an array
+     * @param {object[]} pokestops - Array of pokestops
+     * @return {Promise}
+     */
     spinPokestops(pokestops) {
         if (pokestops.length == 0) return Promise.resolve(0);
 
@@ -72,6 +93,10 @@ class Walker {
             });
     }
 
+    /**
+     * Encounter all pokemons in range (based on current state)
+     * @return {Promise}
+     */
     encounterPokemons() {
         let pokemons = this.state.map.catchable_pokemons;
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
@@ -105,6 +130,11 @@ class Walker {
 
     }
 
+    /**
+     * Use Google Map API to get a path to nearest pokestop.
+     * Update state with path.
+     * @return {Promise}
+     */
     generatePath() {
         // logger.debug("Get new path.");
 
@@ -132,6 +162,11 @@ class Walker {
         }
     }
 
+    /**
+     * Check is current path is still valid, generate a new path if not.
+     * Update state if needed.
+     * @return {Promise}
+     */
     checkPath() {
         if (this.state.path.waypoints.length == 0) {
             if (this.state.path.target) {
@@ -144,6 +179,10 @@ class Walker {
         return Promise.resolve(false);
     }
 
+    /**
+     * Move toward target, get call each second or so.
+     * Update state.
+     */
     walk() {
         // move towards next target
         let dest = this.state.path.waypoints[0];
@@ -164,14 +203,30 @@ class Walker {
         if (dist < 5) this.state.path.waypoints.shift();
     }
 
+    /**
+     * Calculte distance from current pos to a target.
+     * @param {object} target position
+     * @return {int} distance to target
+     */
     distance(target) {
         return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 
+    /**
+     * Return a random float number between 2 numbers
+     * @param {float} min minimum value
+     * @param {float} max maximum value
+     * @return {float} random value
+     */
     randGPSFloatBetween(min, max) {
         return parseFloat((Math.random()*(max-min)+min).toFixed(10));
     }
 
+    /**
+     * Fuzz a gps location in order to make walking path real
+     * @param {object} latlng location
+     * @return {object} fuzzed location
+     */
     fuzzedLocation(latlng) {
         return {
             lat: parseFloat((latlng.lat + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),

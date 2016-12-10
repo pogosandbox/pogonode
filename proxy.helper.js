@@ -8,7 +8,16 @@ const moment = require('moment');
 
 Promise.promisifyAll(request);
 
+/**
+ * Helper class to deal with proxies
+ */
 class ProxyHelper {
+
+    /**
+     * @constructor
+     * @param {object} config - global config object
+     * @param {object} state - global state object
+     */
     constructor(config, state) {
         this.config = config;
         this.state = state;
@@ -25,6 +34,11 @@ class ProxyHelper {
         }
     }
 
+    /**
+     * Find a suitable proxy. If 'auto' is set in config,
+     * find a proxy from https://www.sslproxies.org/.
+     * @return {Promise} with a proxy url as param.
+     */
     findProxy() {
         if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy);
 
@@ -44,6 +58,11 @@ class ProxyHelper {
         });
     }
 
+    /**
+     * Check if proxy is working. To do this we compare real ip
+     * with visible ip through proxy.
+     * @return {Promise} with true or false
+     */
     checkProxy() {
         if (!this.config || !this.config.proxy) {
             return Promise.resolve(true);
@@ -79,6 +98,9 @@ class ProxyHelper {
         });
     }
 
+    /**
+     * Add the current proxy in our bad proxy database so we won't use it anymore.
+     */
     badProxy() {
         this.badProxies.push({
             proxy: this.proxy,

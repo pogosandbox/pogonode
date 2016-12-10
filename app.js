@@ -77,6 +77,7 @@ let state = {
     encountered: [],
 };
 
+/** Global events */
 class AppEvents extends EventEmitter {}
 const App = new AppEvents();
 state.events = App;
@@ -210,6 +211,11 @@ proxyhelper.checkProxy().then(valid => {
     }
 });
 
+/**
+ * Launch internal browser to solve captcha and pass result to api
+ * @param {string} url - captcha url sent from checkChallenge
+ * @return {Promise} result from verifyChallenge() call
+ */
 function resolveChallenge(url) {
     // Manually solve challenge using embeded Browser.
     const CaptchaHelper = require('./captcha/captcha.helper');
@@ -269,6 +275,10 @@ App.on('updatePos', () => {
     }
 });
 
+/**
+ * Refresh map information based on current location
+ * @return {Promise}
+ */
 function mapRefresh() {
     logger.info('Map Refresh', {pos: state.pos});
     let cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
