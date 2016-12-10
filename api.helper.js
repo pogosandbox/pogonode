@@ -42,12 +42,23 @@ APIHelper.prototype.always = function(batch) {
 APIHelper.prototype.parseInventoryDelta = function(r) {
     let split = pogobuf.Utils.splitInventory(r);
 
-    console.log('---');
-    console.dir(r.inventory_delta, {depth: 4});
-    console.dir(split, {depth: 4});
-    console.log('---');
+    // console.log('---');
+    // console.dir(r.inventory_delta, {depth: 4});
+    // console.dir(split, {depth: 4});
+    // console.log('---');
 
-    if (split.player) this.state.inventory.player = split.player;
+    if (split.pokemon.length > 0) {
+        _.each(split.pokemon, pkm => {
+            // add new pokemon to inventory, removing it if already there (to be sure)
+            if (pkm.is_egg) {
+                this.state.inventory.eggs = _.filter(this.state.inventory.eggs, e => e.id != pkm.id);
+                this.state.inventory.eggs.push(pkm);
+            } else {
+                this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, e => e.id != pkm.id);
+                this.state.inventory.pokemon.push(pkm);
+            }
+        });
+    }
     if (split.items.length > 0) {
         // replace any modified item in inventory
         _.each(split.items, i => {
@@ -60,17 +71,9 @@ APIHelper.prototype.parseInventoryDelta = function(r) {
             }
         });
     }
-    if (split.pokemon.length > 0) {
-        _.each(split.pokemon, pkm => {
-            // add new pokemon to inventory, removing it if already there (to be sure)
-            if (pkm.is_egg) {
-                this.state.inventory.eggs = _.filter(this.state.inventory.eggs, e => e.id != pkm.id);
-                this.state.inventory.eggs.push(pkm);
-            } else {
-                this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, e => e.id != pkm.id);
-                this.state.inventory.pokemon.push(pkm);
-            }
-        });
+    if (split.player) this.state.inventory.player = split.player;
+    if (split.egg_incubators.length > 0) {
+        console.log(split.egg_incubators);
     }
 };
 
@@ -118,7 +121,7 @@ APIHelper.prototype.parse = function(responses) {
 
             } else if (r.inventory_delta.inventory_items.length > 0) {
                 this.parseInventoryDelta(r);
-                
+
             }
 
         } else if (r.awarded_badges) {
@@ -173,7 +176,10 @@ APIHelper.prototype.parse = function(responses) {
                 }
 
                 this.state.player.experience += r.experience_awarded;
-                info.cooldown = r.cooldown_complete_timestamp_ms;
+                info = {
+                    status: r.status,
+                    cooldown: r.cooldown_complete_timestamp_ms,
+                };
 
             } else {
                 logger.warn('fortSearch() returned %s', r.result);
@@ -217,6 +223,14 @@ APIHelper.prototype.parse = function(responses) {
                 nearby_pokemons: nearbyPokemons,
                 // spawn_points: spawnPoints
             };
+
+        } else if (r.hasOwnProperty('capture_probability')) {
+            // encounter
+            info.status = r.status;
+            if (r.wild_pokemon) {
+                info.pokemon = r.wild_pokemon.pokemon_data;
+                info.position = {lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude};
+            }
 
         } else {
             logger.warn('unhandled');

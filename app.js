@@ -36,6 +36,11 @@ let config = {
         country: 'US',
         language: 'en',
     },
+    delay: {
+        walk: 1,
+        spin: 2,
+        encounter: 1.5,
+    },
     loglevel: 'info',
 };
 
@@ -69,10 +74,12 @@ let state = {
         visited_pokestops: [],
         waypoints: [],
     },
+    encountered: [],
 };
 
 class AppEvents extends EventEmitter {}
 const App = new AppEvents();
+state.events = App;
 
 let apihelper = new APIHelper(config, state);
 let walker = new Walker(config, state);
@@ -220,7 +227,7 @@ App.on('apiReady', () => {
     logger.info('Initial flow done.');
     App.emit('saveState');
     socket.ready();
-    setTimeout(() => App.emit('updatePos'), 1000);
+    setTimeout(() => App.emit('updatePos'), config.delay.walk);
 });
 
 App.on('updatePos', () => {
@@ -240,6 +247,7 @@ App.on('updatePos', () => {
                 let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
                 let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
                 let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
+
                 if (!state.api.last_gmo) {
                     // no previous call, fire a getMapObjects
                    return mapRefresh();
@@ -253,11 +261,11 @@ App.on('updatePos', () => {
 
                 return Promise.resolve();
             })
-            .delay(1000)
+            .delay(config.delay.walk)
             .then(() => App.emit('updatePos'));
     } else {
         // we need a first getMapObjects to get some info about what is around us
-        return mapRefresh().delay(1000).then(() => App.emit('updatePos'));
+        return mapRefresh().delay(config.delay.walk).then(() => App.emit('updatePos'));
     }
 });
 
@@ -281,26 +289,11 @@ function mapRefresh() {
     }).then(() => {
         // spin pokestop that are close enough
         let stops = walker.findSpinnablePokestops();
-        if (stops.length > 0) {
-            return Promise.map(stops, ps => {
-                logger.debug('spin %s', ps.id);
-                batch = client.batchStart();
-                batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-                return batch.batchCall().then(responses => {
-                    let info = apihelper.parse(responses);
-                    let stop = _.find(state.map.pokestops, p => p.id == ps.id);
-                    stop.cooldown_complete_timestamp_ms = info.cooldown;
-                    socket.sendVisitedPokestop(stop);
-                    return Promise.resolve();
-                }).delay(1500);
-            }, {concurrency: 1});
-        } else {
-            return Promise.resolve(0);
-        }
+        return walker.spinPokestops(stops);
 
     }).then(done => {
-        // catch available pokemon
-        if (done) logger.debug('after all spin');
+        // encounter available pokemon
+        return walker.encounterPokemons();
 
     }).then(() => {
         App.emit('saveState');
@@ -316,11 +309,22 @@ function mapRefresh() {
     });
 }
 
+App.on('spinned', stop => {
+    // send info to ui
+    socket.sendVisitedPokestop(stop);
+});
+
+App.on('spinned', stop => {
+    // send info to ui
+    socket.sendVisitedPokestop(stop);
+});
+
 App.on('saveState', () => {
     // save current state to file (useful for debugging)
     // clean up a little and remove non useful data
     let lightstate = _.cloneDeep(state);
     lightstate.client = {};
     lightstate.api.item_templates = [];
+    lightstate.events = {};
     fs.writeFile('data/state.json', JSON.stringify(lightstate, null, 4), (err) => {});
 });

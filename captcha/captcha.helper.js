@@ -10,9 +10,9 @@ class CaptchaHelper {
         this.state = state;
         this.options = {
             show: true,
-            openDevTools: {
-                mode: 'detach',
-            },
+            // openDevTools: {
+            //     mode: 'detach',
+            // },
             switches: {},
             waitTimeout: 60 * 1000, // 1 min
             executionTimeout: 120 * 1000, // 2 min
