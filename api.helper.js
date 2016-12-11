@@ -2,7 +2,7 @@ const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
-const fs = require('fs');
+// const fs = require('fs');
 
 /**
  * Throw that there is a challenge needed
@@ -104,7 +104,7 @@ class APIHelper {
         }
         if (split.player) this.state.inventory.player = split.player;
         if (split.egg_incubators.length > 0) {
-            console.log(split.egg_incubators);
+            console.dir(split.egg_incubators, {depth: 4});
         }
     }
 
@@ -150,7 +150,6 @@ class APIHelper {
                 this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
                 if (!this.state.hasOwnProperty('inventory')) {
                     // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
-                    fs.writeFileSync('data/inventory.json', JSON.stringify(r, null, 4));
                     this.state.inventory = pogobuf.Utils.splitInventory(r);
                     this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
                     this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
@@ -171,8 +170,12 @@ class APIHelper {
                 // downloadSettings()
                 this.state.api.settings_hash = r.hash;
                 if (r.settings) {
-                    if (this.config.api.checkversion && vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
-                        throw new Error('Minimum client version=' + r.settings.minimum_client_version);
+                    if (vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
+                        if (this.config.api.checkversion) {
+                            throw new Error('Minimum client version=' + r.settings.minimum_client_version);
+                        } else {
+                            logger.warn('Minimum client version=' + r.settings.minimum_client_version);
+                        }
                     }
                     this.state.download_settings = r.settings;
                     this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
