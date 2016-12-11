@@ -1,4 +1,4 @@
-const pogobuf = require('./pogobuf/pogobuf/pogobuf');
+const pogobuf = require('../pogobuf/pogobuf/pogobuf');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
@@ -63,7 +63,7 @@ class APIHelper {
      * @return {Client} current client in order to chain call
      */
     always(batch) {
-        return alwaysinit(batch).getBuddyWalked();
+        return this.alwaysinit(batch).getBuddyWalked();
     }
 
     /**

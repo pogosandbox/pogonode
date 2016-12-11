@@ -42,7 +42,7 @@ class ProxyHelper {
     findProxy() {
         if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy);
 
-        let trToProxy = function(tr) {
+        let trToProxy = function($, tr) {
             return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
         };
 
@@ -53,11 +53,11 @@ class ProxyHelper {
             let $ = cheerio.load(response.body);
             let proxylist = $('#proxylisttable tr');
             let proxy = _.find(proxylist, tr => {
-                return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(trToProxy(tr)) < 0;
+                return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(trToProxy($, tr)) < 0;
             }, 1);
 
             if (!proxy) return false;
-            else return trToProxy(proxy);
+            else return trToProxy($, proxy);
         });
     }
 

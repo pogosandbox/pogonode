@@ -6,57 +6,17 @@ const POGOProtos = require('node-pogo-protos');
 const EventEmitter = require('events');
 const logger = require('winston');
 const fs = require('fs');
-const yaml = require('js-yaml');
 const Promise = require('bluebird');
 const _ = require('lodash');
 const moment = require('moment');
 
-const APIHelper = require('./api.helper');
-const Walker = require('./walker');
-const ProxyHelper = require('./proxy.helper');
-const signaturehelper = require('./signature.helper');
-const SocketServer = require('./socket.server');
+const APIHelper = require('./helpers/api');
+const ProxyHelper = require('./helpers/proxy');
+const signaturehelper = require('./helpers/signature');
+const Walker = require('./helpers/walker');
+const SocketServer = require('./ui/socket.server');
 
-let config = {
-    credentials: {
-        user: '',
-        password: '',
-    },
-    pos: {
-        lat: 48.8456222,
-        lng: 2.3364526,
-    },
-    speed: 5,
-    gmapKey: '',
-    device: {id: 0},
-    api: {
-        version: '4500',
-        clientversion: '0.45.0',
-        checkversion: true,
-        country: 'US',
-        language: 'en',
-    },
-    delay: {
-        walk: 1,
-        spin: 2,
-        encounter: 1.5,
-    },
-    loglevel: 'info',
-};
-
-if (fs.existsSync('data/config.yaml')) {
-    let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
-    config = _.defaultsDeep(loaded, config);
-}
-
-logger.level = config.loglevel;
-logger.add(logger.transports.File, {filename: 'pogonode.log', json: false});
-
-if (!config.device.id) {
-    config.device.id = _.times(32, () => '0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
-}
-
-fs.writeFileSync('data/config.actual.yaml', yaml.dump(config));
+let config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
     logger.error('Invalid credentials. Please fill data/config.yaml, config.example.yaml or config.actual.yaml.');

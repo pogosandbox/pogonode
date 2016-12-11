@@ -9,7 +9,7 @@ Promise.promisifyAll(GoogleMapsAPI.prototype);
 const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
 const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 
-const APIHelper = require('./api.helper');
+const APIHelper = require('./api');
 
 /**
  * Helper class to deal with our walker.
@@ -73,7 +73,7 @@ class Walker {
 
         logger.debug('Start pokestops spinning...');
         let client = this.state.client;
-        return Promise.map(stops, ps => {
+        return Promise.map(pokestops, ps => {
                     logger.debug('  spin %s', ps.id);
                     let batch = client.batchStart();
                     batch.fortSearch(ps.id, ps.latitude, ps.longitude);
