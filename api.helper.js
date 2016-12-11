@@ -63,12 +63,7 @@ class APIHelper {
      * @return {Client} current client in order to chain call
      */
     always(batch) {
-        return batch.checkChallenge()
-                    .getHatchedEggs()
-                    .getInventory(this.state.api.inventory_timestamp)
-                    .checkAwardedBadges()
-                    .downloadSettings(this.state.api.settings_hash)
-                    .getBuddyWalked();
+        return alwaysinit(batch).getBuddyWalked();
     }
 
     /**

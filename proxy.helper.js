@@ -42,6 +42,10 @@ class ProxyHelper {
     findProxy() {
         if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy);
 
+        let trToProxy = function(tr) {
+            return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
+        };
+
         let badUrls = _.map(this.badProxies, p => p.proxy);
 
         let url = 'https://www.sslproxies.org/';
@@ -49,12 +53,11 @@ class ProxyHelper {
             let $ = cheerio.load(response.body);
             let proxylist = $('#proxylisttable tr');
             let proxy = _.find(proxylist, tr => {
-                let p = 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
-                return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(p) < 0;
+                return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(trToProxy(tr)) < 0;
             }, 1);
 
             if (!proxy) return false;
-            else return 'http://' + $(proxy).find('td').eq(0).text() + ':' + $(proxy).find('td').eq(1).text();
+            else return trToProxy(proxy);
         });
     }
 

@@ -1,0 +1,13 @@
+engines:
+    duplication:
+        enabled: true
+        config:
+            languages:
+                - javascript
+    fixme:
+        enabled: true
+    eslint:
+        enabled: true
+
+exclude_paths:
+    - debug.js
