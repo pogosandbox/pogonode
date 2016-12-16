@@ -78,7 +78,15 @@ proxyhelper.checkProxy().then(valid => {
     // yeah we have a token, set api and initial position
     logger.debug('Token: %s', token);
     client.setAuthInfo('ptc', token);
-    client.setPosition(state.pos.lat, state.pos.lng);
+
+    return walker.getAltitude(state.pos);
+
+}).then(altitude => {
+    client.setPosition({
+        latitude: state.pos.lat,
+        longitude: state.pos.lng,
+        altitude: altitude,
+    });
 
 }).then(() => {
     // init api (false = don't call anything yet')
@@ -165,6 +173,9 @@ proxyhelper.checkProxy().then(valid => {
         if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
         else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
+        else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
+        else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
+        else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
 
         logger.error('Exiting.');
         process.exit();
@@ -205,9 +216,15 @@ App.on('updatePos', () => {
             })
             .then(() => {
                 walker.walk();
+                return walker.getAltitude(state.pos);
             })
-            .then(() => {
-                client.setPosition(state.pos.lat, state.pos.lng);
+            .then(altitude => {
+                client.setPosition({
+                    latitude: state.pos.lat,
+                    longitude: state.pos.lng,
+                    altitude: altitude,
+                });
+
                 socket.sendPosition();
 
                 let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;

@@ -36,7 +36,7 @@ class ProxyHelper {
 
     /**
      * Find a suitable proxy. If 'auto' is set in config,
-     * find a proxy from https://www.sslproxies.org/.
+     * find a proxy from www. ssl proxies .org/.
      * @return {Promise} with a proxy url as param.
      */
     findProxy() {
@@ -48,7 +48,7 @@ class ProxyHelper {
 
         let badUrls = _.map(this.badProxies, p => p.proxy);
 
-        let url = 'https://www.sslproxies.org/';
+        let url = 'https://www.sslp' + 'roxies.org/';
         return request.getAsync(url).then(response => {
             let $ = cheerio.load(response.body);
             let proxylist = $('#proxylisttable tr');

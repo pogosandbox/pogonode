@@ -235,6 +235,29 @@ class Walker {
             lng: parseFloat((latlng.lng + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),
         };
     }
+
+    /**
+     * Get altitude from locaztion
+     * @param {object} latlng location
+     * @return {Promise<altitude>} Promise returning altitude
+     */
+    getAltitude(latlng) {
+        let gmAPI = new GoogleMapsAPI({
+            key: this.config.gmapKey,
+        });
+        return gmAPI.elevationFromLocationsAsync({
+            locations: `${latlng.lat},${latlng.lng}`,
+        }).then(data => {
+            if (data && data.results.length > 0) {
+                return data.results[0].elevation;
+            } else {
+                return 0;
+            }
+        }).catch(e => {
+            logger.war('Unable to get altitude.');
+            return 0;
+        });
+    }
 }
 
 module.exports = Walker;

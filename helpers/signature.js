@@ -17,7 +17,7 @@ module.exports.register = function(config, client) {
                         provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
                         latitude: client.playerLatitude,
                         longitude: client.playerLongitude,
-                        altitude: random.triangular(300, 400, 350),
+                        altitude: client.playerAltitude || random.triangular(300, 400, 350),
                         provider_status: 3,
                         location_type: 1,
                     };
