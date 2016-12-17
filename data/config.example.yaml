@@ -38,7 +38,7 @@ api:
 
 # If nothing is set, direct call will be made
 # If a proxy is set it will be used (like http://server:8080)
-# If 'auto' is set, a proxy from https://www.sslproxies.org will be used
+# If 'auto' is set, a proxy from www . ssl proxies . org will be used
 # When free proxy are used, you probably have to set env NODE_TLS_REJECT_UNAUTHORIZED=0
 proxy: 
 

@@ -93,6 +93,10 @@ proxyhelper.checkProxy().then(valid => {
     return client.init(false);
 
 }).then(() => {
+    // first empty request
+    return client.batchStart().batchCall();
+
+}).then(() => {
     // initial player state
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
@@ -129,6 +133,7 @@ proxyhelper.checkProxy().then(valid => {
     }
 
     if (last < state.api.item_templates_timestamp) {
+        logger.info('Game master updating...');
         let batch = client.batchStart();
         batch.downloadItemTemplates();
         return apihelper.alwaysinit(batch)
@@ -142,10 +147,8 @@ proxyhelper.checkProxy().then(valid => {
     }
 
 }).then(() => {
-    // like the actual app (not used later)
-    let batch = client.batchStart();
-    batch.getPlayerProfile();
-    return apihelper.always(batch).batchCall();
+    // complete tutorial if needed
+    return apihelper.completeTutorial();
 
 }).then(responses => {
     // get any rewards if available
@@ -176,6 +179,9 @@ proxyhelper.checkProxy().then(valid => {
         else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
         else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
+        else {
+            e = e;
+        }
 
         logger.error('Exiting.');
         process.exit();

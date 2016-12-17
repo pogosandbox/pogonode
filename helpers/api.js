@@ -2,6 +2,7 @@ const pogobuf = require('../pogobuf/pogobuf/pogobuf');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
+const Promise = require('bluebird');
 // const fs = require('fs');
 
 /**
@@ -42,6 +43,16 @@ class APIHelper {
      */
     getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    /**
+     * Get a random float between two numbers
+     * @param {int} min - minimum value
+     * @param {int} max - maximum value
+     * @return {int} random float
+     */
+    getRandomFloat(min, max) {
+        return (Math.random() * (max - min) + min).toFixed(4);
     }
 
     /**
@@ -105,6 +116,126 @@ class APIHelper {
         if (split.player) this.state.inventory.player = split.player;
         if (split.egg_incubators.length > 0) {
             console.dir(split.egg_incubators, {depth: 4});
+        }
+    }
+
+    /**
+     * Complete tutorial if needed, setting a random avatar
+     * @return {Promise} Promise
+     */
+    completeTutorial() {
+        let tuto = this.state.player.tutorial_state || [];
+        let client = this.state.client;
+        if (_.difference([0, 1, 3, 4, 7], tuto).length == 0) {
+            // tuto done, do a getPlayerProfile()
+            // like the actual app (not used later)
+            let batch = client.batchStart();
+            batch.getPlayerProfile();
+            return this.always(batch).batchCall()
+            .then(responses => {
+                this.parse(responses);
+            });
+
+        } else {
+            logger.info('Completing tutorial...');
+            return Promise.delay(this.getRandomFloat(2, 5))
+            .then(() => {
+                if (!_.includes(tuto, 0)) {
+                    // complete tutorial
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(0, false, false);
+                    return this.alwaysinit(batch).batchCall();
+                }
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 1)) {
+                    // set avatar
+                    return Promise.delay(this.getRandomFloat(5, 10))
+                            .then(() => {
+                                let batch = client.batchStart();
+                                batch.setAvatar(
+                                    this.getRandomInt(1, 3), // skin
+                                    this.getRandomInt(1, 5), // hair
+                                    this.getRandomInt(1, 3), // shirt
+                                    this.getRandomInt(1, 2), // pants
+                                    this.getRandomInt(0, 3), // hat
+                                    this.getRandomInt(1, 6), // shoes,
+                                    0, // gender,
+                                    this.getRandomInt(1, 4), // eyes,
+                                    this.getRandomInt(1, 5) // backpack
+                                );
+                                return this.alwaysinit(batch).batchCall();
+
+                            }).then(responses => {
+                                this.parse(responses);
+                                let batch = client.batchStart();
+                                batch.markTutorialComplete(1, false, false);
+                                return this.alwaysinit(batch).batchCall();
+
+                            }).then(responses => {
+                                this.parse(responses);
+
+                            });
+                }
+
+            }).then(() => {
+                let batch = client.batchStart();
+                batch.getPlayerProfile();
+                return this.always(batch).batchCall();
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(this.getRandomFloat(6, 12));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 3)) {
+                    // encounter starter pokemon
+                    return Promise.delay(this.getRandomFloat(6, 12))
+                        .then(() => {
+                            let batch = client.batchStart();
+                            let pkmId = [1, 4, 7][Math.floor(Math.random()*3)];
+                            batch.encounterTutorialComplete(pkmId);
+                            return this.always(batch).batchCall();
+
+                        }).then(responses => {
+                            this.parse(responses);
+                            let batch = client.batchStart();
+                            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+                            return this.always(batch).batchCall();
+
+                        });
+                }
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(this.getRandomFloat(5, 11));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 4)) {
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(4, false, false);
+                    return this.alwaysinit(batch).batchCall();
+                }
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(this.getRandomFloat(4, 9));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 7)) {
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(7, false, false);
+                    return this.always(batch).batchCall();
+                }
+
+            });
         }
     }
 
@@ -269,6 +400,23 @@ class APIHelper {
                 if (r.wild_pokemon) {
                     info.pokemon = r.wild_pokemon.pokemon_data;
                     info.position = {lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude};
+                }
+
+            } else if (r.hasOwnProperty('capture_award')) {
+                // capture pokemon
+                if (r.pokemon_data) {
+                    this.state.inventory.pokemon.push(r.pokemon_data);
+                }
+                let award = r.capture_award;
+                this.state.inventory.player.xp += _.sum(award.xp);
+                let candy = _.find(this.state.inventory.candies, c => c.family_id == r.pokemon_data.pokemon_id);
+                if (candy) {
+                    candy.candy += _.sum(award.candy);
+                } else {
+                    this.state.inventory.candies.push({
+                        family_id: r.pokemon_data.pokemon_id,
+                        candy: _.sum(award.candy),
+                    });
                 }
 
             } else {
