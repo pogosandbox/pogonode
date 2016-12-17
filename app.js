@@ -14,6 +14,7 @@ const APIHelper = require('./helpers/api');
 const ProxyHelper = require('./helpers/proxy');
 const signaturehelper = require('./helpers/signature');
 const Walker = require('./helpers/walker');
+const Player = require('./helpers/player');
 const SocketServer = require('./ui/socket.server');
 
 let config = require('./helpers/config').load();
@@ -44,6 +45,7 @@ state.events = App;
 
 let apihelper = new APIHelper(config, state);
 let walker = new Walker(config, state);
+let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
@@ -285,8 +287,11 @@ function mapRefresh() {
         return walker.spinPokestops(stops);
 
     }).then(done => {
-        // encounter available pokemon
-        return walker.encounterPokemons();
+        // encounter available pokemons
+        return player.encounterPokemons();
+
+    }).then(encounters => {
+        return player.catchPokemons();
 
     }).then(() => {
         App.emit('saveState');

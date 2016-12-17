@@ -94,45 +94,6 @@ class Walker {
     }
 
     /**
-     * Encounter all pokemons in range (based on current state)
-     * @return {Promise}
-     */
-    encounterPokemons() {
-        let pokemons = this.state.map.catchable_pokemons;
-        pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
-
-        if (pokemons.length == 0) return Promise.resolve(0);
-
-        logger.debug('Start encounters...');
-        let client = this.state.client;
-        return Promise.map(pokemons, pk => {
-                    logger.debug('  encounter %s', pk.pokemon_id);
-                    let batch = client.batchStart();
-                    batch.encounter(pk.encounter_id, pk.spawn_point_id);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        return this.apihelper.parse(responses);
-
-                    }).then(info => {
-                        if (info.status == EncounterResult.POKEMON_INVENTORY_FULL) {
-                            logger.warn('Pokemon bag full.');
-                        } else if (info.status != EncounterResult.ENCOUNTER_SUCCESS) {
-                            logger.warn('Error while encountering pokemon: %d', info.status);
-                        } else {
-                            // encounter success
-                            this.state.encountered.push(pk.encounter_id);
-                            this.state.events.emit('encounter', info.pokemon);
-                        }
-
-                    }).delay(this.config.delay.encounter * 1000);
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Encounter done.');
-            });
-
-    }
-
-    /**
      * Use Google Map API to get a path to nearest pokestop.
      * Update state with path.
      * @return {Promise}
@@ -254,7 +215,7 @@ class Walker {
                 return 0;
             }
         }).catch(e => {
-            logger.war('Unable to get altitude.');
+            logger.warn('Unable to get altitude.', e);
             return 0;
         });
     }

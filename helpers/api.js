@@ -310,7 +310,6 @@ class APIHelper {
                     }
                     this.state.download_settings = r.settings;
                     this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
-                    this.state.api.gmapkey = this.state.download_settings.map_settings.google_maps_api_key;
                 }
 
             } else if (r.item_templates_timestamp_ms) {
