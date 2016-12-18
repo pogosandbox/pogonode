@@ -30,9 +30,10 @@ class Player {
 
     /**
      * Encounter all pokemons in range (based on current state)
+     * @param {bool} catchPokemon true to catch pokemons, by default only encounter them
      * @return {Promise}
      */
-    encounterPokemons() {
+    encounterPokemons(catchPokemon) {
         let pokemons = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
@@ -66,46 +67,92 @@ class Player {
                             };
                         }
 
-                    }).delay(this.config.delay.encounter * 1000);
+                    }).delay(this.config.delay.encounter * 1000)
+                    .then(encounter => {
+                        if (catchPokemon) {
+                            return this.catchPokemon(encounter);
+                        } else {
+                            return encounter;
+                        }
+                    });
                 }, {concurrency: 1})
             .then(done => {
                 if (done) logger.debug('Encounter done.');
                 return done;
             });
-
     }
 
     /**
-     * Catch all encounters passed in parameters.
-     * @param {object[]} encounters Array of encounteres results
+     * Catch pokemon passed in parameters.
+     * @param {object} encounter Encounter result
      * @return {Promise}
      */
-    catchPokemons(encounters) {
-        if (!encounters || encounters.length == 0) return Promise.resolve();
-        logger.debug('Start catching...');
-        return Promise.map(encounters, enc => {
-                    if (!enc) return;
-                    let ball = this.getPokeBallForPokemon(enc.pokemon_id);
-                    let batch = client.batchStart();
-                    batch.catchPokemon(
-                        pk.encounter_id,
-                        ball,
-                        1.950 - Math.random() / 200, // reticle size
-                        pk.spawn_point_id,
-                        true, // hit
-                        1, // spin modified
-                        1 // normalized hit position
-                    );
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        return this.apihelper.parse(responses);
-                    });
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Catch done.');
-                return done;
-            });
+    catchPokemon(encounter) {
+        if (!encounter) return Promise.resolve();
+
+        let ball = this.getPokeBallForPokemon(encounter.pokemon_id);
+        if (ball < 0) {
+            logger.warn('  no pokéball found for catching.');
+            return;
+        }
+
+        logger.debug('  catch pokemon', encounter);
+
+        let batch = this.state.client.batchStart();
+        batch.catchPokemon(
+            encounter.encounter_id,
+            ball,
+            1.950 - Math.random() / 200, // reticle size
+            encounter.spawn_point_id,
+            true, // hit
+            1, // spin modified
+            1 // normalized hit position
+        );
+
+        return this.apihelper.always(batch).batchCall()
+                .then(responses => {
+                    let info = this.apihelper.parse(responses);
+                    if (info.caught) {
+                        let pokemon = _.find(this.state.inventory.pokemon, pk => pk.id == info.id);
+                        logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
+                        this.state.events.emit('pokemon_caught', pokemon);
+                    } else {
+                        logger.info('Pokemon missed.', info);
+                    }
+                });
     }
+
+    // /**
+    //  * Catch all encounters passed in parameters.
+    //  * @param {object[]} encounters Array of encounteres results
+    //  * @return {Promise}
+    //  */
+    // catchPokemons(encounters) {
+    //     if (!encounters || encounters.length == 0) return Promise.resolve();
+    //     logger.debug('Start catching...');
+    //     return Promise.map(encounters, enc => {
+    //                 if (!enc) return;
+    //                 let ball = this.getPokeBallForPokemon(enc.pokemon_id);
+    //                 let batch = client.batchStart();
+    //                 batch.catchPokemon(
+    //                     pk.encounter_id,
+    //                     ball,
+    //                     1.950 - Math.random() / 200, // reticle size
+    //                     pk.spawn_point_id,
+    //                     true, // hit
+    //                     1, // spin modified
+    //                     1 // normalized hit position
+    //                 );
+    //                 this.apihelper.always(batch);
+    //                 return batch.batchCall().then(responses => {
+    //                     return this.apihelper.parse(responses);
+    //                 });
+    //             }, {concurrency: 1})
+    //         .then(done => {
+    //             if (done) logger.debug('Catch done.');
+    //             return done;
+    //         });
+    // }
 
     /**
      * Get a Pokéball from inventory for pokemon passed in params.
@@ -113,7 +160,7 @@ class Player {
      * @return {int} id of pokemon
      */
     getPokeBallForPokemon(pokemondId) {
-        let balls = _.filter(this.state.inventory.items, i => i.count > 0 && _.includes(POKE_BALLS, i));
+        let balls = _.filter(this.state.inventory.items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
             return _.head(balls).item_id;
         } else {

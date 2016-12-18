@@ -288,10 +288,7 @@ function mapRefresh() {
 
     }).then(done => {
         // encounter available pokemons
-        return player.encounterPokemons();
-
-    }).then(encounters => {
-        return player.catchPokemons();
+        return player.encounterPokemons(config.behavior.catch);
 
     }).then(() => {
         App.emit('saveState');
@@ -312,9 +309,9 @@ App.on('spinned', stop => {
     socket.sendVisitedPokestop(stop);
 });
 
-App.on('encounter', pokemon => {
+App.on('pokemon_caught', pokemon => {
     // send info to ui
-    // socket.sendVisitedPokestop(stop);
+    socket.sendPokemonCaught(pokemon);
 });
 
 App.on('saveState', () => {

@@ -97,12 +97,24 @@ class SocketServer {
     }
 
     /**
+     * Send a pokemon caught event to connected clients
+     * @param {object} pokemon - the pokemon we've just caught
+     */
+    sendPokemonCaught(pokemon) {
+        this.io.emit('pokemon_caught', {
+            pokemon: pokemon,
+            position: this.state.pos,
+        });
+    }
+
+    /**
      * Send a pokestop visited event to connected clients
      * @param {object} pokestop - the pokestop we've just visited
      */
     sendVisitedPokestop(pokestop) {
         this.io.emit('pokestop_visited', pokestop);
     }
+
 
     /**
      * Send the inventory to a client after it request it

@@ -36,6 +36,11 @@ api:
   language: en
   checkversion: false
 
+# User behavior
+behavior:
+  # true to catch pokemon, by default we only encounter them
+  catch: false
+
 # If nothing is set, direct call will be made
 # If a proxy is set it will be used (like http://server:8080)
 # If 'auto' is set, a proxy from www . ssl proxies . org will be used

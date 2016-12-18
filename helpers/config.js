@@ -24,6 +24,9 @@ module.exports.load = function() {
             country: 'US',
             language: 'en',
         },
+        behavior: {
+            catch: true,
+        },
         delay: {
             walk: 1,
             spin: 2,

@@ -1,4 +1,5 @@
 const pogobuf = require('../pogobuf/pogobuf/pogobuf');
+const POGOProtos = require('node-pogo-protos');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
@@ -18,6 +19,8 @@ function ChallengeError(url) {
 }
 ChallengeError.prototype = Object.create(Error.prototype);
 ChallengeError.prototype.constructor = ChallengeError;
+
+const CatchPokemonResult = POGOProtos.Networking.Responses.CatchPokemonResponse.CatchStatus;
 
 /**
  * Helper class to deal with api requests and reponses.
@@ -404,19 +407,17 @@ class APIHelper {
             } else if (r.hasOwnProperty('capture_award')) {
                 // capture pokemon
                 if (r.pokemon_data) {
+                    // init capture
                     this.state.inventory.pokemon.push(r.pokemon_data);
                 }
-                let award = r.capture_award;
-                this.state.inventory.player.xp += _.sum(award.xp);
-                let candy = _.find(this.state.inventory.candies, c => c.family_id == r.pokemon_data.pokemon_id);
-                if (candy) {
-                    candy.candy += _.sum(award.candy);
-                } else {
-                    this.state.inventory.candies.push({
-                        family_id: r.pokemon_data.pokemon_id,
-                        candy: _.sum(award.candy),
-                    });
-                }
+                info = {
+                    caught: r.status == CatchPokemonResult.CATCH_SUCCESS,
+                    status: r.status,
+                    id: r.captured_pokemon_id,
+                    capture_reason: r.capture_reason,
+                    candy: _.sum(r.capture_award.candy),
+                    xp: _.sum(r.capture_award.xp),
+                };
 
             } else {
                 logger.warn('unhandled');
