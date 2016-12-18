@@ -83,6 +83,40 @@ class Player {
     }
 
     /**
+     * Get throw parameter.
+     * Ball has some effect but is not curved.
+     * Player is not a bad thrower but not a good one either.
+     * @param {int} pokemonId Pokemon Id
+     * @return {object} throw parameters
+     */
+    getThrowParameter(pokemonId) {
+        let ball = this.getPokeBallForPokemon(encounter.pokemon_id);
+        let lancer = {
+            ball: ball,
+            reticleSize: 1.25 + 0.70 * Math.random(),
+            hit: true,
+            spinModifier: 0.3 * Math.random(),
+            normalizedHitPosition: 0,
+        };
+
+        if (Math.random() > 0.9) {
+            // excellent throw
+            lancer.reticleSize = 1.70 + 0.25 * Math.random();
+            lancer.normalizedHitPosition = 1;
+        } else if (Math.random() > 0.8) {
+            // great throw
+            lancer.reticleSize = 1.30 + 0.399 * Math.random();
+            lancer.normalizedHitPosition = 1;
+        } else if (Math.random() > 0.7) {
+            // nice throw
+            lancer.reticleSize = 1.00 + 0.299 * Math.random();
+            lancer.normalizedHitPosition = 1;
+        }
+
+        return lancer;
+    }
+
+    /**
      * Catch pokemon passed in parameters.
      * @param {object} encounter Encounter result
      * @return {Promise}
@@ -90,8 +124,8 @@ class Player {
     catchPokemon(encounter) {
         if (!encounter) return Promise.resolve();
 
-        let ball = this.getPokeBallForPokemon(encounter.pokemon_id);
-        if (ball < 0) {
+        let lancer = this.getThrowParameter(encounter.pokemon_id);
+        if (lancer.ball < 0) {
             logger.warn('  no pokéball found for catching.');
             return;
         }
@@ -101,12 +135,12 @@ class Player {
         let batch = this.state.client.batchStart();
         batch.catchPokemon(
             encounter.encounter_id,
-            ball,
-            1.950 - Math.random() / 200, // reticle size
+            lancer.ball,
+            lancer.reticleSize,
             encounter.spawn_point_id,
-            true, // hit
-            1, // spin modified
-            1 // normalized hit position
+            lancer.hit,
+            lancer.spinModifier,
+            lancer.normalizedHitPosition
         );
 
         return this.apihelper.always(batch).batchCall()
@@ -121,38 +155,6 @@ class Player {
                     }
                 });
     }
-
-    // /**
-    //  * Catch all encounters passed in parameters.
-    //  * @param {object[]} encounters Array of encounteres results
-    //  * @return {Promise}
-    //  */
-    // catchPokemons(encounters) {
-    //     if (!encounters || encounters.length == 0) return Promise.resolve();
-    //     logger.debug('Start catching...');
-    //     return Promise.map(encounters, enc => {
-    //                 if (!enc) return;
-    //                 let ball = this.getPokeBallForPokemon(enc.pokemon_id);
-    //                 let batch = client.batchStart();
-    //                 batch.catchPokemon(
-    //                     pk.encounter_id,
-    //                     ball,
-    //                     1.950 - Math.random() / 200, // reticle size
-    //                     pk.spawn_point_id,
-    //                     true, // hit
-    //                     1, // spin modified
-    //                     1 // normalized hit position
-    //                 );
-    //                 this.apihelper.always(batch);
-    //                 return batch.batchCall().then(responses => {
-    //                     return this.apihelper.parse(responses);
-    //                 });
-    //             }, {concurrency: 1})
-    //         .then(done => {
-    //             if (done) logger.debug('Catch done.');
-    //             return done;
-    //         });
-    // }
 
     /**
      * Get a Pokéball from inventory for pokemon passed in params.
