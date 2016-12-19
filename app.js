@@ -283,8 +283,8 @@ function mapRefresh() {
 
     }).then(() => {
         // spin pokestop that are close enough
-        let stops = walker.findSpinnablePokestops();
-        return walker.spinPokestops(stops);
+        let stops = player.findSpinnablePokestops();
+        return player.spinPokestops(stops);
 
     }).then(done => {
         // encounter available pokemons

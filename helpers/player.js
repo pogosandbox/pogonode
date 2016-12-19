@@ -1,11 +1,13 @@
 const POGOProtos = require('node-pogo-protos');
 const GoogleMapsAPI = require('googlemaps');
+const geolib = require('geolib');
 const _ = require('lodash');
 const Promise = require('bluebird');
 const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
 const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
+const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
 
 const APIHelper = require('./api');
 
@@ -26,6 +28,47 @@ class Player {
         this.config = config;
         this.state = state;
         this.apihelper = new APIHelper(config, state);
+    }
+
+
+    /**
+     * Find pokestop we can spin. Get only reachable one that are not in cooldown.
+     * @return {object} array of pokestop we can spin
+     */
+    findSpinnablePokestops() {
+        let pokestops = this.state.map.pokestops;
+        let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
+
+        // get pokestops not in cooldown that are close enough to spin it
+        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
+
+        return pokestops;
+    }
+
+    /**
+     * Spin all pokestops in an array
+     * @param {object[]} pokestops - Array of pokestops
+     * @return {Promise}
+     */
+    spinPokestops(pokestops) {
+        if (pokestops.length == 0) return Promise.resolve(0);
+
+        let client = this.state.client;
+        return Promise.map(pokestops, ps => {
+                    logger.debug('Spin %s', ps.id);
+                    let batch = client.batchStart();
+                    batch.fortSearch(ps.id, ps.latitude, ps.longitude);
+                    this.apihelper.always(batch);
+                    return batch.batchCall().then(responses => {
+                        let info = this.apihelper.parse(responses);
+                        if (info.status == FortSearchResult.SUCCESS) {
+                            let stop = _.find(state.map.pokestops, p => p.id == ps.id);
+                            stop.cooldown_complete_timestamp_ms = info.cooldown;
+                            this.state.events.emit('spinned', stop);
+                        }
+                        return Promise.resolve();
+                    }).delay(this.config.delay.spin * 1000);
+                }, {concurrency: 1});
     }
 
     /**
@@ -67,12 +110,14 @@ class Player {
                             };
                         }
 
-                    }).delay(this.config.delay.encounter * 1000)
+                    })
                     .then(encounter => {
                         if (catchPokemon) {
-                            return this.catchPokemon(encounter);
+                            return Promise.delay(this.config.delay.catch * 1000)
+                                            .then(() => this.catchPokemon(encounter))
+                                            .delay(this.config.delay.encounter * 1000, encounter);
                         } else {
-                            return encounter;
+                            return Promise.delay(this.config.delay.encounter * 1000, encounter);
                         }
                     });
                 }, {concurrency: 1})
@@ -90,7 +135,7 @@ class Player {
      * @return {object} throw parameters
      */
     getThrowParameter(pokemonId) {
-        let ball = this.getPokeBallForPokemon(encounter.pokemon_id);
+        let ball = this.getPokeBallForPokemon(pokemonId);
         let lancer = {
             ball: ball,
             reticleSize: 1.25 + 0.70 * Math.random(),
@@ -168,6 +213,15 @@ class Player {
         } else {
             return -1;
         }
+    }
+
+    /**
+     * Calculte distance from current pos to a target.
+     * @param {object} target position
+     * @return {int} distance to target
+     */
+    distance(target) {
+        return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 }
 

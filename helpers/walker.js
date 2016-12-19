@@ -1,4 +1,4 @@
-const POGOProtos = require('node-pogo-protos');
+// const POGOProtos = require('node-pogo-protos');
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
 const _ = require('lodash');
@@ -6,8 +6,8 @@ const Promise = require('bluebird');
 const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
-const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
-const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
+// const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
+// const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 
 const APIHelper = require('./api');
 
@@ -47,50 +47,6 @@ class Walker {
         // take closest
         if (pokestops.length > 0) return pokestops[0];
         else return null;
-    }
-
-    /**
-     * Find pokestop we can spin. Get only reachable one that are not in cooldown.
-     * @return {object} array of pokestop we can spin
-     */
-    findSpinnablePokestops() {
-        let pokestops = this.state.map.pokestops;
-        let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
-
-        // get pokestops not in cooldown that are close enough to spin it
-        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
-
-        return pokestops;
-    }
-
-    /**
-     * Spin all pokestops in an array
-     * @param {object[]} pokestops - Array of pokestops
-     * @return {Promise}
-     */
-    spinPokestops(pokestops) {
-        if (pokestops.length == 0) return Promise.resolve(0);
-
-        logger.debug('Start pokestops spinning...');
-        let client = this.state.client;
-        return Promise.map(pokestops, ps => {
-                    logger.debug('  spin %s', ps.id);
-                    let batch = client.batchStart();
-                    batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        let info = this.apihelper.parse(responses);
-                        if (info.status == FortSearchResult.SUCCESS) {
-                            let stop = _.find(state.map.pokestops, p => p.id == ps.id);
-                            stop.cooldown_complete_timestamp_ms = info.cooldown;
-                            this.state.events.emit('spinned', stop);
-                        }
-                        return Promise.resolve();
-                    }).delay(this.config.delay.spin * 1000);
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Spins done.');
-            });
     }
 
     /**

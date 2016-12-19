@@ -87,11 +87,6 @@ class APIHelper {
     parseInventoryDelta(r) {
         let split = pogobuf.Utils.splitInventory(r);
 
-        // console.log('---');
-        // console.dir(r.inventory_delta, {depth: 4});
-        // console.dir(split, {depth: 4});
-        // console.log('---');
-
         if (split.pokemon.length > 0) {
             _.each(split.pokemon, pkm => {
                 // add new pokemon to inventory, removing it if already there (to be sure)
@@ -118,7 +113,7 @@ class APIHelper {
         }
         if (split.player) this.state.inventory.player = split.player;
         if (split.egg_incubators.length > 0) {
-            console.dir(split.egg_incubators, {depth: 4});
+            this.state.inventory.egg_incubators = split.egg_incubators;
         }
     }
 
@@ -296,8 +291,8 @@ class APIHelper {
             } else if (r.awarded_badges) {
                 // checkAwardedBadges()
                 if (r.awarded_badges.length > 0 || r.awarded_badge_levels > 0) {
-                    console.log('checkAwardedBadges()');
-                    console.dir(r, {depth: 4});
+                    // console.log('checkAwardedBadges()');
+                    // console.dir(r, {depth: 4});
                 }
 
             } else if (r.hash) {
@@ -365,6 +360,7 @@ class APIHelper {
                     _.each(r.items_awarded, i => {
                         let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
                         if (item) item.count += i.item_count;
+                        else this.state.inventory.items.push(item);
                     });
                 }
 

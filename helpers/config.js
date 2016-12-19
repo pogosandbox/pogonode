@@ -31,6 +31,7 @@ module.exports.load = function() {
             walk: 1,
             spin: 2,
             encounter: 1.5,
+            catch: 3,
         },
         loglevel: 'info',
     };
