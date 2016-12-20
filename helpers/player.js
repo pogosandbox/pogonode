@@ -12,7 +12,6 @@ const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Resu
 const APIHelper = require('./api');
 
 const POKE_BALLS = [1, 2, 3, 4];
-const INCUBATORS = [901, 902];
 
 /**
  * Helper class to deal with our walker.
@@ -29,7 +28,6 @@ class Player {
         this.state = state;
         this.apihelper = new APIHelper(config, state);
     }
-
 
     /**
      * Find pokestop we can spin. Get only reachable one that are not in cooldown.
@@ -212,6 +210,32 @@ class Player {
             return _.head(balls).item_id;
         } else {
             return -1;
+        }
+    }
+
+    /**
+     * Dipatch available incubators to eggs in order to hatch.
+     * We use short eggs with unlimited incubator if available,
+     * and use long eggs with limited one if available.
+     */
+    dispatchIncubators() {
+        let freeIncubators = _.filter(this.state.inventory.egg_incubators, i => i.pokemon_id == 0);
+        let freeEggs = _.filter(this.state.inventory.eggs, e => e.egg_incubator_id == '');
+        if (freeIncubators.length > 0 && freeEggs.length > 0) {
+            // we have some free eggs and some free incubators
+
+            freeEggs = _.sortBy(freeEggs, e => e.egg_km_walked_target);
+            let infiniteOnes = _.filter(freeIncubators, i => i.item_id == 901);
+            let others = _.filter(freeIncubators, i => i.item_id != 901);
+
+            _.each(_.take(freeEggs, infiniteOnes.length), e => {
+                // eggs to associate with infinite incubators
+            });
+
+
+            console.log(infiniteOnes.length);
+            console.log(others.length);
+            console.dir(freeEggs);
         }
     }
 

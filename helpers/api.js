@@ -39,26 +39,6 @@ class APIHelper {
     }
 
     /**
-     * Get a random int between two numbers
-     * @param {int} min - minimum value
-     * @param {int} max - maximum value
-     * @return {int} random int
-     */
-    getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    /**
-     * Get a random float between two numbers
-     * @param {int} min - minimum value
-     * @param {int} max - maximum value
-     * @return {int} random float
-     */
-    getRandomFloat(min, max) {
-        return (Math.random() * (max - min) + min).toFixed(4);
-    }
-
-    /**
      * During init flow, each call come with some other calls
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
@@ -136,7 +116,7 @@ class APIHelper {
 
         } else {
             logger.info('Completing tutorial...');
-            return Promise.delay(this.getRandomFloat(2, 5))
+            return Promise.delay(_.random(2.0, 5.0))
             .then(() => {
                 if (!_.includes(tuto, 0)) {
                     // complete tutorial
@@ -149,19 +129,19 @@ class APIHelper {
                 this.parse(responses);
                 if (!_.includes(tuto, 1)) {
                     // set avatar
-                    return Promise.delay(this.getRandomFloat(5, 10))
+                    return Promise.delay(_.random(5.0, 10.5))
                             .then(() => {
                                 let batch = client.batchStart();
                                 batch.setAvatar(
-                                    this.getRandomInt(1, 3), // skin
-                                    this.getRandomInt(1, 5), // hair
-                                    this.getRandomInt(1, 3), // shirt
-                                    this.getRandomInt(1, 2), // pants
-                                    this.getRandomInt(0, 3), // hat
-                                    this.getRandomInt(1, 6), // shoes,
+                                    _.random(1, 3), // skin
+                                    _.random(1, 5), // hair
+                                    _.random(1, 3), // shirt
+                                    _.random(1, 2), // pants
+                                    _.random(0, 3), // hat
+                                    _.random(1, 6), // shoes,
                                     0, // gender,
-                                    this.getRandomInt(1, 4), // eyes,
-                                    this.getRandomInt(1, 5) // backpack
+                                    _.random(1, 4), // eyes,
+                                    _.random(1, 5) // backpack
                                 );
                                 return this.alwaysinit(batch).batchCall();
 
@@ -185,16 +165,16 @@ class APIHelper {
             }).then(responses => {
                 // wait a bit
                 this.parse(responses);
-                return Promise.delay(this.getRandomFloat(6, 12));
+                return Promise.delay(_.random(6.0, 11.5));
 
             }).then(responses => {
                 this.parse(responses);
                 if (!_.includes(tuto, 3)) {
                     // encounter starter pokemon
-                    return Promise.delay(this.getRandomFloat(6, 12))
+                    return Promise.delay(_.random(6.0, 12.0))
                         .then(() => {
                             let batch = client.batchStart();
-                            let pkmId = [1, 4, 7][Math.floor(Math.random()*3)];
+                            let pkmId = [1, 4, 7][_.random(3)];
                             batch.encounterTutorialComplete(pkmId);
                             return this.always(batch).batchCall();
 
@@ -210,7 +190,7 @@ class APIHelper {
             }).then(responses => {
                 // wait a bit
                 this.parse(responses);
-                return Promise.delay(this.getRandomFloat(5, 11));
+                return Promise.delay(_.random(5.0, 11.5));
 
             }).then(responses => {
                 this.parse(responses);
@@ -223,7 +203,7 @@ class APIHelper {
             }).then(responses => {
                 // wait a bit
                 this.parse(responses);
-                return Promise.delay(this.getRandomFloat(4, 9));
+                return Promise.delay(_.random(4.0, 9.0));
 
             }).then(responses => {
                 this.parse(responses);

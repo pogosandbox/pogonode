@@ -9,6 +9,10 @@
 #               |___/                                 #
 #######################################################
 
+# Once the app is run once, you'll see a 'config.actual.yaml' than contains
+# the actual config used by the app. You'll see some more options and their
+# default values.
+
 # PTC Credentials
 credentials:
   user: username

@@ -291,6 +291,11 @@ function mapRefresh() {
         return player.encounterPokemons(config.behavior.catch);
 
     }).then(() => {
+        // if (Math.random() < 0.2) {
+            return player.dispatchIncubators();
+        // }
+
+    }).then(() => {
         App.emit('saveState');
 
     }).catch(e => {

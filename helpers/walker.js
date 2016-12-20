@@ -1,4 +1,3 @@
-// const POGOProtos = require('node-pogo-protos');
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
 const _ = require('lodash');
@@ -6,8 +5,6 @@ const Promise = require('bluebird');
 const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
-// const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
-// const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 
 const APIHelper = require('./api');
 
