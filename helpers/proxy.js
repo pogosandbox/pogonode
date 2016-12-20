@@ -105,11 +105,13 @@ class ProxyHelper {
      * Add the current proxy in our bad proxy database so we won't use it anymore.
      */
     badProxy() {
-        this.badProxies.push({
-            proxy: this.proxy,
-            date: Date.now(),
-        });
-        fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));
+        if (!_.find(this.badProxies, p => p.proxy == this.proxy)) {
+            this.badProxies.push({
+                proxy: this.proxy,
+                date: Date.now(),
+            });
+            fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));
+        }
     }
 }
 

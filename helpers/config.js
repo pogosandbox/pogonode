@@ -32,6 +32,7 @@ module.exports.load = function() {
             spin: 2,
             encounter: 1.5,
             catch: 3,
+            incubator: 3,
         },
         loglevel: 'info',
     };

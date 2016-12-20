@@ -1,7 +1,7 @@
 require('dotenv').config({silent: true});
 
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
-// const pogobuf         = require('pogobuf');
+// const pogobuf = require('pogobuf');
 const POGOProtos = require('node-pogo-protos');
 const EventEmitter = require('events');
 const logger = require('winston');
@@ -20,7 +20,8 @@ const SocketServer = require('./ui/socket.server');
 let config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
-    logger.error('Invalid credentials. Please fill data/config.yaml, config.example.yaml or config.actual.yaml.');
+    logger.error('Invalid credentials. Please fill data/config.yaml.').
+    logger.errro('look at config.example.yaml or config.actual.yaml for example.');
     process.exit();
 }
 

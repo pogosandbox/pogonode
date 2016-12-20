@@ -228,14 +228,18 @@ class Player {
             let infiniteOnes = _.filter(freeIncubators, i => i.item_id == 901);
             let others = _.filter(freeIncubators, i => i.item_id != 901);
 
-            _.each(_.take(freeEggs, infiniteOnes.length), e => {
+            _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
                 // eggs to associate with infinite incubators
+                //logger.debug('associate egg %s with incub %s', e.)
+                console.log(e);
+                console.log(infiniteOnes[i]);
             });
 
-
-            console.log(infiniteOnes.length);
-            console.log(others.length);
-            console.dir(freeEggs);
+            _.each(_.takeRight(freeEggs, _.min([others.length, freeEggs.length - infiniteOnes.length])), (e, i) => {
+                // eggs to associate with disposable incubators
+                console.log(e);
+                console.log(others[i]);
+            });
         }
     }
 
