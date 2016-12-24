@@ -19,15 +19,19 @@ module.exports.load = function() {
         device: {id: 0},
         api: {
             version: '4500',
-            clientversion: '0.45.0',
             checkversion: true,
             country: 'US',
             language: 'en',
+        },
+        behavior: {
+            catch: true,
         },
         delay: {
             walk: 1,
             spin: 2,
             encounter: 1.5,
+            catch: 3,
+            incubator: 3,
         },
         loglevel: 'info',
     };

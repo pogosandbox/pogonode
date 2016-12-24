@@ -1,4 +1,3 @@
-const POGOProtos = require('node-pogo-protos');
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
 const _ = require('lodash');
@@ -6,8 +5,6 @@ const Promise = require('bluebird');
 const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
-const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
-const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 
 const APIHelper = require('./api');
 
@@ -50,89 +47,6 @@ class Walker {
     }
 
     /**
-     * Find pokestop we can spin. Get only reachable one that are not in cooldown.
-     * @return {object} array of pokestop we can spin
-     */
-    findSpinnablePokestops() {
-        let pokestops = this.state.map.pokestops;
-        let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
-
-        // get pokestops not in cooldown that are close enough to spin it
-        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
-
-        return pokestops;
-    }
-
-    /**
-     * Spin all pokestops in an array
-     * @param {object[]} pokestops - Array of pokestops
-     * @return {Promise}
-     */
-    spinPokestops(pokestops) {
-        if (pokestops.length == 0) return Promise.resolve(0);
-
-        logger.debug('Start pokestops spinning...');
-        let client = this.state.client;
-        return Promise.map(pokestops, ps => {
-                    logger.debug('  spin %s', ps.id);
-                    let batch = client.batchStart();
-                    batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        let info = this.apihelper.parse(responses);
-                        if (info.status == FortSearchResult.SUCCESS) {
-                            let stop = _.find(state.map.pokestops, p => p.id == ps.id);
-                            stop.cooldown_complete_timestamp_ms = info.cooldown;
-                            this.state.events.emit('spinned', stop);
-                        }
-                        return Promise.resolve();
-                    }).delay(this.config.delay.spin * 1000);
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Spins done.');
-            });
-    }
-
-    /**
-     * Encounter all pokemons in range (based on current state)
-     * @return {Promise}
-     */
-    encounterPokemons() {
-        let pokemons = this.state.map.catchable_pokemons;
-        pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
-
-        if (pokemons.length == 0) return Promise.resolve(0);
-
-        logger.debug('Start encounters...');
-        let client = this.state.client;
-        return Promise.map(pokemons, pk => {
-                    logger.debug('  encounter %s', pk.pokemon_id);
-                    let batch = client.batchStart();
-                    batch.encounter(pk.encounter_id, pk.spawn_point_id);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        return this.apihelper.parse(responses);
-
-                    }).then(info => {
-                        if (info.status == EncounterResult.POKEMON_INVENTORY_FULL) {
-                            logger.warn('Pokemon bag full.');
-                        } else if (info.status != EncounterResult.ENCOUNTER_SUCCESS) {
-                            logger.warn('Error while encountering pokemon: %d', info.status);
-                        } else {
-                            // encounter success
-                            this.state.encountered.push(pk.encounter_id);
-                            this.state.events.emit('encounter', info.pokemon);
-                        }
-
-                    }).delay(this.config.delay.encounter * 1000);
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Encounter done.');
-            });
-
-    }
-
-    /**
      * Use Google Map API to get a path to nearest pokestop.
      * Update state with path.
      * @return {Promise}
@@ -160,7 +74,8 @@ class Walker {
                             return state.path;
                         });
         } else {
-            throw new Error('No more available stops.');
+            logger.warn('No stop to go to, stand still.');
+            return Promise.resolve();
         }
     }
 
@@ -186,6 +101,8 @@ class Walker {
      * Update state.
      */
     walk() {
+        if (!this.state.path || this.state.path.waypoints.length == 0) return;
+
         // move towards next target
         let dest = this.state.path.waypoints[0];
         let speed = this.config.speed;
@@ -254,7 +171,7 @@ class Walker {
                 return 0;
             }
         }).catch(e => {
-            logger.war('Unable to get altitude.');
+            logger.warn('Unable to get altitude.', e);
             return 0;
         });
     }

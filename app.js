@@ -1,7 +1,7 @@
 require('dotenv').config({silent: true});
 
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
-// const pogobuf         = require('pogobuf');
+// const pogobuf = require('pogobuf');
 const POGOProtos = require('node-pogo-protos');
 const EventEmitter = require('events');
 const logger = require('winston');
@@ -14,12 +14,14 @@ const APIHelper = require('./helpers/api');
 const ProxyHelper = require('./helpers/proxy');
 const signaturehelper = require('./helpers/signature');
 const Walker = require('./helpers/walker');
+const Player = require('./helpers/player');
 const SocketServer = require('./ui/socket.server');
 
 let config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
-    logger.error('Invalid credentials. Please fill data/config.yaml, config.example.yaml or config.actual.yaml.');
+    logger.error('Invalid credentials. Please fill data/config.yaml.').
+    logger.errro('look at config.example.yaml or config.actual.yaml for example.');
     process.exit();
 }
 
@@ -44,6 +46,7 @@ state.events = App;
 
 let apihelper = new APIHelper(config, state);
 let walker = new Walker(config, state);
+let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
@@ -93,6 +96,10 @@ proxyhelper.checkProxy().then(valid => {
     return client.init(false);
 
 }).then(() => {
+    // first empty request
+    return client.batchStart().batchCall();
+
+}).then(() => {
     // initial player state
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
@@ -124,28 +131,33 @@ proxyhelper.checkProxy().then(valid => {
     let last = 0;
     if (fs.existsSync('data/item_templates.json')) {
         let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
-        state.api.item_templates = JSON.parse(json);
-        last = state.api.item_templates.timestamp_ms;
+        let data = JSON.parse(json);
+        state.api.item_templates = data.templates;
+        last = data.timestamp_ms || 0;
     }
 
-    if (last < state.api.item_templates_timestamp) {
+    if (!last || last < state.api.item_templates_timestamp) {
+        logger.info('Game master updating...');
         let batch = client.batchStart();
+        // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
         batch.downloadItemTemplates();
         return apihelper.alwaysinit(batch)
                 .batchCall().then(resp => {
-                    apihelper.parse(resp);
-                }).then(() => {
-                    fs.writeFile('data/item_templates.json', JSON.stringify(state.api.item_templates), (err) => {});
+                    return apihelper.parse(resp);
+                }).then(info => {
+                    let json = JSON.stringify({
+                        templates: state.api.item_templates,
+                        timestamp_ms: info.timestamp_ms,
+                    });
+                    fs.writeFile('data/item_templates.json', json, (err) => {});
                 });
     } else {
         return Promise.resolve();
     }
 
 }).then(() => {
-    // like the actual app (not used later)
-    let batch = client.batchStart();
-    batch.getPlayerProfile();
-    return apihelper.always(batch).batchCall();
+    // complete tutorial if needed
+    return apihelper.completeTutorial();
 
 }).then(responses => {
     // get any rewards if available
@@ -176,6 +188,9 @@ proxyhelper.checkProxy().then(valid => {
         else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
         else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
+        else {
+            e = e;
+        }
 
         logger.error('Exiting.');
         process.exit();
@@ -192,7 +207,7 @@ function resolveChallenge(url) {
     const CaptchaHelper = require('./captcha/captcha.helper');
     let helper = new CaptchaHelper(config, state);
     return helper
-            .solveCaptcha(url)
+            .solveCaptchaManual(url)
             .then(token => {
                 let batch = client.batchStart();
                 batch.verifyChallenge(token);
@@ -204,7 +219,7 @@ App.on('apiReady', () => {
     logger.info('Initial flow done.');
     App.emit('saveState');
     socket.ready();
-    setTimeout(() => App.emit('updatePos'), config.delay.walk);
+    setTimeout(() => App.emit('updatePos'), config.delay.walk * 1000);
 });
 
 App.on('updatePos', () => {
@@ -231,24 +246,24 @@ App.on('updatePos', () => {
                 let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
                 let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
 
-                if (!state.api.last_gmo) {
+                if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
                     // no previous call, fire a getMapObjects
+                    // or if it's been enough time since last getMapObjects
                    return mapRefresh();
-                } else if (moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
-                    // it's been enough time since last getMapObjects
-                    return mapRefresh();
+
                 } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
                     // if we travelled enough distance, fire a getMapObjects
                     if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
+
                 }
 
                 return Promise.resolve();
             })
-            .delay(config.delay.walk)
+            .delay(config.delay.walk * 1000)
             .then(() => App.emit('updatePos'));
     } else {
         // we need a first getMapObjects to get some info about what is around us
-        return mapRefresh().delay(config.delay.walk).then(() => App.emit('updatePos'));
+        return mapRefresh().delay(config.delay.walk * 1000).then(() => App.emit('updatePos'));
     }
 });
 
@@ -275,12 +290,17 @@ function mapRefresh() {
 
     }).then(() => {
         // spin pokestop that are close enough
-        let stops = walker.findSpinnablePokestops();
-        return walker.spinPokestops(stops);
+        let stops = player.findSpinnablePokestops();
+        return player.spinPokestops(stops);
 
     }).then(done => {
-        // encounter available pokemon
-        return walker.encounterPokemons();
+        // encounter available pokemons
+        return player.encounterPokemons(config.behavior.catch);
+
+    }).then(() => {
+        // if (Math.random() < 0.2) {
+            return player.dispatchIncubators();
+        // }
 
     }).then(() => {
         App.emit('saveState');
@@ -301,9 +321,9 @@ App.on('spinned', stop => {
     socket.sendVisitedPokestop(stop);
 });
 
-App.on('encounter', pokemon => {
+App.on('pokemon_caught', pokemon => {
     // send info to ui
-    // socket.sendVisitedPokestop(stop);
+    socket.sendPokemonCaught(pokemon);
 });
 
 App.on('saveState', () => {

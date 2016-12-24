@@ -1,7 +1,9 @@
 const pogobuf = require('../pogobuf/pogobuf/pogobuf');
+const POGOProtos = require('node-pogo-protos');
 const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
+const Promise = require('bluebird');
 // const fs = require('fs');
 
 /**
@@ -18,6 +20,8 @@ function ChallengeError(url) {
 ChallengeError.prototype = Object.create(Error.prototype);
 ChallengeError.prototype.constructor = ChallengeError;
 
+const CatchPokemonResult = POGOProtos.Networking.Responses.CatchPokemonResponse.CatchStatus;
+
 /**
  * Helper class to deal with api requests and reponses.
  * Responsible for keeping state up to date.
@@ -32,16 +36,6 @@ class APIHelper {
     constructor(config, state) {
         this.config = config;
         this.state = state;
-    }
-
-    /**
-     * Get a random int between two numbers
-     * @param {int} min - minimum value
-     * @param {int} max - maximum value
-     * @return {int} random int
-     */
-    getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     /**
@@ -73,11 +67,6 @@ class APIHelper {
     parseInventoryDelta(r) {
         let split = pogobuf.Utils.splitInventory(r);
 
-        // console.log('---');
-        // console.dir(r.inventory_delta, {depth: 4});
-        // console.dir(split, {depth: 4});
-        // console.log('---');
-
         if (split.pokemon.length > 0) {
             _.each(split.pokemon, pkm => {
                 // add new pokemon to inventory, removing it if already there (to be sure)
@@ -104,7 +93,127 @@ class APIHelper {
         }
         if (split.player) this.state.inventory.player = split.player;
         if (split.egg_incubators.length > 0) {
-            console.dir(split.egg_incubators, {depth: 4});
+            this.state.inventory.egg_incubators = split.egg_incubators;
+        }
+    }
+
+    /**
+     * Complete tutorial if needed, setting a random avatar
+     * @return {Promise} Promise
+     */
+    completeTutorial() {
+        let tuto = this.state.player.tutorial_state || [];
+        let client = this.state.client;
+        if (_.difference([0, 1, 3, 4, 7], tuto).length == 0) {
+            // tuto done, do a getPlayerProfile()
+            // like the actual app (not used later)
+            let batch = client.batchStart();
+            batch.getPlayerProfile();
+            return this.always(batch).batchCall()
+            .then(responses => {
+                this.parse(responses);
+            });
+
+        } else {
+            logger.info('Completing tutorial...');
+            return Promise.delay(_.random(2.0, 5.0))
+            .then(() => {
+                if (!_.includes(tuto, 0)) {
+                    // complete tutorial
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(0, false, false);
+                    return this.alwaysinit(batch).batchCall();
+                }
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 1)) {
+                    // set avatar
+                    return Promise.delay(_.random(5.0, 10.5))
+                            .then(() => {
+                                let batch = client.batchStart();
+                                batch.setAvatar(
+                                    _.random(1, 3), // skin
+                                    _.random(1, 5), // hair
+                                    _.random(1, 3), // shirt
+                                    _.random(1, 2), // pants
+                                    _.random(0, 3), // hat
+                                    _.random(1, 6), // shoes,
+                                    0, // gender,
+                                    _.random(1, 4), // eyes,
+                                    _.random(1, 5) // backpack
+                                );
+                                return this.alwaysinit(batch).batchCall();
+
+                            }).then(responses => {
+                                this.parse(responses);
+                                let batch = client.batchStart();
+                                batch.markTutorialComplete(1, false, false);
+                                return this.alwaysinit(batch).batchCall();
+
+                            }).then(responses => {
+                                this.parse(responses);
+
+                            });
+                }
+
+            }).then(() => {
+                let batch = client.batchStart();
+                batch.getPlayerProfile();
+                return this.always(batch).batchCall();
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(_.random(6.0, 11.5));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 3)) {
+                    // encounter starter pokemon
+                    return Promise.delay(_.random(6.0, 12.0))
+                        .then(() => {
+                            let batch = client.batchStart();
+                            let pkmId = [1, 4, 7][_.random(3)];
+                            batch.encounterTutorialComplete(pkmId);
+                            return this.always(batch).batchCall();
+
+                        }).then(responses => {
+                            this.parse(responses);
+                            let batch = client.batchStart();
+                            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+                            return this.always(batch).batchCall();
+
+                        });
+                }
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(_.random(5.0, 11.5));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 4)) {
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(4, false, false);
+                    return this.alwaysinit(batch).batchCall();
+                }
+
+            }).then(responses => {
+                // wait a bit
+                this.parse(responses);
+                return Promise.delay(_.random(4.0, 9.0));
+
+            }).then(responses => {
+                this.parse(responses);
+                if (!_.includes(tuto, 7)) {
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(7, false, false);
+                    return this.always(batch).batchCall();
+                }
+
+            });
         }
     }
 
@@ -162,15 +271,16 @@ class APIHelper {
             } else if (r.awarded_badges) {
                 // checkAwardedBadges()
                 if (r.awarded_badges.length > 0 || r.awarded_badge_levels > 0) {
-                    console.log('checkAwardedBadges()');
-                    console.dir(r, {depth: 4});
+                    // console.log('checkAwardedBadges()');
+                    // console.dir(r, {depth: 4});
                 }
 
             } else if (r.hash) {
                 // downloadSettings()
                 this.state.api.settings_hash = r.hash;
                 if (r.settings) {
-                    if (vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
+                    let clientversion = this.versionToClientVersion(this.config.api.version);
+                    if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
                         if (this.config.api.checkversion) {
                             throw new Error('Minimum client version=' + r.settings.minimum_client_version);
                         } else {
@@ -179,7 +289,6 @@ class APIHelper {
                     }
                     this.state.download_settings = r.settings;
                     this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
-                    this.state.api.gmapkey = this.state.download_settings.map_settings.google_maps_api_key;
                 }
 
             } else if (r.item_templates_timestamp_ms) {
@@ -199,7 +308,8 @@ class APIHelper {
             } else if (r.item_templates) {
                 // downloadItemTemplates()
                 if (r.item_templates.length > 0) {
-                    this.state.item_templates = r.item_templates;
+                    this.state.api.item_templates = r.item_templates;
+                    info.timestamp_ms = r.timestamp_ms;
                 }
 
             } else if (r.hasOwnProperty('cooldown_complete_timestamp_ms')) {
@@ -232,6 +342,7 @@ class APIHelper {
                     _.each(r.items_awarded, i => {
                         let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
                         if (item) item.count += i.item_count;
+                        else this.state.inventory.items.push(item);
                     });
                 }
 
@@ -271,6 +382,21 @@ class APIHelper {
                     info.position = {lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude};
                 }
 
+            } else if (r.hasOwnProperty('capture_award')) {
+                // capture pokemon
+                if (r.pokemon_data) {
+                    // init capture
+                    this.state.inventory.pokemon.push(r.pokemon_data);
+                }
+                info = {
+                    caught: r.status == CatchPokemonResult.CATCH_SUCCESS,
+                    status: r.status,
+                    id: r.captured_pokemon_id,
+                    capture_reason: r.capture_reason,
+                    candy: _.sum(r.capture_award.candy),
+                    xp: _.sum(r.capture_award.xp),
+                };
+
             } else {
                 logger.warn('unhandled');
                 logger.warn(r);
@@ -279,6 +405,33 @@ class APIHelper {
         });
 
         return info;
+    }
+
+    /**
+     * Convert version string (like 5100) to iOS (like 1.21)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} iOS version
+     */
+    versionToiOSVersion(version) {
+        return '1.' + (+version-3000)/100;
+    }
+
+    /**
+     * Convert version string (like 5100) to client version (like 0.51.0)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} client version (like 0.51.0)
+     */
+    versionToClientVersion(version) {
+        return '0.' + (+version)/100;
+    }
+
+    /**
+     * Convert version string (like 5100) to hash version (like v121)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} iOS version (like v121)
+     */
+    versionToHashVersion(version) {
+        return 'v1' + Math.floor((+version - 3000)/100);
     }
 }
 
