@@ -259,7 +259,7 @@ App.on('updatePos', () => {
 
                 return Promise.resolve();
             })
-            .delay(config.delay.walk)
+            .delay(config.delay.walk * 1000)
             .then(() => App.emit('updatePos'));
     } else {
         // we need a first getMapObjects to get some info about what is around us
