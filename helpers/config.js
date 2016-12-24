@@ -19,7 +19,6 @@ module.exports.load = function() {
         device: {id: 0},
         api: {
             version: '4500',
-            clientversion: '0.45.0',
             checkversion: true,
             country: 'US',
             language: 'en',

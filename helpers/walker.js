@@ -74,7 +74,7 @@ class Walker {
                             return state.path;
                         });
         } else {
-            throw new Error('No more available stops.');
+            logger.warn('No stop to go to, stand still.');
         }
     }
 
@@ -100,6 +100,8 @@ class Walker {
      * Update state.
      */
     walk() {
+        if (!this.state.path || this.state.path.waypoints.length == 0) return;
+
         // move towards next target
         let dest = this.state.path.waypoints[0];
         let speed = this.config.speed;

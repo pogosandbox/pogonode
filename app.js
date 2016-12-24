@@ -131,19 +131,25 @@ proxyhelper.checkProxy().then(valid => {
     let last = 0;
     if (fs.existsSync('data/item_templates.json')) {
         let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
-        state.api.item_templates = JSON.parse(json);
-        last = state.api.item_templates.timestamp_ms;
+        let data = JSON.parse(json);
+        state.api.item_templates = data.templates;
+        last = data.timestamp_ms || 0;
     }
 
-    if (last < state.api.item_templates_timestamp) {
+    if (!last || last < state.api.item_templates_timestamp) {
         logger.info('Game master updating...');
         let batch = client.batchStart();
+        // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
         batch.downloadItemTemplates();
         return apihelper.alwaysinit(batch)
                 .batchCall().then(resp => {
-                    apihelper.parse(resp);
-                }).then(() => {
-                    fs.writeFile('data/item_templates.json', JSON.stringify(state.api.item_templates), (err) => {});
+                    return apihelper.parse(resp);
+                }).then(info => {
+                    let json = JSON.stringify({
+                        templates: state.api.item_templates,
+                        timestamp_ms: info.timestamp_ms,
+                    });
+                    fs.writeFile('data/item_templates.json', json, (err) => {});
                 });
     } else {
         return Promise.resolve();
@@ -201,7 +207,7 @@ function resolveChallenge(url) {
     const CaptchaHelper = require('./captcha/captcha.helper');
     let helper = new CaptchaHelper(config, state);
     return helper
-            .solveCaptcha(url)
+            .solveCaptchaManual(url)
             .then(token => {
                 let batch = client.batchStart();
                 batch.verifyChallenge(token);
@@ -240,15 +246,15 @@ App.on('updatePos', () => {
                 let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
                 let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
 
-                if (!state.api.last_gmo) {
+                if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
                     // no previous call, fire a getMapObjects
+                    // or if it's been enough time since last getMapObjects
                    return mapRefresh();
-                } else if (moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
-                    // it's been enough time since last getMapObjects
-                    return mapRefresh();
+
                 } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
                     // if we travelled enough distance, fire a getMapObjects
                     if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
+
                 }
 
                 return Promise.resolve();

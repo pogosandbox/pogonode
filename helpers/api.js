@@ -279,7 +279,8 @@ class APIHelper {
                 // downloadSettings()
                 this.state.api.settings_hash = r.hash;
                 if (r.settings) {
-                    if (vercmp(this.config.api.clientversion, r.settings.minimum_client_version) < 0) {
+                    let clientversion = this.versionToClientVersion(this.config.api.version);
+                    if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
                         if (this.config.api.checkversion) {
                             throw new Error('Minimum client version=' + r.settings.minimum_client_version);
                         } else {
@@ -307,7 +308,8 @@ class APIHelper {
             } else if (r.item_templates) {
                 // downloadItemTemplates()
                 if (r.item_templates.length > 0) {
-                    this.state.item_templates = r.item_templates;
+                    this.state.api.item_templates = r.item_templates;
+                    info.timestamp_ms = r.timestamp_ms;
                 }
 
             } else if (r.hasOwnProperty('cooldown_complete_timestamp_ms')) {
@@ -403,6 +405,33 @@ class APIHelper {
         });
 
         return info;
+    }
+
+    /**
+     * Convert version string (like 5100) to iOS (like 1.21)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} iOS version
+     */
+    versionToiOSVersion(version) {
+        return '1.' + (+version-3000)/100;
+    }
+
+    /**
+     * Convert version string (like 5100) to client version (like 0.51.0)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} client version (like 0.51.0)
+     */
+    versionToClientVersion(version) {
+        return '0.' + (+version)/100;
+    }
+
+    /**
+     * Convert version string (like 5100) to hash version (like v121)
+     * @param {string} version - version string (in the form of 5100)
+     * @return {string} iOS version (like v121)
+     */
+    versionToHashVersion(version) {
+        return 'v1' + Math.floor((+version - 3000)/100);
     }
 }
 
