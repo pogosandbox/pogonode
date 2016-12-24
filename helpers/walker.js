@@ -75,6 +75,7 @@ class Walker {
                         });
         } else {
             logger.warn('No stop to go to, stand still.');
+            return Promise.resolve();
         }
     }
 

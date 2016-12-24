@@ -228,18 +228,26 @@ class Player {
             let infiniteOnes = _.filter(freeIncubators, i => i.item_id == 901);
             let others = _.filter(freeIncubators, i => i.item_id != 901);
 
+            let association = [];
+
             _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
                 // eggs to associate with infinite incubators
-                //logger.debug('associate egg %s with incub %s', e.)
-                console.log(e);
-                console.log(infiniteOnes[i]);
+                association.push({egg: e, incubator: infiniteOnes[i]});
             });
 
             _.each(_.takeRight(freeEggs, _.min([others.length, freeEggs.length - infiniteOnes.length])), (e, i) => {
                 // eggs to associate with disposable incubators
-                console.log(e);
-                console.log(others[i]);
+                association.push({egg: e, incubator: others[i]});
             });
+
+            return Promise.map(association, a => {
+                        let batch = client.batchStart();
+                        batch.useItemEggIncubator(a.incubator, a.egg);
+                        this.apihelper.always(batch);
+                        return batch.batchCall().then(responses => {
+                            this.apihelper.parse(responses);
+                        }).delay(this.config.delay.incubator * 1000);
+                    }, {concurrency: 1});
         }
     }
 
