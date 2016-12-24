@@ -1,16 +1,18 @@
 const fs = require('fs');
-const yaml = require('js-yaml');
 const logger = require('winston');
-const pogobuf = require('./pogobuf/pogobuf/pogobuf');
+// const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 
 logger.level = 'debug';
 
-let config = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
-let state = JSON.parse(fs.readFileSync('data/state.old.1.json', 'utf8'));
+let config = require('./helpers/config').load();
+let state = JSON.parse(fs.readFileSync('data/state.json', 'utf8'));
 
 state.map.pokestops.splice(2);
 
-const Walker = require('./walker');
+const APIHelper = require('./helpers/api');
+let apihelper = new APIHelper(config, state);
+
+const Walker = require('./helpers/walker');
 let walker = new Walker(config, state);
 
 // const ProxyHelper = require('./proxy.helper');
@@ -51,3 +53,7 @@ function testSocket() {
         }, 1000);
     });
 }
+
+config.api.version = '4910';
+logger.info('Version', config.api.version);
+logger.info('iOS Version', apihelper.versionToHashVersion(config.api.version));
