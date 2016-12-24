@@ -219,7 +219,7 @@ App.on('apiReady', () => {
     logger.info('Initial flow done.');
     App.emit('saveState');
     socket.ready();
-    setTimeout(() => App.emit('updatePos'), config.delay.walk);
+    setTimeout(() => App.emit('updatePos'), config.delay.walk * 1000);
 });
 
 App.on('updatePos', () => {
@@ -263,7 +263,7 @@ App.on('updatePos', () => {
             .then(() => App.emit('updatePos'));
     } else {
         // we need a first getMapObjects to get some info about what is around us
-        return mapRefresh().delay(config.delay.walk).then(() => App.emit('updatePos'));
+        return mapRefresh().delay(config.delay.walk * 1000).then(() => App.emit('updatePos'));
     }
 });
 
