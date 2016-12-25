@@ -10,6 +10,8 @@ let course = random.uniform(0, 360);
 
 module.exports.register = function(config, client) {
 
+    start = new Date().getTime();
+
     client.setSignatureInfo(function(envelope) {
         let timestampSinceStart = new Date().getTime() - start;
         let infos = {};
@@ -79,20 +81,6 @@ module.exports.register = function(config, client) {
         }];
 
         return infos;
-    });
-
-};
-
-module.exports.registersimple = function(config, client) {
-
-    client.setSignatureInfo(function(envelope) {
-        return {
-            location_fix: {
-                latitude: client.playerLatitude,
-                longitude: client.playerLongitude,
-                altitude: random.triangular(300, 400, 350),
-            },
-        };
     });
 
 };

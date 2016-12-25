@@ -42,7 +42,7 @@ module.exports.load = function() {
     }
 
     logger.level = config.loglevel;
-    logger.add(logger.transports.File, {filename: 'pogonode.log', json: false});
+    logger.add(logger.transports.File, {filename: 'data/pogonode.log', json: false});
 
     if (!config.device.id) {
         config.device.id = _.times(32, () => '0123456789abcdef'[Math.floor(Math.random()*16)]).join('');

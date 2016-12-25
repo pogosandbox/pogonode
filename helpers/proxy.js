@@ -106,6 +106,8 @@ class ProxyHelper {
      */
     badProxy() {
         if (!_.find(this.badProxies, p => p.proxy == this.proxy)) {
+            if (this.config.proxy != 'auto') logger.warn('Configured proxy looks bad.');
+
             this.badProxies.push({
                 proxy: this.proxy,
                 date: Date.now(),

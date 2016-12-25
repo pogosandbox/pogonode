@@ -170,6 +170,7 @@ proxyhelper.checkProxy().then(valid => {
     // ok api is ready to go
     apihelper.parse(responses);
     App.emit('apiReady');
+    return true;
 
 }).catch(e => {
     if (e.name == 'ChallengeError') {
@@ -219,52 +220,56 @@ App.on('apiReady', () => {
     logger.info('Initial flow done.');
     App.emit('saveState');
     socket.ready();
-    setTimeout(() => App.emit('updatePos'), config.delay.walk * 1000);
+
+    // Wait a bit, call a getMapObjects() then start walking around
+    Promise.delay(config.delay.walk * _.random(900, 1100))
+            .then(() => {
+                return mapRefresh();
+            })
+            .delay(config.delay.walk * _.random(900, 1100))
+            .then(() => {
+                App.emit('updatePos');
+            });
 });
 
 App.on('updatePos', () => {
-    if (state.map) {
-        walker
-            .checkPath()
-            .then(path => {
-                if (path) socket.sendRoute(path.waypoints);
-            })
-            .then(() => {
-                walker.walk();
-                return walker.getAltitude(state.pos);
-            })
-            .then(altitude => {
-                client.setPosition({
-                    latitude: state.pos.lat,
-                    longitude: state.pos.lng,
-                    altitude: altitude,
-                });
+    walker
+        .checkPath()
+        .then(path => {
+            if (path) socket.sendRoute(path.waypoints);
+        })
+        .then(() => {
+            walker.walk();
+            return walker.getAltitude(state.pos);
+        })
+        .then(altitude => {
+            client.setPosition({
+                latitude: state.pos.lat,
+                longitude: state.pos.lng,
+                altitude: altitude,
+            });
 
-                socket.sendPosition();
+            socket.sendPosition();
 
-                let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
-                let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
-                let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
+            let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
+            let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
+            let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
 
-                if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
-                    // no previous call, fire a getMapObjects
-                    // or if it's been enough time since last getMapObjects
-                   return mapRefresh();
+            if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
+                // no previous call, fire a getMapObjects
+                // or if it's been enough time since last getMapObjects
+                return mapRefresh();
 
-                } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
-                    // if we travelled enough distance, fire a getMapObjects
-                    if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
+            } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
+                // if we travelled enough distance, fire a getMapObjects
+                if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
 
-                }
+            }
 
-                return Promise.resolve();
-            })
-            .delay(config.delay.walk * 1000)
-            .then(() => App.emit('updatePos'));
-    } else {
-        // we need a first getMapObjects to get some info about what is around us
-        return mapRefresh().delay(config.delay.walk * 1000).then(() => App.emit('updatePos'));
-    }
+            return Promise.resolve();
+        })
+        .delay(config.delay.walk * _.random(900, 1100))
+        .then(() => App.emit('updatePos'));
 });
 
 /**
