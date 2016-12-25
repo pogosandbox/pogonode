@@ -37,9 +37,11 @@ class SocketServer {
             logger.debug('UI connected.');
             if (this.initialized) this.ready(socket);
 
+            socket.on('pokemon_settings', msg => this.sendPokemonSettings(socket));
             socket.on('inventory_list', msg => this.sendInventory(socket));
             socket.on('pokemon_list', msg => this.sendPokemons(socket));
             socket.on('eggs_list', msg => this.sendEggs(socket));
+            socket.on('player_stats', msg => this.sendPlayerStats(socket));
         });
 
         return httpserver.listenAsync(process.env.PORT || 8000, '0.0.0.0').then(() => {
@@ -115,6 +117,14 @@ class SocketServer {
         this.io.emit('pokestop_visited', pokestop);
     }
 
+    /**
+     * Send pokemon settings (part of item_templates)
+     * @param {object} client - the socket client to send info to
+     */
+    sendPokemonSettings(client) {
+        let pkmSettings = _.filter(this.state.api.item_templates, i => i.pokemon_settings != null);
+        client.emit('pokemon_settings', _.map(pkmSettings, s => s.pokemon_settings));
+    }
 
     /**
      * Send the inventory to a client after it request it
@@ -131,7 +141,7 @@ class SocketServer {
     sendPokemons(client) {
         client.emit('pokemon_list', {
             pokemon: this.state.inventory.pokemon,
-            candy: this.state.inventory.candies,
+            candy: _.keyBy(this.state.inventory.candies, 'family_id'),
         });
     }
 
@@ -145,6 +155,14 @@ class SocketServer {
             egg_incubators: this.state.inventory.egg_incubators,
             eggs: this.state.inventory.eggs,
         });
+    }
+
+    /**
+     * Send player stats  to a client after it request it
+     * @param {object} client - the socket client to send info to
+     */
+    sendPlayerStats(client) {
+        client.emit('player_stats', this.state.inventory.player);
     }
 }
 

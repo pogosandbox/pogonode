@@ -8,6 +8,7 @@ const logger = require('winston');
 Promise.promisifyAll(GoogleMapsAPI.prototype);
 const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
+const UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
 
 const APIHelper = require('./api');
 
@@ -84,7 +85,7 @@ class Player {
         logger.debug('Start encounters...');
         let client = this.state.client;
         return Promise.map(pokemons, pk => {
-                    logger.debug('  encounter %s', pk.pokemon_id);
+                    logger.debug('Encounter %s', pk.pokemon_id);
                     let batch = client.batchStart();
                     batch.encounter(pk.encounter_id, pk.spawn_point_id);
                     this.apihelper.always(batch);
@@ -169,11 +170,9 @@ class Player {
 
         let lancer = this.getThrowParameter(encounter.pokemon_id);
         if (lancer.ball < 0) {
-            logger.warn('  no pokéball found for catching.');
+            logger.warn('No pokéball found for catching.');
             return;
         }
-
-        logger.debug('  catch pokemon', encounter);
 
         let batch = this.state.client.batchStart();
         batch.catchPokemon(
@@ -207,7 +206,9 @@ class Player {
     getPokeBallForPokemon(pokemondId) {
         let balls = _.filter(this.state.inventory.items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
-            return _.head(balls).item_id;
+            let ball = _.head(balls);
+            ball.count--;
+            return ball.item_id;
         } else {
             return -1;
         }
@@ -217,6 +218,7 @@ class Player {
      * Dipatch available incubators to eggs in order to hatch.
      * We use short eggs with unlimited incubator if available,
      * and use long eggs with limited one if available.
+     * @return {Promise} Promise
      */
     dispatchIncubators() {
         let freeIncubators = _.filter(this.state.inventory.egg_incubators, i => i.pokemon_id == 0);
@@ -232,20 +234,28 @@ class Player {
 
             _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
                 // eggs to associate with infinite incubators
-                association.push({egg: e, incubator: infiniteOnes[i]});
+                association.push({egg: e.id, incubator: infiniteOnes[i].id});
             });
 
             _.each(_.takeRight(freeEggs, _.min([others.length, freeEggs.length - infiniteOnes.length])), (e, i) => {
                 // eggs to associate with disposable incubators
-                association.push({egg: e, incubator: others[i]});
+                association.push({egg: e.id, incubator: others[i].id});
             });
 
             return Promise.map(association, a => {
-                        let batch = client.batchStart();
+                        let batch = this.state.client.batchStart();
                         batch.useItemEggIncubator(a.incubator, a.egg);
                         this.apihelper.always(batch);
                         return batch.batchCall().then(responses => {
-                            this.apihelper.parse(responses);
+                            let info = this.apihelper.parse(responses);
+                            if (info.result != UseIncubatorResult.SUCCESS) {
+                                logger.warn('Error using incubator.', {
+                                    result: info.result,
+                                    incubator: a.incubator,
+                                    egg: a.egg,
+                                });
+                            }
+
                         }).delay(this.config.delay.incubator * 1000);
                     }, {concurrency: 1});
         }

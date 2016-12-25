@@ -20,6 +20,7 @@ function ChallengeError(url) {
 ChallengeError.prototype = Object.create(Error.prototype);
 ChallengeError.prototype.constructor = ChallengeError;
 
+const RequestType = POGOProtos.Networking.Requests.RequestType;
 const CatchPokemonResult = POGOProtos.Networking.Responses.CatchPokemonResponse.CatchStatus;
 
 /**
@@ -91,7 +92,14 @@ class APIHelper {
                 }
             });
         }
-        if (split.player) this.state.inventory.player = split.player;
+        if (split.player) {
+            let lvl = this.state.inventory.player.level;
+            this.state.inventory.player = split.player;
+            if (this.state.inventory.player.level != lvl) {
+                // level up
+                this.state.lvlUp = true;
+            }
+        }
         if (split.egg_incubators.length > 0) {
             this.state.inventory.egg_incubators = split.egg_incubators;
         }
@@ -229,179 +237,183 @@ class APIHelper {
         let info = {};
 
         responses.forEach(r => {
-            if (r.player_data) {
-                // getPlayer()
-                this.state.player = r.player_data;
-                this.state.player.banned = r.banned;
-                this.state.player.warn = r.warn;
-                if (r.banned) throw new Error('Account Banned');
-                if (r.warn) logger.error('Ban warning.');
 
-            } else if (r.egg_km_walked) {
-                // getHatchedEggs()
-                if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 ||
-                    r.experience_awarded.length > 0 || r.pokemon_id.length > 0) {
-                    console.dir(r, {depth: 4});
+            switch(r.pogoBufRequest) {
 
-                    // for(let stardust in r.stardust_awarded) {
-                    //     //this.state.inventory.player.
-                    // }
-                    // for (let xp in r.experience_awarded) {
-                    //     //this.state.inventory.player.experience += xp;
-                    // }
-                    // for (let candy in r.candy_awarded) {
-                    //
-                    // }
-                }
+                case RequestType.GET_PLAYER:
+                    this.state.player = r.player_data;
+                    this.state.player.banned = r.banned;
+                    this.state.player.warn = r.warn;
+                    if (r.banned) throw new Error('Account Banned');
+                    if (r.warn) logger.error('Ban warning.');
+                    break;
 
-            } else if (r.inventory_delta) {
-                // getInventory()
-                this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
-                if (!this.state.hasOwnProperty('inventory')) {
-                    // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
-                    this.state.inventory = pogobuf.Utils.splitInventory(r);
-                    this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
-                    this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
+                case RequestType.GET_INVENTORY:
+                    this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
+                    if (!this.state.hasOwnProperty('inventory')) {
+                        // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
+                        this.state.inventory = pogobuf.Utils.splitInventory(r);
+                        this.state.inventory.eggs = _.filter(this.state.inventory.pokemon, p => p.is_egg);
+                        this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, p => !p.is_egg);
 
-                } else if (r.inventory_delta.inventory_items.length > 0) {
-                    this.parseInventoryDelta(r);
+                    } else if (r.inventory_delta.inventory_items.length > 0) {
+                        this.parseInventoryDelta(r);
 
-                }
+                    }
+                    break;
 
-            } else if (r.awarded_badges) {
-                // checkAwardedBadges()
-                if (r.awarded_badges.length > 0 || r.awarded_badge_levels > 0) {
-                    // console.log('checkAwardedBadges()');
-                    // console.dir(r, {depth: 4});
-                }
-
-            } else if (r.hash) {
-                // downloadSettings()
-                this.state.api.settings_hash = r.hash;
-                if (r.settings) {
-                    let clientversion = this.versionToClientVersion(this.config.api.version);
-                    if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
-                        if (this.config.api.checkversion) {
-                            throw new Error('Minimum client version=' + r.settings.minimum_client_version);
-                        } else {
-                            logger.warn('Minimum client version=' + r.settings.minimum_client_version);
+                case RequestType.DOWNLOAD_SETTINGS:
+                    this.state.api.settings_hash = r.hash;
+                    if (r.settings) {
+                        let clientversion = this.versionToClientVersion(this.config.api.version);
+                        if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
+                            if (this.config.api.checkversion) {
+                                throw new Error('Minimum client version=' + r.settings.minimum_client_version);
+                            } else {
+                                logger.warn('Minimum client version=' + r.settings.minimum_client_version);
+                            }
                         }
+                        this.state.download_settings = r.settings;
+                        this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                     }
-                    this.state.download_settings = r.settings;
-                    this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
-                }
+                    break;
 
-            } else if (r.item_templates_timestamp_ms) {
-                // downloadRemoteConfigVersion()
-                this.state.api.item_templates_timestamp = r.item_templates_timestamp_ms;
-
-            } else if (r.hasOwnProperty('show_challenge')) {
-                // checkChallenge()
-                if (r.show_challenge) {
-                    logger.error('Challenge!', {challenge_url: r.challenge_url});
-                    throw new ChallengeError(r.challenge_url);
-                }
-
-            } else if (r.hasOwnProperty('digest')) {
-                // getAssetDigest()
-
-            } else if (r.item_templates) {
-                // downloadItemTemplates()
-                if (r.item_templates.length > 0) {
-                    this.state.api.item_templates = r.item_templates;
-                    info.timestamp_ms = r.timestamp_ms;
-                }
-
-            } else if (r.hasOwnProperty('cooldown_complete_timestamp_ms')) {
-                // fortSearch
-                if (r.result == 1) {
-                    _.each(r.items_awarded, i => {
-                        let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
-                        if (item) item.count += i.item_count;
-                    });
-
-                    if (r.pokemon_data_egg) {
-                        this.state.inventory.eggs.push(r.pokemon_data_egg);
+                case RequestType.DOWNLOAD_ITEM_TEMPLATES:
+                    if (r.item_templates.length > 0) {
+                        this.state.api.item_templates = r.item_templates;
+                        info.timestamp_ms = r.timestamp_ms;
                     }
+                    break;
 
-                    this.state.player.experience += r.experience_awarded;
+                case RequestType.DOWNLOAD_REMOTE_CONFIG_VERSION:
+                    this.state.api.item_templates_timestamp = r.item_templates_timestamp_ms;
+                    break;
+
+                case RequestType.FORT_SEARCH:
+                    if (r.result == 1) {
+                        _.each(r.items_awarded, i => {
+                            let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+                            if (item) item.count += i.item_count;
+                        });
+
+                        if (r.pokemon_data_egg) {
+                            this.state.inventory.eggs.push(r.pokemon_data_egg);
+                        }
+
+                        this.state.player.experience += r.experience_awarded;
+                        info = {
+                            status: r.status,
+                            cooldown: r.cooldown_complete_timestamp_ms,
+                        };
+
+                    } else {
+                        logger.warn('fortSearch() returned %s', r.result);
+                    }
+                    break;
+
+                case RequestType.ENCOUNTER:
+                    info.status = r.status;
+                    if (r.wild_pokemon) {
+                        info.pokemon = r.wild_pokemon.pokemon_data;
+                        info.position = {lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude};
+                    }
+                    break;
+
+                case RequestType.CATCH_POKEMON:
+                    if (r.pokemon_data) {
+                        // init capture
+                        this.state.inventory.pokemon.push(r.pokemon_data);
+                    }
                     info = {
+                        caught: r.status == CatchPokemonResult.CATCH_SUCCESS,
                         status: r.status,
-                        cooldown: r.cooldown_complete_timestamp_ms,
+                        id: r.captured_pokemon_id,
+                        capture_reason: r.capture_reason,
+                        candy: _.sum(r.capture_award.candy),
+                        xp: _.sum(r.capture_award.xp),
                     };
+                    break;
 
-                } else {
-                    logger.warn('fortSearch() returned %s', r.result);
-                }
+                case RequestType.GET_MAP_OBJECTS:
+                    let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
+                    let pokestops = forts.filter(f => f.type == 1);
+                    let gyms = forts.filter(f => f.type == 2);
+                    let wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
+                    let catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
+                    let nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
+                    // let spawnPoints = r.map_cells.reduce((all, c) => all.concat(c.spawn_points), []);
 
-            } else if (r.items_awarded) {
-                // levelUpRewards
-                if (r.result == 1) {
-                    console.log('levelUpRewards()');
-                    console.dir(r, {depth: 4});
-                    _.each(r.items_awarded, i => {
-                        let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
-                        if (item) item.count += i.item_count;
-                        else this.state.inventory.items.push(item);
-                    });
-                }
+                    this.state.map = {
+                        pokestops: pokestops,
+                        gyms: gyms,
+                        wild_pokemons: wildPokemons,
+                        catchable_pokemons: catchablePokemons,
+                        nearby_pokemons: nearbyPokemons,
+                        // spawn_points: spawnPoints
+                    };
+                    break;
 
-            } else if (r.hasOwnProperty('candy_earned_count')) {
-                // getBuddyWalked
-                if (r.family_candy_id || r.candy_earned_count) {
-                    console.dir(r, {depth: 4});
-                }
+                case RequestType.GET_PLAYER_PROFILE:
+                    // nothing
+                    break;
 
-            } else if (r.badges) {
-                // getPlayerProfile
+                case RequestType.GET_HATCHED_EGGS:
+                    if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 ||
+                        r.experience_awarded.length > 0 || r.pokemon_id.length > 0) {
+                        logger.info('getHatchedEggs()');
+                        console.dir(r, {depth: 4});
+                    }
+                    break;
 
-            } else if (r.map_cells) {
-                // getMapObjects
-                let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
-                let pokestops = forts.filter(f => f.type == 1);
-                let gyms = forts.filter(f => f.type == 2);
-                let wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
-                let catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
-                let nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
-                // let spawnPoints = r.map_cells.reduce((all, c) => all.concat(c.spawn_points), []);
-
-                this.state.map = {
-                    pokestops: pokestops,
-                    gyms: gyms,
-                    wild_pokemons: wildPokemons,
-                    catchable_pokemons: catchablePokemons,
-                    nearby_pokemons: nearbyPokemons,
-                    // spawn_points: spawnPoints
-                };
-
-            } else if (r.hasOwnProperty('capture_probability')) {
-                // encounter
-                info.status = r.status;
-                if (r.wild_pokemon) {
-                    info.pokemon = r.wild_pokemon.pokemon_data;
-                    info.position = {lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude};
-                }
-
-            } else if (r.hasOwnProperty('capture_award')) {
-                // capture pokemon
-                if (r.pokemon_data) {
-                    // init capture
+                case RequestType.ENCOUNTER_TUTORIAL_COMPLETE:
+                    // TODO: check if not already in getInventory()
                     this.state.inventory.pokemon.push(r.pokemon_data);
-                }
-                info = {
-                    caught: r.status == CatchPokemonResult.CATCH_SUCCESS,
-                    status: r.status,
-                    id: r.captured_pokemon_id,
-                    capture_reason: r.capture_reason,
-                    candy: _.sum(r.capture_award.candy),
-                    xp: _.sum(r.capture_award.xp),
-                };
+                    break;
 
-            } else {
-                logger.warn('unhandled');
-                logger.warn(r);
+                case RequestType.LEVEL_UP_REWARDS:
+                    if (r.result == 1) {
+                        logger.debug('levelUpRewards()');
+                        logger.debug(' todo: see if also in inventory_delta?');
+                        console.dir(r, {depth: 4});
+                        _.each(r.items_awarded, i => {
+                            let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+                            if (item) item.count += i.item_count;
+                            else this.state.inventory.items.push(item);
+                        });
+                    }
+                    break;
 
+                case RequestType.CHECK_AWARDED_BADGES:
+                    // nothing
+                    break;
+
+                case RequestType.USE_ITEM_EGG_INCUBATOR:
+                    info.result = r.result;
+                    break;
+
+                case RequestType.GET_BUDDY_WALKED:
+                    if (r.family_candy_id || r.candy_earned_count) {
+                        logger.info('getBuddyWalked()');
+                        console.dir(r, {depth: 4});
+                    }
+                    break;
+
+                case RequestType.GET_ASSET_DIGEST:
+                    // nothing
+                    break;
+
+                case RequestType.CHECK_CHALLENGE:
+                    if (r.show_challenge) {
+                        logger.error('Challenge!', {challenge_url: r.challenge_url});
+                        throw new ChallengeError(r.challenge_url);
+                    }
+                    break;
+
+                default:
+                    logger.warn('Unhandled request: %s', r.pogoBufRequest);
+                    break;
             }
+
         });
 
         return info;

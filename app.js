@@ -51,7 +51,9 @@ let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
-let client = new pogobuf.Client();
+let client = new pogobuf.Client({
+    includeReqTypeInResponse: true,
+});
 state.client = client;
 
 signaturehelper.register(config, client);
@@ -85,9 +87,10 @@ proxyhelper.checkProxy().then(valid => {
     return walker.getAltitude(state.pos);
 
 }).then(altitude => {
+    let pos = walker.fuzzedLocation(state.pos);
     client.setPosition({
-        latitude: state.pos.lat,
-        longitude: state.pos.lng,
+        latitude: pos.lat,
+        longitude: pos.lng,
         altitude: altitude,
     });
 
@@ -148,7 +151,7 @@ proxyhelper.checkProxy().then(valid => {
                     let json = JSON.stringify({
                         templates: state.api.item_templates,
                         timestamp_ms: info.timestamp_ms,
-                    });
+                    }, null, 4);
                     fs.writeFile('data/item_templates.json', json, (err) => {});
                 });
     } else {
@@ -243,14 +246,26 @@ App.on('updatePos', () => {
             return walker.getAltitude(state.pos);
         })
         .then(altitude => {
+            let pos = walker.fuzzedLocation(state.pos);
             client.setPosition({
-                latitude: state.pos.lat,
-                longitude: state.pos.lng,
+                latitude: pos.lat,
+                longitude: pos.lng,
                 altitude: altitude,
             });
 
             socket.sendPosition();
 
+        })
+        .then(() => {
+            if (state.lvlUp) {
+                let batch = client.batchStart();
+                batch.levelUpRewards(state.inventory.player.level);
+                return apihelper.always(batch).batchCall()
+                        .then(responses => apihelper.parse(responses));
+            }
+
+        })
+        .then(() => {
             let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
             let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
             let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
