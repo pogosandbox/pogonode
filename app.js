@@ -129,6 +129,10 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(responses => {
     apihelper.parse(responses);
+    // TODO: REGISTER_BACKGROUND_DEVICE
+
+}).then(responses => {
+    apihelper.parse(responses);
 
     // check if item_templates need to be downloaded based on current timestamp
     let last = 0;

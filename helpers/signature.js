@@ -51,8 +51,8 @@ module.exports.register = function(config, client) {
                                 device_model_boot: 'iPhone8,1',
                                 hardware_manufacturer: 'Apple',
                                 hardware_model: 'N71AP',
-                                firmware_brand: 'iPhone OS',
-                                firmware_type: '10.1.1',
+                                firmware_brand: 'iOS',
+                                firmware_type: '10.2',
                             };
 
         infos.activity_status = {

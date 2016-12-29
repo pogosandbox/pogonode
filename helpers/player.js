@@ -6,6 +6,7 @@ const Promise = require('bluebird');
 const logger = require('winston');
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
+
 const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
 const UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
