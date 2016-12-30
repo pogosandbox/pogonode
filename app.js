@@ -61,6 +61,7 @@ if (config.hashserver.active) {
 
 state.client = client;
 
+client.setIncludeReqTypeInResponse(true);
 signaturehelper.register(config, client);
 
 logger.info('App starting...');
@@ -69,7 +70,7 @@ proxyhelper.checkProxy().then(valid => {
     // find a proxy if 'auto' is set in config
     // then test if to be sure it works
     // if ok, set proxy in api
-    if (config.proxy) {
+    if (config.proxy && config.proxy.url) {
         if (valid) {
             login.setProxy(proxyhelper.proxy);
             client.setProxy(proxyhelper.proxy);

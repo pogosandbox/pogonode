@@ -236,9 +236,16 @@ class APIHelper {
 
         let info = {};
 
-        responses.forEach(r => {
+        if (responses[0].pogoBufRequest == RequestType.LEVEL_UP_REWARDS) {
+            if (responses[0].result == 1) {
+                info = info;
+                // check if new item are also in get_inventory
+            }
+        }
 
-            switch(r.pogoBufRequest) {
+        responses.forEach(r => {
+            // eslint-disable-next-line no-underscore-dangle
+            switch(r._requestType) {
 
                 case RequestType.GET_PLAYER:
                     this.state.player = r.player_data;

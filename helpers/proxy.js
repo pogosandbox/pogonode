@@ -40,7 +40,7 @@ class ProxyHelper {
      * @return {Promise} with a proxy url as param.
      */
     findProxy() {
-        if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy);
+        if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy.url);
 
         let trToProxy = function($, tr) {
             return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
@@ -67,7 +67,7 @@ class ProxyHelper {
      * @return {Promise} with true or false
      */
     checkProxy() {
-        if (!this.config || !this.config.proxy) {
+        if (!this.config || !this.config.proxy || !this.config.proxy.url) {
             return Promise.resolve(true);
         }
 
@@ -77,6 +77,7 @@ class ProxyHelper {
             this.proxy = proxy;
             this.state.proxy = proxy;
             logger.info('Using proxy: %s', proxy);
+
             return request.getAsync('https://api.ipify.org/?format=json');
 
         }).then(response => {
@@ -95,7 +96,7 @@ class ProxyHelper {
 
             let ip = JSON.parse(response.body).ip;
             logger.debug('Proxified ip: ' + ip);
-            let valid = this.clearIp != ip;
+            let valid = !this.config.proxy.check || (this.clearIp != ip);
             if (!valid) this.badProxy();
             return valid;
         });
@@ -106,7 +107,7 @@ class ProxyHelper {
      */
     badProxy() {
         if (!_.find(this.badProxies, p => p.proxy == this.proxy)) {
-            if (this.config.proxy != 'auto') logger.warn('Configured proxy looks bad.');
+            if (this.config.proxy.url != 'auto') logger.warn('Configured proxy looks bad.');
 
             this.badProxies.push({
                 proxy: this.proxy,
