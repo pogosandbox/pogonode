@@ -52,13 +52,19 @@ let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
 let client = new pogobuf.Client();
-client.mapObjectsThrottlingEnabled = false;
 state.client = client;
 
-client.setIncludeReqTypeInResponse(true);
+client.mapObjectsThrottlingEnabled = false;
+client.setIncludeRequestTypeInResponse(true);
+client.setVersion(config.api.version);
 signaturehelper.register(config, client);
 
 logger.info('App starting...');
+
+if (config.hashserver && config.hashserver.active) {
+    logger.info('Using hashserver');
+    client.activateHashServer(config.hashserver.key);
+}
 
 proxyhelper.checkProxy().then(valid => {
     // find a proxy if 'auto' is set in config
@@ -116,7 +122,7 @@ proxyhelper.checkProxy().then(valid => {
 
     // download config version like the real app
     let batch = client.batchStart();
-    batch.downloadRemoteConfigVersion('IOS', config.api.version);
+    batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
@@ -124,7 +130,7 @@ proxyhelper.checkProxy().then(valid => {
 
     // get asset digest (never use, but do it like the app)
     let batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, undefined, undefined, undefined, +config.api.version);
+    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
