@@ -7,7 +7,7 @@ logger.level = 'debug';
 let config = require('./helpers/config').load();
 let state = JSON.parse(fs.readFileSync('data/state.json', 'utf8'));
 
-state.map.pokestops.splice(2);
+// state.map.pokestops.splice(2);
 
 const APIHelper = require('./helpers/api');
 let apihelper = new APIHelper(config, state);
@@ -54,6 +54,7 @@ function testSocket() {
     });
 }
 
-config.api.version = '4910';
+// config.api.version = '5120';
 logger.info('Version', config.api.version);
-logger.info('iOS Version', apihelper.versionToHashVersion(config.api.version));
+logger.info('Client Version', apihelper.versionToClientVersion(config.api.version));
+logger.info('iOS Version', apihelper.versionToiOSVersion(config.api.version));

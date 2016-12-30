@@ -441,16 +441,7 @@ class APIHelper {
      * @return {string} client version (like 0.51.0)
      */
     versionToClientVersion(version) {
-        return '0.' + (+version)/100;
-    }
-
-    /**
-     * Convert version string (like 5100) to hash version (like v121)
-     * @param {string} version - version string (in the form of 5100)
-     * @return {string} iOS version (like v121)
-     */
-    versionToHashVersion(version) {
-        return 'v1' + Math.floor((+version - 3000)/100);
+        return '0.' + ((+version)/100).toFixed(1);
     }
 }
 

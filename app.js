@@ -51,6 +51,7 @@ let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
+
 let client = new pogobuf.Client();
 state.client = client;
 
@@ -106,7 +107,7 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     // first empty request
-    return client.batchStart().batchCall();
+    // return client.batchStart().batchCall();
 
 }).then(() => {
     // initial player state
