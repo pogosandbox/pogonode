@@ -51,9 +51,14 @@ let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
-let client = new pogobuf.Client({
-    includeReqTypeInResponse: true,
-});
+
+let client = new pogobuf.Client();
+client.setVersion(config.api.version);
+client.setIncludeRequestTypeInResponse(true);
+if (config.hashserver.active) {
+    client.activateHashServer(config.hashserver.key);
+}
+
 state.client = client;
 
 signaturehelper.register(config, client);
@@ -100,7 +105,7 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     // first empty request
-    return client.batchStart().batchCall();
+    // return client.batchStart().batchCall();
 
 }).then(() => {
     // initial player state
