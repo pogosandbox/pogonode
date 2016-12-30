@@ -236,6 +236,13 @@ class APIHelper {
 
         let info = {};
 
+        if (responses[0].pogoBufRequest == RequestType.LEVEL_UP_REWARDS) {
+            if (responses[0].result == 1) {
+                info = info;
+                // check if new item are also in get_inventory
+            }
+        }
+
         responses.forEach(r => {
 
             switch(r.pogoBufRequest) {
