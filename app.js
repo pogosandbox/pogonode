@@ -62,11 +62,6 @@ signaturehelper.register(config, client);
 
 logger.info('App starting...');
 
-if (config.hashserver && config.hashserver.active) {
-    logger.info('Using hashserver');
-    client.activateHashServer(config.hashserver.key);
-}
-
 proxyhelper.checkProxy().then(valid => {
     // find a proxy if 'auto' is set in config
     // then test if to be sure it works
@@ -80,6 +75,12 @@ proxyhelper.checkProxy().then(valid => {
         }
     }
     return socket.start();
+
+}).then(() => {
+    if (config.hashserver && config.hashserver.active) {
+        logger.info('Activating hashserver...');
+        return client.activateHashServer(config.hashserver.key);
+    }
 
 }).then(() => {
     // try login using PTC
