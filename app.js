@@ -52,6 +52,7 @@ let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
 let client = new pogobuf.Client();
+client.mapObjectsThrottlingEnabled = false;
 state.client = client;
 
 client.setIncludeReqTypeInResponse(true);

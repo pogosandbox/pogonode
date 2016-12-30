@@ -244,8 +244,8 @@ class APIHelper {
         }
 
         responses.forEach(r => {
-
-            switch(r.pogoBufRequest) {
+            // eslint-disable-next-line no-underscore-dangle
+            switch(r._requestType) {
 
                 case RequestType.GET_PLAYER:
                     this.state.player = r.player_data;
