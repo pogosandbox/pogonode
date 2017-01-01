@@ -1,5 +1,6 @@
 const fs = require('fs');
 const logger = require('winston');
+const _ = require('lodash');
 // const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 
 logger.level = 'debug';
@@ -58,3 +59,12 @@ function testSocket() {
 logger.info('Version', config.api.version);
 logger.info('Client Version', apihelper.versionToClientVersion(config.api.version));
 logger.info('iOS Version', apihelper.versionToiOSVersion(config.api.version));
+
+hashKeyIdx = 0;
+hashKey = [1, 2, 3, 4];
+function key() {
+    console.log(hashKey[hashKeyIdx]);
+    hashKeyIdx = (hashKeyIdx + 1) % hashKey.length;
+}
+
+_.map(_.range(10), key);

@@ -383,9 +383,9 @@ class APIHelper {
                         logger.debug(' todo: see if also in inventory_delta?');
                         console.dir(r, {depth: 4});
                         _.each(r.items_awarded, i => {
-                            let item = _.find(this.state.inventory.items, it => it.item_id == i.item_id);
+                            let item = _.find(this.state.inventory.items, it => it && it.item_id == i.item_id);
                             if (item) item.count += i.item_count;
-                            else this.state.inventory.items.push(item);
+                            else this.state.inventory.items.push(i);
                         });
                     }
                     break;

@@ -6,6 +6,7 @@
   "author": "niico",
   "license": "MIT",
   "dependencies": {
+    "bluebird-retry": "^0.10.1",
     "cheerio": "^0.22.0",
     "dotenv": "^2.0.0",
     "events": "^1.1.1",

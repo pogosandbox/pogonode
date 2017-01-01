@@ -16,12 +16,13 @@ module.exports.register = function(config, client) {
         let timestampSinceStart = new Date().getTime() - start;
         let infos = {};
         let loc = {
-                        provider: ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
+                        provider: 'fused', // ['network', 'network', 'network', 'network', 'fused'][Math.floor(Math.random()*5)],
                         latitude: client.playerLatitude,
                         longitude: client.playerLongitude,
                         altitude: client.playerAltitude || random.triangular(300, 400, 350),
                         provider_status: 3,
                         location_type: 1,
+                        floor: 0,
                     };
         if (Math.random() > 0.95) {
             loc.course = -1;
