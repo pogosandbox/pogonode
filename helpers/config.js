@@ -33,6 +33,9 @@ module.exports.load = function() {
             catch: 3,
             incubator: 3,
         },
+        hashserver: {
+            active: false,
+        },
         proxy: {
             check: true,
             url: null,

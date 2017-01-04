@@ -12,7 +12,7 @@ module.exports.register = function(config, client) {
 
     start = new Date().getTime();
 
-    client.setSignatureInfo(function(envelope) {
+    client.setOption('signatureInfo', function(envelope) {
         let timestampSinceStart = new Date().getTime() - start;
         let infos = {};
         let loc = {

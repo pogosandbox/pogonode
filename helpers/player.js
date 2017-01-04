@@ -216,6 +216,14 @@ class Player {
     }
 
     /**
+     * Clean inventory based on config
+     * @return {Promise} Promise
+     */
+    cleanInventory() {
+        return Promise.resolve();
+    }
+
+    /**
      * Dipatch available incubators to eggs in order to hatch.
      * We use short eggs with unlimited incubator if available,
      * and use long eggs with limited one if available.
