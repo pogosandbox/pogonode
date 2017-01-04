@@ -40,7 +40,7 @@ class ProxyHelper {
      * @return {Promise} with a proxy url as param.
      */
     findProxy() {
-        if (this.config.proxy != 'auto') return Promise.resolve(this.config.proxy.url);
+        if (this.config.proxy.url != 'auto') return Promise.resolve(this.config.proxy.url);
 
         let trToProxy = function($, tr) {
             return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
@@ -67,7 +67,7 @@ class ProxyHelper {
      * @return {Promise} with true or false
      */
     checkProxy() {
-        if (!this.config || !this.config.proxy || !this.config.proxy.url) {
+        if (!this.config.proxy.url) {
             return Promise.resolve(true);
         }
 

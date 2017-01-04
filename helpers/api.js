@@ -4,7 +4,7 @@ const logger = require('winston');
 const vercmp = require('semver-compare');
 const _ = require('lodash');
 const Promise = require('bluebird');
-// const fs = require('fs');
+const util = require('util');
 
 /**
  * Throw that there is a challenge needed
@@ -12,13 +12,12 @@ const Promise = require('bluebird');
  * @param {string} url - Challenge url
  */
 function ChallengeError(url) {
+    Error.captureStackTrace(this, this.constructor);
     this.name = 'ChallengeError';
     this.url = url;
-    this.message = 'A challenged have been received: ' + url,
-    this.stack = (new Error()).stack;
+    this.message = 'A challenged have been received: ' + url;
 }
-ChallengeError.prototype = Object.create(Error.prototype);
-ChallengeError.prototype.constructor = ChallengeError;
+util.inherits(ChallengeError, Error);
 
 const RequestType = POGOProtos.Networking.Requests.RequestType;
 const CatchPokemonResult = POGOProtos.Networking.Responses.CatchPokemonResponse.CatchStatus;

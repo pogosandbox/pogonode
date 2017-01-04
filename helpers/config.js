@@ -33,6 +33,10 @@ module.exports.load = function() {
             catch: 3,
             incubator: 3,
         },
+        proxy: {
+            check: true,
+            url: null,
+        },
         loglevel: 'info',
     };
 
