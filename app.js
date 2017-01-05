@@ -193,13 +193,14 @@ proxyhelper.checkProxy().then(valid => {
         resolveChallenge(e.url)
         .then(responses => {
             apihelper.parse(responses);
-            logger.warn('Catcha send. Please restart.');
+            logger.warn('Catcha response sent. Please restart.');
             process.exit();
         });
     } else {
         logger.error(e);
 
-        if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
+        if (e.code == 'ECONNRESET') proxyhelper.badProxy();
+        else if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
         else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
         else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
