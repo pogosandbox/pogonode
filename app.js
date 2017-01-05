@@ -52,13 +52,7 @@ let socket = new SocketServer(config, state);
 
 let login = new pogobuf.PTCLogin();
 
-let client = new pogobuf.Client();
-state.client = client;
-
-client.mapObjectsThrottlingEnabled = false;
-client.setIncludeRequestTypeInResponse(true);
-client.setVersion(config.api.version);
-signaturehelper.register(config, client);
+let client = {};
 
 logger.info('App starting...');
 
@@ -66,31 +60,39 @@ proxyhelper.checkProxy().then(valid => {
     // find a proxy if 'auto' is set in config
     // then test if to be sure it works
     // if ok, set proxy in api
-    if (config.proxy && config.proxy.url) {
-        if (valid) {
-            login.setProxy(proxyhelper.proxy);
-            client.setProxy(proxyhelper.proxy);
-        } else {
-            throw new Error('Invalid proxy. Exiting.');
-        }
+    if (config.proxy.url && !valid) {
+        throw new Error('Invalid proxy. Exiting.');
     }
     return socket.start();
 
 }).then(() => {
-    if (config.hashserver && config.hashserver.active) {
-        logger.info('Activating hashserver...');
-        return client.activateHashServer(config.hashserver.key);
-    }
-
-}).then(() => {
     // try login using PTC
     logger.info('Login...');
+
+    if (proxyhelper.proxy) login.setProxy(proxyhelper.proxy);
     return login.login(config.credentials.user, config.credentials.password);
 
 }).then(token => {
     // yeah we have a token, set api and initial position
     logger.debug('Token: %s', token);
-    client.setAuthInfo('ptc', token);
+
+    if (config.hashserver.active) {
+        logger.info('Using hashserver...');
+    }
+
+    client = new pogobuf.Client({
+        authType: 'ptc',
+        authToken: token,
+        version: config.api.version,
+        useHashingServer: config.hashserver.active,
+        hashingKey: config.hashserver.key,
+        mapObjectsThrottling: false,
+        includeRequestTypeInResponse: true,
+        proxy: proxyhelper.proxy,
+    });
+    state.client = client;
+
+    signaturehelper.register(config, client);
 
     return walker.getAltitude(state.pos);
 
@@ -102,7 +104,6 @@ proxyhelper.checkProxy().then(valid => {
         altitude: altitude,
     });
 
-}).then(() => {
     // init api (false = don't call anything yet')
     return client.init(false);
 
@@ -192,13 +193,14 @@ proxyhelper.checkProxy().then(valid => {
         resolveChallenge(e.url)
         .then(responses => {
             apihelper.parse(responses);
-            logger.warn('Catcha send. Please restart.');
+            logger.warn('Catcha response sent. Please restart.');
             process.exit();
         });
     } else {
         logger.error(e);
 
-        if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
+        if (e.code == 'ECONNRESET') proxyhelper.badProxy();
+        else if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
         else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
         else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
