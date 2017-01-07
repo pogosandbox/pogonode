@@ -37,6 +37,7 @@ let state = {
         waypoints: [],
     },
     encountered: [],
+    todo: [],
 };
 
 /** Global events */
@@ -271,11 +272,34 @@ App.on('updatePos', () => {
 
         })
         .then(() => {
-            if (state.lvlUp) {
-                let batch = client.batchStart();
-                batch.levelUpRewards(state.inventory.player.level);
-                return apihelper.always(batch).batchCall()
-                        .then(responses => apihelper.parse(responses));
+            // actions have been requested, but we only call them if
+            // there is nothing going down at the same time
+            if (state.todo.length > 0) {
+                let todo = state.todo.shift();
+                if (todo.call == 'level_up') {
+                    let batch = client.batchStart();
+                    batch.levelUpRewards(state.inventory.player.level);
+                    return apihelper.always(batch).batchCall()
+                            .then(responses => apihelper.parse(responses))
+                            .delay(config.delay.levelUp * _.random(900, 1100));
+
+                } else if (todo.call == 'release_pokemon') {
+                    let batch = client.batchStart();
+                    batch.releasePokemon(todo.pokemons);
+                    return apihelper.always(batch).batchCall()
+                            .then(responses => apihelper.parse(responses))
+                            .then(info => { 
+                                if (info.result == 1) {
+                                    logger.info('Pokemon released', todo.pokemons, info);
+                                } else {
+                                    logger.warn('Error releasing pokemon', info);
+                                }
+                            })
+                            .delay(config.delay.release * _.random(900, 1100));
+
+                } else {
+                    logger.warn('Unhandled todo: ' + todo.call);
+                }
             }
 
         })

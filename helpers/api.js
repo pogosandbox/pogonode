@@ -79,6 +79,9 @@ class APIHelper {
                 }
             });
         }
+        if (split.removed_pokemon.length > 0) {
+            this.state.inventory.pokemon = _.filter(this.state.inventory.pokemon, e => split.removed_pokemon.indexOf(e.id) < 0);
+        }
         if (split.items.length > 0) {
             // replace any modified item in inventory
             _.each(split.items, i => {
@@ -96,7 +99,7 @@ class APIHelper {
             this.state.inventory.player = split.player;
             if (this.state.inventory.player.level != lvl) {
                 // level up
-                this.state.lvlUp = true;
+                this.state.todo.push({call: 'level_up'});
             }
         }
         if (split.egg_incubators.length > 0) {
@@ -413,6 +416,13 @@ class APIHelper {
                         logger.error('Challenge!', {challenge_url: r.challenge_url});
                         throw new ChallengeError(r.challenge_url);
                     }
+                    break;
+
+                case RequestType.RELEASE_POKEMON:
+                    info = {
+                        result: r.result,
+                        candy_awarded: r.candy_awarded,
+                    };
                     break;
 
                 default:
