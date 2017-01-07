@@ -288,7 +288,7 @@ App.on('updatePos', () => {
                     batch.releasePokemon(todo.pokemons);
                     return apihelper.always(batch).batchCall()
                             .then(responses => apihelper.parse(responses))
-                            .then(info => { 
+                            .then(info => {
                                 if (info.result == 1) {
                                     logger.info('Pokemon released', todo.pokemons, info);
                                 } else {
@@ -304,8 +304,8 @@ App.on('updatePos', () => {
 
         })
         .then(() => {
-            let max = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
-            let min = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
+            let min = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
+            let max = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
             let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
 
             if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {

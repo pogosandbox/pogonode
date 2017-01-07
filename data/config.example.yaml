@@ -38,7 +38,15 @@ device:
 api:
   country: US
   language: en
-  checkversion: false
+  timezone: Europe/Paris
+  version: '5100'
+
+# configuration for hashserver
+# if active=true, use hashserver, if not using native hashing (ver=0.45)
+# buy your key from pokefarmer folks
+hashserver:
+  active: true
+  key: your-key
 
 # User behavior
 behavior:
@@ -50,6 +58,7 @@ behavior:
 # If 'auto' is set, a proxy from www . ssl proxies . org will be used
 # When free proxy are used, you probably have to set env NODE_TLS_REJECT_UNAUTHORIZED=0
 proxy: 
+  url: auto
 
 # loglevel (debug, info, warn, error)
 loglevel: debug
