@@ -139,7 +139,11 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(responses => {
     apihelper.parse(responses);
-    // TODO: REGISTER_BACKGROUND_DEVICE
+
+    // REGISTER_BACKGROUND_DEVICE (never use, but do it like the app)
+    let batch = client.batchStart();
+    batch.registerBackgroundDevice('apple_watch', '');
+    return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
@@ -173,7 +177,8 @@ proxyhelper.checkProxy().then(valid => {
     }
 
 }).then(() => {
-    // complete tutorial if needed
+    // complete tutorial if needed,
+    // at minimum, getPlayerProfile() is called
     return apihelper.completeTutorial();
 
 }).then(responses => {
