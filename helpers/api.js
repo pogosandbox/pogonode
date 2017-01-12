@@ -348,7 +348,7 @@ class APIHelper {
                 case RequestType.GET_MAP_OBJECTS:
                     let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
                     let pokestops = forts.filter(f => f.type == 1);
-                    let gyms = forts.filter(f => f.type == 2);
+                    let gyms = forts.filter(f => f.type == 0);
                     let wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
                     let catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
                     let nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
