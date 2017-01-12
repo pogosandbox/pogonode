@@ -140,11 +140,6 @@ proxyhelper.checkProxy().then(valid => {
 }).then(responses => {
     apihelper.parse(responses);
 
-    // REGISTER_BACKGROUND_DEVICE (never use, but do it like the app)
-    let batch = client.batchStart();
-    batch.registerBackgroundDevice('apple_watch', '');
-    return apihelper.alwaysinit(batch).batchCall();
-
 }).then(responses => {
     apihelper.parse(responses);
 
