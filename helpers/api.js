@@ -269,6 +269,7 @@ class APIHelper {
                         this.parseInventoryDelta(r);
 
                     }
+                    _.map(this.state.inventory.pokemon, this.addIv);
                     break;
 
                 case RequestType.DOWNLOAD_SETTINGS:
@@ -433,6 +434,15 @@ class APIHelper {
         });
 
         return info;
+    }
+
+    /**
+     * Add an `iv` field to a pokemon
+     * @param {object} pokemon - pokemon to add iv field to
+     */
+    addIv(pokemon) {
+        pokemon.iv = 100 * (pokemon.individual_attack + pokemon.individual_defense + pokemon.individual_stamina) / 45.0;
+        pokemon.iv = Math.round(pokemon.iv);
     }
 
     /**

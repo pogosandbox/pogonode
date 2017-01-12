@@ -55,7 +55,7 @@ function testSocket() {
     });
 }
 
-// config.api.version = '5120';
+config.api.version = '5102';
 logger.info('Version', config.api.version);
 logger.info('Client Version', apihelper.versionToClientVersion(config.api.version));
 logger.info('iOS Version', apihelper.versionToiOSVersion(config.api.version));
