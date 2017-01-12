@@ -332,6 +332,7 @@ class APIHelper {
                 case RequestType.CATCH_POKEMON:
                     if (r.pokemon_data) {
                         // init capture
+                        this.addIv(r.pokemon_data);
                         this.state.inventory.pokemon.push(r.pokemon_data);
                     }
                     info = {
@@ -377,6 +378,7 @@ class APIHelper {
 
                 case RequestType.ENCOUNTER_TUTORIAL_COMPLETE:
                     // TODO: check if not already in getInventory()
+                    this.addIv(r.pokemon_data);
                     this.state.inventory.pokemon.push(r.pokemon_data);
                     break;
 
@@ -427,7 +429,8 @@ class APIHelper {
                     break;
 
                 default:
-                    logger.warn('Unhandled request: %s', r.pogoBufRequest);
+                    logger.warn('Unhandled request: %s', r._requestType);
+                    logger.debug(r);
                     break;
             }
 
