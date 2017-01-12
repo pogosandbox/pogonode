@@ -51,7 +51,7 @@ let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
-let login = new pogobuf.PTCLogin();
+let login = (config.credentials.type == 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
 
 let client = {};
 
@@ -67,16 +67,12 @@ proxyhelper.checkProxy().then(valid => {
     return socket.start();
 
 }).then(() => {
-    // try login using PTC
     logger.info('Login...');
 
     if (proxyhelper.proxy) login.setProxy(proxyhelper.proxy);
     return login.login(config.credentials.user, config.credentials.password);
 
 }).then(token => {
-    // yeah we have a token, set api and initial position
-    logger.debug('Token: %s', token);
-
     if (config.hashserver.active) {
         logger.info('Using hashserver...');
     }
@@ -136,9 +132,6 @@ proxyhelper.checkProxy().then(valid => {
     let batch = client.batchStart();
     batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
-
-}).then(responses => {
-    apihelper.parse(responses);
 
 }).then(responses => {
     apihelper.parse(responses);

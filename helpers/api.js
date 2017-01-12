@@ -191,6 +191,7 @@ class APIHelper {
                         '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
                         'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
                     ]);
+
                     return this.always(batch).batchCall()
                     .delay(_.random(7000, 10000)).then(responses => {
                         this.parse(responses);
@@ -211,7 +212,6 @@ class APIHelper {
             }).then(responses => {
                 // wait a bit
                 this.parse(responses);
-
 
             }).then(() => {
                 this.parse(responses);

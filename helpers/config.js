@@ -7,6 +7,7 @@ module.exports.load = function() {
 
     let config = {
         credentials: {
+            type: 'ptc',
             user: '',
             password: '',
         },
