@@ -24,7 +24,8 @@ module.exports.load = function() {
             language: 'en',
         },
         behavior: {
-            catch: true,
+            catch: false,
+            autorelease: true,
         },
         delay: {
             walk: 1,

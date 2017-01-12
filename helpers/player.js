@@ -53,10 +53,9 @@ class Player {
     spinPokestops(pokestops) {
         if (pokestops.length == 0) return Promise.resolve(0);
 
-        let client = this.state.client;
         return Promise.map(pokestops, ps => {
                     logger.debug('Spin %s', ps.id);
-                    let batch = client.batchStart();
+                    let batch = this.state.client.batchStart();
                     batch.fortSearch(ps.id, ps.latitude, ps.longitude);
                     this.apihelper.always(batch);
                     return batch.batchCall().then(responses => {
@@ -86,14 +85,16 @@ class Player {
         logger.debug('Start encounters...');
         let client = this.state.client;
         return Promise.map(pokemons, pk => {
-                    logger.debug('Encounter %s', pk.pokemon_id);
-                    let batch = client.batchStart();
-                    batch.encounter(pk.encounter_id, pk.spawn_point_id);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        return this.apihelper.parse(responses);
+                    return Promise.delay(this.config.delay.encounter * _.random(900, 1100))
+                    .then(() => {
+                        logger.debug('Encounter %s', pk.pokemon_id);
+                        let batch = client.batchStart();
+                        batch.encounter(pk.encounter_id, pk.spawn_point_id);
+                        this.apihelper.always(batch);
+                        return batch.batchCall();
 
-                    }).then(info => {
+                    }).then(responses => {
+                        let info = this.apihelper.parse(responses);
                         if (info.status == EncounterResult.POKEMON_INVENTORY_FULL) {
                             logger.warn('Pokemon bag full.');
                         } else if (info.status != EncounterResult.ENCOUNTER_SUCCESS) {
@@ -115,9 +116,10 @@ class Player {
                         if (catchPokemon) {
                             return Promise.delay(this.config.delay.catch * 1000)
                                             .then(() => this.catchPokemon(encounter))
-                                            .delay(this.config.delay.encounter * 1000, encounter);
+                                            .then(pokemon => this.releaseIfNotGoodEnough(pokemon))
+                                            .then(() => encounter);
                         } else {
-                            return Promise.delay(this.config.delay.encounter * 1000, encounter);
+                            return encounter;
                         }
                     });
                 }, {concurrency: 1})
@@ -163,7 +165,7 @@ class Player {
 
     /**
      * Catch pokemon passed in parameters.
-     * @param {object} encounter Encounter result
+     * @param {object} encounter - Encounter result
      * @return {Promise}
      */
     catchPokemon(encounter) {
@@ -193,10 +195,42 @@ class Player {
                         let pokemon = _.find(this.state.inventory.pokemon, pk => pk.id == info.id);
                         logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
                         this.state.events.emit('pokemon_caught', pokemon);
+                        return pokemon;
                     } else {
                         logger.info('Pokemon missed.', info);
+                        return null;
                     }
                 });
+    }
+
+    /**
+     * Release pokemon if its not good enough.
+     * i.e. we have another one better already
+     * @param {object} pokemon - pokemon to check
+     * @return {Promise}
+     */
+    releaseIfNotGoodEnough(pokemon) {
+        if (!pokemon || !this.config.behavior.autorelease) return;
+        // find same pokemons, with better iv and better cp
+        let better = _.find(this.state.inventory.pokemon, pkm => {
+            return pkm.pokemon_id == pokemon.pokemon_id &&
+                    pkm.iv > pokemon.iv * 1.1 &&
+                    pkm.cp > pokemon.cp * 1.1;
+        });
+        if (better) {
+            return Promise.delay(this.config.delay * _.random(900, 1100))
+                .then(() => {
+                    // release pokemon
+                    logger.info('Release pokemon', pokemon.pokemon_id);
+                    let batch = this.state.client.batchStart();
+                    batch.releasePokemon(pokemon.id);
+                    return this.apihelper.always(batch).batchCall();
+
+                }).then(responses => {
+                    this.apihelper.parse(responses);
+
+                });
+        }
     }
 
     /**

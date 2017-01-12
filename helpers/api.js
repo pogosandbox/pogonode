@@ -428,6 +428,10 @@ class APIHelper {
                     };
                     break;
 
+                case RequestType.REGISTER_BACKGROUND_DEVICE:
+                    // nothing
+                    break;
+
                 default:
                     logger.warn('Unhandled request: %s', r._requestType);
                     logger.debug(r);
