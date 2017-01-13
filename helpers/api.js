@@ -125,7 +125,7 @@ class APIHelper {
             .then(() => {
                 batch = client.batchStart();
                 batch.registerBackgroundDevice('apple_watch', '');
-                return apihelper.alwaysinit(batch).batchCall();
+                return this.alwaysinit(batch).batchCall();
             })
             .then(reponses => this.parse(responses));
 
@@ -179,7 +179,7 @@ class APIHelper {
                 this.parse(responses);
                 batch = client.batchStart();
                 batch.registerBackgroundDevice('apple_watch', '');
-                return apihelper.alwaysinit(batch).batchCall();
+                return this.alwaysinit(batch).batchCall();
 
             }).then(responses => {
                 this.parse(responses);
