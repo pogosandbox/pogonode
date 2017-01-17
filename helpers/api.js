@@ -127,7 +127,7 @@ class APIHelper {
                 batch.registerBackgroundDevice('apple_watch', '');
                 return this.alwaysinit(batch).batchCall();
             })
-            .then(reponses => this.parse(responses));
+            .then(responses => this.parse(responses));
 
         } else {
             logger.info('Completing tutorial...');
