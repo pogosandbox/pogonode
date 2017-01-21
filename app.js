@@ -106,7 +106,7 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     // first empty request
-    // return client.batchStart().batchCall();
+    return client.batchStart().batchCall();
 
 }).then(() => {
     // initial player state
