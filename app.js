@@ -120,7 +120,7 @@ proxyhelper.checkProxy().then(valid => {
     logger.info('Logged In.');
     logger.info('Starting initial flow...');
 
-    // download config version like the real app
+    logger.debug('Download remote config...');
     let batch = client.batchStart();
     batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
@@ -128,15 +128,15 @@ proxyhelper.checkProxy().then(valid => {
 }).then(responses => {
     apihelper.parse(responses);
 
-    // get asset digest (never use, but do it like the app)
+    logger.debug('Get asset digest...');
     let batch = client.batchStart();
     batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
     return apihelper.alwaysinit(batch).batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
+    logger.debug('Checking if item_templates need a refresh...');
 
-    // check if item_templates need to be downloaded based on current timestamp
     let last = 0;
     if (fs.existsSync('data/item_templates.json')) {
         let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
@@ -167,10 +167,11 @@ proxyhelper.checkProxy().then(valid => {
 }).then(() => {
     // complete tutorial if needed,
     // at minimum, getPlayerProfile() is called
+    logger.debug('Checking tutorial state...');
     return apihelper.completeTutorial();
 
 }).then(responses => {
-    // get any rewards if available
+    logger.debug('Level up rewards...');
     apihelper.parse(responses);
     let batch = client.batchStart();
     batch.levelUpRewards(state.inventory.player.level);
@@ -334,6 +335,7 @@ function mapRefresh() {
     batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
     return apihelper.always(batch).batchCall().then(responses => {
         apihelper.parse(responses);
+        App.emit('saveState');
 
     }).then(() => {
         // send pokestop info to the ui
@@ -349,9 +351,10 @@ function mapRefresh() {
         return player.encounterPokemons(config.behavior.catch);
 
     }).then(() => {
-        // if (Math.random() < 0.2) {
+        if (Math.random() < 0.3) {
+            logger.info('Dispatch incubators...');
             return player.dispatchIncubators();
-        // }
+        }
 
     }).then(() => {
         App.emit('saveState');

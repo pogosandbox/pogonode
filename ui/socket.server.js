@@ -172,10 +172,15 @@ class SocketServer {
      * @param {object} msg - message send from the ui
      */
     transferPokemon(client, msg) {
-        this.state.todo.push({
-            call: 'release_pokemon',
-            pokemons: msg.id,
-        });
+        let release = _.find(this.state.todo, todo => todo.call == 'release_pokemon');
+        if (release) {
+            release.pokemons.push(msg.id);
+        } else {
+            this.state.todo.push({
+                call: 'release_pokemon',
+                pokemons: [msg.id],
+            });
+        }
     }
 }
 

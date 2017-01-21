@@ -79,6 +79,7 @@ class Player {
         let pokemons = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
+        pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
 
         if (pokemons.length == 0) return Promise.resolve(0);
 
