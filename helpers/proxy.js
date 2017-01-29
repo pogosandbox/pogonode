@@ -89,7 +89,7 @@ class ProxyHelper {
 
         }).then(ip => {
             if (!ip) return false;
-            return request.getAsync('https://api.ipify.org/?format=json', {proxy: this.proxy});
+            return request.getAsync('https://api.ipify.org/?format=json', {proxy: this.proxy, timeout: 5000});
 
         }).then(response => {
             if (!response) return false;
@@ -99,6 +99,11 @@ class ProxyHelper {
             let valid = !this.config.proxy.check || (this.clearIp != ip);
             if (!valid) this.badProxy();
             return valid;
+
+        }).catch(e => {
+            debugger;
+            return false;
+
         });
     }
 

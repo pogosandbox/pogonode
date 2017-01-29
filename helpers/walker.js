@@ -138,7 +138,7 @@ class Walker {
      * @return {float} random value
      */
     randGPSFloatBetween(min, max) {
-        return parseFloat((Math.random()*(max-min)+min).toFixed(10));
+        return parseFloat((Math.random()*(max-min)+min).toFixed(14));
     }
 
     /**
@@ -148,8 +148,8 @@ class Walker {
      */
     fuzzedLocation(latlng) {
         return {
-            lat: parseFloat((latlng.lat + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),
-            lng: parseFloat((latlng.lng + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(10)),
+            lat: parseFloat((latlng.lat + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(14)),
+            lng: parseFloat((latlng.lng + this.randGPSFloatBetween(-0.0000009, 0.0000009)).toFixed(14)),
         };
     }
 

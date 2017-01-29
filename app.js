@@ -202,7 +202,7 @@ proxyhelper.checkProxy().then(valid => {
         else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
         else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
         else {
-            e = e;
+            debugger;
         }
 
         logger.error('Exiting.');
@@ -365,6 +365,7 @@ function mapRefresh() {
         }
 
         logger.error(e);
+        debugger;
         // e.status_code == 102
         // detect token expiration
     });
