@@ -1,9 +1,5 @@
 const Random = require('simjs-random');
 
-let getRandomInt = function(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
 let start = new Date().getTime();
 let random = new Random();
 let course = random.uniform(0, 360);
@@ -24,7 +20,7 @@ module.exports.register = function(config, client) {
                         location_type: 1,
                         floor: 0,
                     };
-        if (Math.random() > 0.95) {
+        if (_.random() > 0.95) {
             loc.course = -1;
             loc.speed = -1;
         } else {
@@ -34,13 +30,13 @@ module.exports.register = function(config, client) {
         }
         if (envelope.accuracy >= 65) {
             loc.vertical_accuracy = random.triangular(35, 100, 65);
-            loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66, 80), 200][Math.floor(Math.random()*5)];
+            loc.horizontal_accuracy = [envelope.accuracy, 65, 65, random.uniform(66, 80), 200][_.random(0, 5)];
         } else if (envelope.accuracy > 10) {
             loc.horizontal_accuracy = envelope.accuracy;
-            loc.vertical_accuracy = [24, 32, 48, 48, 64, 64, 96, 128][Math.floor(Math.random()*8)];
+            loc.vertical_accuracy = [24, 32, 48, 48, 64, 64, 96, 128][_.random(0, 8)];
         } else {
             loc.horizontal_accuracy = envelope.accuracy;
-            loc.vertical_accuracy = [3, 4, 6, 6, 8, 12, 24][Math.floor(Math.random()*8)];
+            loc.vertical_accuracy = [3, 4, 6, 6, 8, 12, 24][_.random(0, 8)];
         }
 
         infos.location_fix = [loc];
@@ -61,23 +57,23 @@ module.exports.register = function(config, client) {
                                 };
 
         infos.sensor_info = [{
-            timestamp_snapshot: getRandomInt(timestampSinceStart - 5000, timestampSinceStart - 100),
-            linear_acceleration_x: random.triangular(-3, 1, 0),
-            linear_acceleration_y: random.triangular(-2, 3, 0),
-            linear_acceleration_z: random.triangular(-4, 2, 0),
-            magnetic_field_x: random.triangular(-50, 50, 0),
-            magnetic_field_y: random.triangular(-60, 50, -5),
-            magnetic_field_z: random.triangular(-60, 40, -30),
-            magnetic_field_accuracy: [-1, 1, 1, 2, 2, 2, 2][Math.floor(Math.random()*7)],
-            attitude_pitch: random.triangular(-1.5, 1.5, 0.2),
-            attitude_yaw: random.uniform(-3, 3),
-            attitude_roll: random.triangular(-2.8, 2.5, 0.25),
-            rotation_rate_x: random.triangular(-6, 4, 0),
-            rotation_rate_y: random.triangular(-5.5, 5, 0),
-            rotation_rate_z: random.triangular(-5, 3, 0),
-            gravity_x: random.triangular(-1, 1, 0.15),
+            timestamp_snapshot: _.random(timestampSinceStart - 5000, timestampSinceStart - 100),
+            linear_acceleration_x: random.triangular(-1.7, 1.2, 0),
+            linear_acceleration_y: random.triangular(-1.4, 1.9, 0),
+            linear_acceleration_z: random.triangular(-1.4, .9, 0),
+            magnetic_field_x: random.triangular(-54, 50, 0),
+            magnetic_field_y: random.triangular(-51, 57, -4.8),
+            magnetic_field_z: random.triangular(-56, 43, -30),
+            magnetic_field_accuracy: [-1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2][_.random(0, 7)],
+            attitude_pitch: random.triangular(-1.5, 1.5, 0.4),
+            attitude_yaw: random.triangular(-3.1, 3.1, .198),
+            attitude_roll: random.triangular(-2.8, 3.04, 0),
+            rotation_rate_x: random.triangular(-4.7, 3.9, 0),
+            rotation_rate_y: random.triangular(-4.7, 4.3, 0),
+            rotation_rate_z: random.triangular(-4.7, 6.5, 0),
+            gravity_x: random.triangular(-1, 1, 0),
             gravity_y: random.triangular(-1, 1, -.2),
-            gravity_z: random.triangular(-1, .7, -0.8),
+            gravity_z: random.triangular(-1, .7, -0.7),
             status: 3,
         }];
 
