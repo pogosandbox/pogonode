@@ -89,7 +89,13 @@ proxyhelper.checkProxy().then(valid => {
     });
     state.client = client;
 
-    signaturehelper.register(config, client);
+    // set initial position
+    client.setPosition({
+        latitude: state.pos.lat,
+        longitude: state.pos.lng,
+    });
+
+    signaturehelper.register(config, client, state);
 
     return walker.getAltitude(state.pos);
 

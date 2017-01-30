@@ -57,11 +57,3 @@ function testReqId() {
         console.log('0x' + client.getRequestID().toString(16));
     }
 }
-
-const ptr8msgs = {
-    '5300': '',
-    '5301': '',
-    '5302': 'e40c3e64817d9c96d99d28f6488a2efc40b11046',
-    '5500': '7bb2d74dec0d8c5e132ad6c5491f72c9f19b306c',
-}
-console.log(ptr8msgs[5501]);

@@ -83,6 +83,9 @@ class Player {
 
         if (pokemons.length == 0) return Promise.resolve(0);
 
+        // take the first 3 only so we don't spend to much time in here
+        pokemons = _.take(pokemons, 3);
+
         logger.debug('Start encounters...');
         let client = this.state.client;
         return Promise.map(pokemons, pk => {
