@@ -1,7 +1,5 @@
 const Random = require('simjs-random');
-// const geolib = require('geolib');
 const _ = require('lodash');
-// const logger = require('winston');
 
 let timer = null;
 let start = 0; // time from start, get updated at register();
@@ -12,20 +10,12 @@ let lastLocationFix = null;
 let locationFixes = []; // location fixes get generated all the taime and added as batch when api called
 let lastPos = {};
 
-// let distance = function(from, to) {
-//     return geolib.getDistance(from, to, 1, 2);
-// };
-
 module.exports.register = function(config, client, state) {
 
     start = new Date().getTime() - _.random(4500, 5500);
     lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
 
     let updateLocFixes = function() {
-        // let dist = distance(lastPos, {latitude: client.playerLatitude, longitude: client.playerLongitude});
-        // lastPos = {latitude: client.playerLatitude, longitude: client.playerLongitude};
-        // logger.debug('dist', dist);
-
         let moving = (state.pos.lat != lastPos.latitude) || (state.pos.lng != lastPos.longitude);
         lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
         if (lastLocationFix == null || moving || Math.random() > 0.85) {
@@ -33,11 +23,12 @@ module.exports.register = function(config, client, state) {
             values.unshift(Math.floor(Math.random() * (80 - 66)) + 66);
             client.playerLocationAccuracy = values[Math.floor(values.length * Math.random())];
 
+            let junk = Math.random() < 0.03;
             let loc = {
                             provider: 'fused',
-                            latitude: client.playerLatitude,
-                            longitude: client.playerLongitude,
-                            altitude: client.playerAltitude || random.triangular(300, 400, 350),
+                            latitude: junk ? 360.0 : client.playerLatitude,
+                            longitude: junk ? -360.0 : client.playerLongitude,
+                            altitude: junk ? 0.0 : (client.playerAltitude || random.triangular(300, 400, 350)),
                             provider_status: 3,
                             location_type: 1,
                             floor: 0,
