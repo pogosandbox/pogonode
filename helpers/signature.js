@@ -1,7 +1,7 @@
 const Random = require('simjs-random');
-const geolib = require('geolib');
+// const geolib = require('geolib');
 const _ = require('lodash');
-const logger = require('winston');
+// const logger = require('winston');
 
 let timer = null;
 let start = 0; // time from start, get updated at register();
@@ -12,9 +12,9 @@ let lastLocationFix = null;
 let locationFixes = []; // location fixes get generated all the taime and added as batch when api called
 let lastPos = {};
 
-let distance = function(from, to) {
-    return geolib.getDistance(from, to, 1, 2);
-};
+// let distance = function(from, to) {
+//     return geolib.getDistance(from, to, 1, 2);
+// };
 
 module.exports.register = function(config, client, state) {
 
@@ -28,8 +28,7 @@ module.exports.register = function(config, client, state) {
 
         let moving = (state.pos.lat != lastPos.latitude) || (state.pos.lng != lastPos.longitude);
         lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
-        if (lastLocationFix == null || moving) {
-
+        if (lastLocationFix == null || moving || Math.random() > 0.85) {
             let values = [5, 5, 5, 5, 10, 10, 10, 30, 30, 50, 65];
             values.unshift(Math.floor(Math.random() * (80 - 66)) + 66);
             client.playerLocationAccuracy = values[Math.floor(values.length * Math.random())];
@@ -83,7 +82,7 @@ module.exports.register = function(config, client, state) {
         } else {
             infos.location_fix = [lastLocationFix];
         }
-        envelope.ms_since_last_locationfix = lastLocationFixTimeStamp - start;
+        envelope.ms_since_last_locationfix = new Date().getTime() - lastLocationFixTimeStamp;
 
         infos.device_info = {
                                 device_id: config.device.id,
