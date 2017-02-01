@@ -152,7 +152,7 @@ class APIHelper {
                                     _.random(0, 5), // hair
                                     _.random(0, 3), // shirt
                                     _.random(0, 2), // pants
-                                    _.random(0, 3), // hat
+                                    _.random(0, 4), // hat
                                     _.random(0, 6), // shoes,
                                     0, // gender,
                                     _.random(0, 4), // eyes,
