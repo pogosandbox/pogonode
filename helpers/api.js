@@ -252,10 +252,10 @@ class APIHelper {
 
         let info = {};
 
-        if (responses[0].pogoBufRequest == RequestType.LEVEL_UP_REWARDS) {
+        if (responses[0]._requestType == RequestType.LEVEL_UP_REWARDS) {
             if (responses[0].result == 1) {
-                info = info;
                 // check if new item are also in get_inventory
+                debugger;
             }
         }
 
@@ -383,10 +383,9 @@ class APIHelper {
                     break;
 
                 case RequestType.GET_HATCHED_EGGS:
-                    if (r.egg_km_walked.length > 0 || r.stardust_awarded.length > 0 || r.candy_awarded.length > 0 ||
-                        r.experience_awarded.length > 0 || r.pokemon_id.length > 0) {
-                        logger.info('getHatchedEggs()');
-                        console.dir(r, {depth: 4});
+                    if (r.hatched_pokemon && r.hatched_pokemon.length > 0) {
+                        let pkm = r.hatched_pokemon[0];
+                        logger.info('An egg has hatched, pokemon_id: %d.', pkm.pokemon_id);
                     }
                     break;
 
@@ -444,6 +443,12 @@ class APIHelper {
 
                 case RequestType.REGISTER_BACKGROUND_DEVICE:
                     // nothing
+                    break;
+
+                case RequestType.EVOLVE_POKEMON:
+                    info = {
+                        result: r.result,
+                    };
                     break;
 
                 default:

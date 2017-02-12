@@ -126,7 +126,7 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     // initial player state
-    logger.debug('First getPlayer request.');
+    logger.debug('Get player info...');
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
                  .batchCall();
@@ -304,6 +304,20 @@ App.on('updatePos', () => {
                                 }
                             })
                             .delay(config.delay.release * _.random(900, 1100));
+
+                } else if (todo.call == 'evolve_pokemon') {
+                    let batch = client.batchStart();
+                    batch.evolvePokemon(todo.pokemon);
+                    return apihelper.always(batch).batchCall()
+                            .then(responses => apihelper.parse(responses))
+                            .then(info => {
+                                if (info.result == 1) {
+                                    logger.info('Pokemon evolved', todo.pokemon, info);
+                                } else {
+                                    logger.warn('Error evolving pokemon', info);
+                                }
+                            })
+                            .delay(config.delay.evolve * _.random(900, 1100));
 
                 } else {
                     logger.warn('Unhandled todo: ' + todo.call);

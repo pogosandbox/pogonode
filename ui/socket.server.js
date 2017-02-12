@@ -43,6 +43,7 @@ class SocketServer {
             socket.on('eggs_list', msg => this.sendEggs(socket));
             socket.on('player_stats', msg => this.sendPlayerStats(socket));
             socket.on('transfer_pokemon', msg => this.transferPokemon(socket, msg));
+            socket.on('evolve_pokemon', msg => this.evolvePokemon(socket, msg));
         });
 
         return httpserver.listenAsync(process.env.PORT || 8000, '0.0.0.0').then(() => {
@@ -167,7 +168,7 @@ class SocketServer {
     }
 
     /**
-     * Transfer a pokemon after the client requested it
+     * Transfer a pokemon after the client request it
      * @param {object} client - the socket client to send info to if needed
      * @param {object} msg - message send from the ui
      */
@@ -181,6 +182,18 @@ class SocketServer {
                 pokemons: [msg.id],
             });
         }
+    }
+
+    /**
+     * Evolve a pokemon after the client request it
+     * @param {object} client - the socket client to send info to if needed
+     * @param {object} msg - message send from the ui
+     */
+    evolvePokemon(client, msg) {
+        this.state.todo.push({
+            call: 'evolve_pokemon',
+            pokemon: msg.id,
+        });
     }
 }
 

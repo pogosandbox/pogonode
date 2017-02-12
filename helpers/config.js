@@ -37,6 +37,7 @@ module.exports.load = function() {
             incubator: 3,
             levelUp: 2,
             release: 0.1,
+            evolve: 3,
         },
         hashserver: {
             active: false,

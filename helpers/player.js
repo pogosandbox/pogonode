@@ -219,7 +219,7 @@ class Player {
         let better = _.find(this.state.inventory.pokemon, pkm => {
             return pkm.pokemon_id == pokemon.pokemon_id &&
                     pkm.iv > pokemon.iv * 1.1 &&
-                    pkm.cp > pokemon.cp * 1.1;
+                    pkm.cp > pokemon.cp * 0.8;
         });
         if (better) {
             return Promise.delay(this.config.delay * _.random(900, 1100))
