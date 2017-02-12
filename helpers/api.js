@@ -247,7 +247,7 @@ class APIHelper {
      * @return {object} information about api call (like status, depends of the call)
      */
     parse(responses) {
-        if (!responses || responses.length == 0) return null;
+        if (!responses || responses.length == 0 || responses == true) return null;
         if (!(responses instanceof Array)) responses = [responses];
 
         let info = {};
@@ -473,9 +473,7 @@ class APIHelper {
      */
     versionToiOSVersion(version) {
         let ver = '1.' + ((+version-3000)/100).toFixed(0);
-        if ((+version % 100) != 0) {
-            ver += '.' + (+version % 100);
-        }
+        ver += '.' + (+version % 100);
         return ver;
     }
 
@@ -486,9 +484,7 @@ class APIHelper {
      */
     versionToClientVersion(version) {
         let ver = '0.' + ((+version)/100).toFixed(0);
-        if ((+version % 100) != 0) {
-            ver += '.' + (+version % 100);
-        }
+        ver += '.' + (+version % 100);
         return ver;
     }
 }

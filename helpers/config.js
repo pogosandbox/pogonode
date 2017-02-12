@@ -2,6 +2,7 @@ const fs = require('fs');
 const logger = require('winston');
 const yaml = require('js-yaml');
 const _ = require('lodash');
+const moment = require('moment');
 
 module.exports.load = function() {
 
@@ -52,8 +53,22 @@ module.exports.load = function() {
         config = _.defaultsDeep(loaded, config);
     }
 
-    logger.level = config.loglevel;
-    logger.add(logger.transports.File, {filename: 'data/pogonode.log', json: false});
+    logger.remove(logger.transports.Console);
+    logger.add(logger.transports.Console, {
+        'timestamp': function() {
+            return moment().format('HH:mm:ss');
+        },
+        'colorize': false,
+        'level': config.loglevel,
+    });
+
+    logger.add(logger.transports.File, {
+        'timestamp': function() {
+            return moment().format('HH:mm:ss');
+        },
+        'filename': 'data/pogonode.log', 
+        'json': false,
+    });
 
     if (!config.device.id) {
         config.device.id = _.times(32, () => '0123456789abcdef'[Math.floor(Math.random()*16)]).join('');

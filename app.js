@@ -112,19 +112,27 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     // first empty request
+    logger.debug('First empty request.');
     return client.batchStart().batchCall();
+
+}).then(responses => {
+    apihelper.parse(responses);
+    logger.info('Logged In.');
+
+    let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
+    logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+
+    logger.info('Starting initial flow...');
 
 }).then(() => {
     // initial player state
+    logger.debug('First getPlayer request.');
     return client.batchStart()
                  .getPlayer(config.api.country, config.api.language, config.api.timezone)
                  .batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
-
-    logger.info('Logged In.');
-    logger.info('Starting initial flow...');
 
     logger.debug('Download remote config...');
     let batch = client.batchStart();

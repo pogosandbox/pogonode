@@ -45,7 +45,7 @@ function testSocket() {
 }
 
 function testVersion() {
-    config.api.version = '5102';
+    config.api.version = '5500';
     logger.info('Version', config.api.version);
     logger.info('Client Version', apihelper.versionToClientVersion(config.api.version));
     logger.info('iOS Version', apihelper.versionToiOSVersion(config.api.version));
@@ -57,3 +57,5 @@ function testReqId() {
         console.log('0x' + client.getRequestID().toString(16));
     }
 }
+
+testVersion();
