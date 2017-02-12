@@ -1,11 +1,11 @@
 import * as POGOProtos from 'node-pogo-protos';
-const GoogleMapsAPI = require('googlemaps');
-const geolib = require('geolib');
 import * as _ from 'lodash';
-const Promise = require('bluebird');
+import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 
-Promise.promisifyAll(GoogleMapsAPI.prototype);
+const GoogleMapsAPI = require('googlemaps');
+const geolib = require('geolib');
+Bluebird.promisifyAll(GoogleMapsAPI.prototype);
 
 let EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 let FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
@@ -38,12 +38,12 @@ export default class Player {
      * Find pokestop we can spin. Get only reachable one that are not in cooldown.
      * @return {object} array of pokestop we can spin
      */
-    findSpinnablePokestops() {
-        let pokestops:any[] = this.state.map.pokestops;
+    findSpinnablePokestops(): any[] {
+        let pokestops: any[] = this.state.map.pokestops;
         let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
 
         // get pokestops not in cooldown that are close enough to spin it
-        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
+        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms === 0 && this.distance(pk) < range);
 
         return pokestops;
     }
@@ -53,25 +53,24 @@ export default class Player {
      * @param {object[]} pokestops - Array of pokestops
      * @return {Promise}
      */
-    spinPokestops(pokestops) {
-        if (pokestops.length == 0) return Promise.resolve(0);
+    async spinPokestops(pokestops: any[]): Promise<void> {
+        if (pokestops.length === 0) return;
 
-        return Promise.map(pokestops, ps => {
-                    logger.debug('Spin %s', ps.id);
-                    let batch = this.state.client.batchStart();
-                    batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-                    this.apihelper.always(batch);
-                    return batch.batchCall().then(responses => {
-                        let info = this.apihelper.parse(responses);
-                        if (info.status == FortSearchResult.SUCCESS) {
-                            let stops:any[] = this.state.map.pokestops;
-                            let stop = _.find(stops, p => p.id == ps.id);
-                            stop.cooldown_complete_timestamp_ms = info.cooldown;
-                            this.state.events.emit('spinned', stop);
-                        }
-                        return Promise.resolve();
-                    }).delay(this.config.delay.spin * 1000);
-                }, {concurrency: 1});
+        await Bluebird.map(pokestops, async ps => {
+            logger.debug('Spin %s', ps.id);
+            let batch = this.state.client.batchStart();
+            batch.fortSearch(ps.id, ps.latitude, ps.longitude);
+            this.apihelper.always(batch);
+            let responses = await batch.batchCall();
+            let info = this.apihelper.parse(responses);
+            if (info.status === FortSearchResult.SUCCESS) {
+                let stops: any[] = this.state.map.pokestops;
+                let stop = _.find(stops, p => p.id === ps.id);
+                stop.cooldown_complete_timestamp_ms = info.cooldown;
+                this.state.events.emit('spinned', stop);
+            }
+            await Bluebird.delay(this.config.delay.spin * 1000);
+        }, {concurrency: 1});
     }
 
     /**
@@ -80,20 +79,20 @@ export default class Player {
      * @return {Promise}
      */
     encounterPokemons(catchPokemon) {
-        let pokemons:any[] = this.state.map.catchable_pokemons;
+        let pokemons: any[] = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
         pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
 
-        if (pokemons.length == 0) return Promise.resolve(0);
+        if (pokemons.length === 0) return Promise.resolve(0);
 
         // take the first 3 only so we don't spend to much time in here
         pokemons = _.take(pokemons, 3);
 
         logger.debug('Start encounters...');
         let client = this.state.client;
-        return Promise.map(pokemons, pk => {
-                    return Promise.delay(this.config.delay.encounter * _.random(900, 1100))
+        return Bluebird.map(pokemons, pk => {
+                    return Bluebird.delay(this.config.delay.encounter * _.random(900, 1100))
                     .then(() => {
                         logger.debug('Encounter %s', pk.pokemon_id);
                         let batch = client.batchStart();
@@ -103,9 +102,9 @@ export default class Player {
 
                     }).then(responses => {
                         let info = this.apihelper.parse(responses);
-                        if (info.status == EncounterResult.POKEMON_INVENTORY_FULL) {
+                        if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
                             logger.warn('Pokemon bag full.');
-                        } else if (info.status != EncounterResult.ENCOUNTER_SUCCESS) {
+                        } else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
                             logger.warn('Error while encountering pokemon: %d', info.status);
                         } else {
                             // encounter success
@@ -122,7 +121,7 @@ export default class Player {
                     })
                     .then(encounter => {
                         if (catchPokemon) {
-                            return Promise.delay(this.config.delay.catch * 1000)
+                            return Bluebird.delay(this.config.delay.catch * 1000)
                                             .then(() => this.catchPokemon(encounter))
                                             .then(pokemon => this.releaseIfNotGoodEnough(pokemon))
                                             .then(() => encounter);
@@ -200,8 +199,8 @@ export default class Player {
                 .then(responses => {
                     let info = this.apihelper.parse(responses);
                     if (info.caught) {
-                        let pokemons:any[] = this.state.inventory.pokemon;
-                        let pokemon = _.find(pokemons, pk => pk.id == info.id);
+                        let pokemons: any[] = this.state.inventory.pokemon;
+                        let pokemon = _.find(pokemons, pk => pk.id === info.id);
                         logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
                         this.state.events.emit('pokemon_caught', pokemon);
                         return pokemon;
@@ -218,28 +217,26 @@ export default class Player {
      * @param {object} pokemon - pokemon to check
      * @return {Promise}
      */
-    releaseIfNotGoodEnough(pokemon) {
+    async releaseIfNotGoodEnough(pokemon) {
         if (!pokemon || !this.config.behavior.autorelease) return;
+
         // find same pokemons, with better iv and better cp
-        let pokemons:any[] = this.state.inventory.pokemon;
+        let pokemons: any[] = this.state.inventory.pokemon;
         let better = _.find(pokemons, pkm => {
-            return pkm.pokemon_id == pokemon.pokemon_id &&
+            return pkm.pokemon_id === pokemon.pokemon_id &&
                     pkm.iv > pokemon.iv * 1.1 &&
                     pkm.cp > pokemon.cp * 0.8;
         });
         if (better) {
-            return Promise.delay(this.config.delay * _.random(900, 1100))
-                .then(() => {
-                    // release pokemon
-                    logger.info('Release pokemon', pokemon.pokemon_id);
-                    let batch = this.state.client.batchStart();
-                    batch.releasePokemon(pokemon.id);
-                    return this.apihelper.always(batch).batchCall();
+            await Bluebird.delay(this.config.delay * _.random(900, 1100));
 
-                }).then(responses => {
-                    this.apihelper.parse(responses);
+            // release pokemon
+            logger.info('Release pokemon', pokemon.pokemon_id);
+            let batch = this.state.client.batchStart();
+            batch.releasePokemon(pokemon.id);
+            let responses = await this.apihelper.always(batch).batchCall();
 
-                });
+            this.apihelper.parse(responses);
         }
     }
 
@@ -248,8 +245,8 @@ export default class Player {
      * @param {int} pokemondId pokemon id to get a ball for
      * @return {int} id of pokemon
      */
-    getPokeBallForPokemon(pokemondId) {
-        let items:any[] = this.state.inventory.items;
+    getPokeBallForPokemon(pokemondId: number): number {
+        let items: any[] = this.state.inventory.items;
         let balls = _.filter(items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
             let ball = _.head(balls);
@@ -274,19 +271,19 @@ export default class Player {
      * and use long eggs with limited one if available.
      * @return {Promise} Promise
      */
-    dispatchIncubators() {
-        let incubators:any[] = this.state.inventory.egg_incubators;
-        let eggs:any[] = this.state.inventory.eggs;
+    async dispatchIncubators(): Promise<void> {
+        let incubators: any[] = this.state.inventory.egg_incubators;
+        let eggs: any[] = this.state.inventory.eggs;
 
-        let freeIncubators = _.filter(incubators, i => i.pokemon_id == 0);
-        let freeEggs = _.filter(eggs, e => e.egg_incubator_id == '');
+        let freeIncubators = _.filter(incubators, i => i.pokemon_id === 0);
+        let freeEggs = _.filter(eggs, e => e.egg_incubator_id === '');
 
         if (freeIncubators.length > 0 && freeEggs.length > 0) {
             // we have some free eggs and some free incubators
 
             freeEggs = _.sortBy(freeEggs, e => e.egg_km_walked_target);
-            let infiniteOnes = _.filter(freeIncubators, i => i.item_id == 901);
-            let others = _.filter(freeIncubators, i => i.item_id != 901);
+            let infiniteOnes = _.filter(freeIncubators, i => i.item_id === 901);
+            let others = _.filter(freeIncubators, i => i.item_id !== 901);
 
             let association = [];
 
@@ -300,22 +297,20 @@ export default class Player {
                 association.push({egg: e.id, incubator: others[i].id});
             });
 
-            return Promise.map(association, a => {
-                        let batch = this.state.client.batchStart();
-                        batch.useItemEggIncubator(a.incubator, a.egg);
-                        this.apihelper.always(batch);
-                        return batch.batchCall().then(responses => {
-                            let info = this.apihelper.parse(responses);
-                            if (info.result != UseIncubatorResult.SUCCESS) {
-                                logger.warn('Error using incubator.', {
-                                    result: info.result,
-                                    incubator: a.incubator,
-                                    egg: a.egg,
-                                });
-                            }
-
-                        }).delay(this.config.delay.incubator * 1000);
-                    }, {concurrency: 1});
+            await Bluebird.map(association, async a => {
+                let batch = this.state.client.batchStart();
+                batch.useItemEggIncubator(a.incubator, a.egg);
+                let responses = await this.apihelper.always(batch).batchCall();
+                let info = this.apihelper.parse(responses);
+                if (info.result !== UseIncubatorResult.SUCCESS) {
+                    logger.warn('Error using incubator.', {
+                        result: info.result,
+                        incubator: a.incubator,
+                        egg: a.egg,
+                    });
+                }
+                await Bluebird.delay(this.config.delay.incubator * _.random(900, 1100));
+            }, {concurrency: 1});
         }
     }
 
@@ -324,7 +319,7 @@ export default class Player {
      * @param {object} target position
      * @return {int} distance to target
      */
-    distance(target) {
+    distance(target): number {
         return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 }

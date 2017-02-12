@@ -1,12 +1,11 @@
+"use strict";
 const fs = require('fs');
-import * as logger from 'winston';
+const logger = require("winston");
 const yaml = require('js-yaml');
-import * as _ from 'lodash';
-import * as moment from 'moment';
-
-module.exports.load = function() {
-
-    let config: any = {
+const _ = require("lodash");
+const moment = require("moment");
+module.exports.load = function () {
+    let config = {
         credentials: {
             type: 'ptc',
             user: '',
@@ -18,7 +17,7 @@ module.exports.load = function() {
         },
         speed: 5,
         gmapKey: '',
-        device: {id: 0},
+        device: { id: 0 },
         api: {
             version: '4500',
             checkversion: true,
@@ -48,34 +47,29 @@ module.exports.load = function() {
         },
         loglevel: 'info',
     };
-
     if (fs.existsSync('data/config.yaml')) {
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         config = _.defaultsDeep(loaded, config);
     }
-
     logger.remove(logger.transports.Console);
     logger.add(logger.transports.Console, {
-        'timestamp': function() {
+        'timestamp': function () {
             return moment().format('HH:mm:ss');
         },
         'colorize': false,
         'level': config.loglevel,
     });
-
     logger.add(logger.transports.File, {
-        'timestamp': function() {
+        'timestamp': function () {
             return moment().format('HH:mm:ss');
         },
         'filename': 'data/pogonode.log',
         'json': false,
     });
-
     if (!config.device.id) {
         config.device.id = _.times(32, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
     }
-
     fs.writeFileSync('data/config.actual.yaml', yaml.dump(config));
-
     return config;
 };
+//# sourceMappingURL=config.js.map

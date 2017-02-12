@@ -1,6 +1,7 @@
 "use strict";
 require('dotenv').config({ silent: true });
-const pogobuf = require('./pogobuf/pogobuf/pogobuf');
+// const pogobuf = require('../pogobuf/pogobuf/pogobuf.js');
+const pogobuf = require("../pogobuf/pogobuf/pogobuf");
 // const pogobuf = require('pogobuf');
 const POGOProtos = require('node-pogo-protos');
 const events_1 = require("events");

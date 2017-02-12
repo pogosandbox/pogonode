@@ -16,7 +16,7 @@ module.exports.register = function(config, client, state) {
     lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
 
     let updateLocFixes = function() {
-        let moving = (state.pos.lat != lastPos.latitude) || (state.pos.lng != lastPos.longitude);
+        let moving = (state.pos.lat !== lastPos.latitude) || (state.pos.lng !== lastPos.longitude);
         lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
         if (lastLocationFix == null || moving || Math.random() > 0.85) {
             let values = [5, 5, 5, 5, 10, 10, 10, 30, 30, 50, 65];
@@ -24,7 +24,7 @@ module.exports.register = function(config, client, state) {
             client.playerLocationAccuracy = values[Math.floor(values.length * Math.random())];
 
             let junk = Math.random() < 0.03;
-            let loc:any = {
+            let loc: any = {
                             provider: 'fused',
                             latitude: junk ? 360.0 : client.playerLatitude,
                             longitude: junk ? -360.0 : client.playerLongitude,
@@ -64,7 +64,7 @@ module.exports.register = function(config, client, state) {
     updateLocFixes();
 
     client.setOption('signatureInfo', function(envelope) {
-        let infos:any = {};
+        let infos: any = {};
 
         if (locationFixes.length > 0) {
             infos.location_fix = locationFixes;
@@ -112,5 +112,4 @@ module.exports.register = function(config, client, state) {
 
         return infos;
     });
-
 };
