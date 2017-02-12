@@ -446,6 +446,13 @@ class APIHelper {
                     // nothing
                     break;
 
+                case RequestType.EVOLVE_POKEMON:
+                    info = {
+                        result: r.result,
+                        pokemon_id: r.pokemon_id,
+                    };
+                    break;
+
                 default:
                     logger.warn('Unhandled request: %s', r._requestType);
                     logger.debug(r);
