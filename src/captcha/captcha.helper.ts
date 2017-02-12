@@ -1,12 +1,15 @@
 const logger = require('winston');
 const nightmare = require('nightmare');
 const request = require('request');
-const Promise = require('bluebird');
+const Bluebird = require('bluebird');
 const cheerio = require('cheerio');
 
-Promise.promisifyAll(request);
+Bluebird.promisifyAll(request);
 
 const useragent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36';
+
+declare var document: any;
+declare var window: any;
 
 /**
  * Class to help with captcha solving.
@@ -14,6 +17,9 @@ const useragent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/53
  * the other one using 2captcha.com.
  */
 class CaptchaHelper {
+    config: any;
+    state: any;
+    options: any;
 
     /**
      * @constructor
@@ -63,7 +69,7 @@ class CaptchaHelper {
             })
             .wait('iframe[title="recaptcha challenge"]')
             .wait(function() {
-                return window.grecaptcha.getResponse() != '';
+                return window.grecaptcha.getResponse() !== '';
             })
             .evaluate(function() {
                 return window.grecaptcha.getResponse();
