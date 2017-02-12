@@ -3,29 +3,30 @@ require('dotenv').config({silent: true});
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 // const pogobuf = require('pogobuf');
 const POGOProtos = require('node-pogo-protos');
-const EventEmitter = require('events');
-const logger = require('winston');
+import {EventEmitter} from 'events';
+import * as logger from 'winston';
 const fs = require('fs');
 const Promise = require('bluebird');
-const _ = require('lodash');
+import * as _ from 'lodash';
 const moment = require('moment');
 
-const APIHelper = require('./helpers/api');
-const ProxyHelper = require('./helpers/proxy');
+import APIHelper from './helpers/api';
+import ProxyHelper from './helpers/proxy';
+import Walker from './helpers/walker';
+import Player from './helpers/player';
+import SocketServer from './ui/socket.server';
+
 const signaturehelper = require('./helpers/signature');
-const Walker = require('./helpers/walker');
-const Player = require('./helpers/player');
-const SocketServer = require('./ui/socket.server');
 
 let config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
-    logger.error('Invalid credentials. Please fill data/config.yaml.').
-    logger.errro('look at config.example.yaml or config.actual.yaml for example.');
+    logger.error('Invalid credentials. Please fill data/config.yaml.');
+    logger.error('look at config.example.yaml or config.actual.yaml for example.');
     process.exit();
 }
 
-let state = {
+let state:any = {
     pos: {
         lat: config.pos.lat,
         lng: config.pos.lng,
@@ -53,7 +54,7 @@ let socket = new SocketServer(config, state);
 
 let login = (config.credentials.type == 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
 
-let client = {};
+let client:any = {};
 
 logger.info('App starting...');
 

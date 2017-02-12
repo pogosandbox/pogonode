@@ -11,6 +11,7 @@
     "dotenv": "^4.0.0",
     "events": "^1.1.1",
     "express": "^4.14.1",
+    "fs-promise": "^2.0.0",
     "geolib": "^2.0.22",
     "googlemaps": "^1.12.0",
     "js-yaml": "^3.8.1",
@@ -27,7 +28,14 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "eslint": "^3.14.1",
-    "eslint-config-google": "^0.7.1"
+    "@types/bluebird": "^3.0.37",
+    "@types/bytebuffer": "^5.0.33",
+    "@types/fs-promise": "^1.0.1",
+    "@types/lodash": "^4.14.52",
+    "@types/long": "^3.0.31",
+    "@types/node": "^7.0.5",
+    "@types/winston": "^2.2.0",
+    "tslint": "^4.4.2",
+    "typescript": "^2.1.6"
   }
 }

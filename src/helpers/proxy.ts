@@ -1,17 +1,22 @@
-const _ = require('lodash');
+import * as _ from 'lodash';
 const Promise = require('bluebird');
 const request = require('request');
-const logger = require('winston');
+import * as logger from 'winston';
 const cheerio = require('cheerio');
 const fs = require('fs');
-const moment = require('moment');
+import * as moment from 'moment';
 
 Promise.promisifyAll(request);
 
 /**
  * Helper class to deal with proxies
  */
-class ProxyHelper {
+export default class ProxyHelper {
+    config: any;
+    state: any;
+    badProxies: any[];
+    proxy: string;
+    clearIp: string;
 
     /**
      * @constructor
@@ -122,5 +127,3 @@ class ProxyHelper {
         }
     }
 }
-
-module.exports = ProxyHelper;

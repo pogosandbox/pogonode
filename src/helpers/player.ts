@@ -1,24 +1,27 @@
-const POGOProtos = require('node-pogo-protos');
+import * as POGOProtos from 'node-pogo-protos';
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
-const _ = require('lodash');
+import * as _ from 'lodash';
 const Promise = require('bluebird');
-const logger = require('winston');
+import * as logger from 'winston';
 
 Promise.promisifyAll(GoogleMapsAPI.prototype);
 
-const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
-const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
-const UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
+let EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
+let FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
+let UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
 
-const APIHelper = require('./api');
+import APIHelper from './api';
 
 const POKE_BALLS = [1, 2, 3, 4];
 
 /**
  * Helper class to deal with our walker.
  */
-class Player {
+export default class Player {
+    config: any;
+    state: any;
+    apihelper: APIHelper;
 
     /**
      * @constructor
@@ -36,7 +39,7 @@ class Player {
      * @return {object} array of pokestop we can spin
      */
     findSpinnablePokestops() {
-        let pokestops = this.state.map.pokestops;
+        let pokestops:any[] = this.state.map.pokestops;
         let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
 
         // get pokestops not in cooldown that are close enough to spin it
@@ -61,7 +64,8 @@ class Player {
                     return batch.batchCall().then(responses => {
                         let info = this.apihelper.parse(responses);
                         if (info.status == FortSearchResult.SUCCESS) {
-                            let stop = _.find(state.map.pokestops, p => p.id == ps.id);
+                            let stops:any[] = this.state.map.pokestops;
+                            let stop = _.find(stops, p => p.id == ps.id);
                             stop.cooldown_complete_timestamp_ms = info.cooldown;
                             this.state.events.emit('spinned', stop);
                         }
@@ -76,7 +80,7 @@ class Player {
      * @return {Promise}
      */
     encounterPokemons(catchPokemon) {
-        let pokemons = this.state.map.catchable_pokemons;
+        let pokemons:any[] = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
         pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
@@ -196,7 +200,8 @@ class Player {
                 .then(responses => {
                     let info = this.apihelper.parse(responses);
                     if (info.caught) {
-                        let pokemon = _.find(this.state.inventory.pokemon, pk => pk.id == info.id);
+                        let pokemons:any[] = this.state.inventory.pokemon;
+                        let pokemon = _.find(pokemons, pk => pk.id == info.id);
                         logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
                         this.state.events.emit('pokemon_caught', pokemon);
                         return pokemon;
@@ -216,7 +221,8 @@ class Player {
     releaseIfNotGoodEnough(pokemon) {
         if (!pokemon || !this.config.behavior.autorelease) return;
         // find same pokemons, with better iv and better cp
-        let better = _.find(this.state.inventory.pokemon, pkm => {
+        let pokemons:any[] = this.state.inventory.pokemon;
+        let better = _.find(pokemons, pkm => {
             return pkm.pokemon_id == pokemon.pokemon_id &&
                     pkm.iv > pokemon.iv * 1.1 &&
                     pkm.cp > pokemon.cp * 0.8;
@@ -243,7 +249,8 @@ class Player {
      * @return {int} id of pokemon
      */
     getPokeBallForPokemon(pokemondId) {
-        let balls = _.filter(this.state.inventory.items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
+        let items:any[] = this.state.inventory.items;
+        let balls = _.filter(items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
             let ball = _.head(balls);
             ball.count--;
@@ -268,8 +275,12 @@ class Player {
      * @return {Promise} Promise
      */
     dispatchIncubators() {
-        let freeIncubators = _.filter(this.state.inventory.egg_incubators, i => i.pokemon_id == 0);
-        let freeEggs = _.filter(this.state.inventory.eggs, e => e.egg_incubator_id == '');
+        let incubators:any[] = this.state.inventory.egg_incubators;
+        let eggs:any[] = this.state.inventory.eggs;
+
+        let freeIncubators = _.filter(incubators, i => i.pokemon_id == 0);
+        let freeEggs = _.filter(eggs, e => e.egg_incubator_id == '');
+
         if (freeIncubators.length > 0 && freeEggs.length > 0) {
             // we have some free eggs and some free incubators
 
@@ -317,5 +328,3 @@ class Player {
         return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 }
-
-module.exports = Player;

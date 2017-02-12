@@ -1,9 +1,18 @@
-const fs = require('fs');
-const logger = require('winston');
-const _ = require('lodash');
+import * as logger from 'winston';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+import * as moment from 'moment';
+
 const pogobuf = require('./pogobuf/pogobuf/pogobuf');
 
-logger.level = 'debug';
+logger.remove(logger.transports.Console);
+logger.add(logger.transports.Console, {
+    'timestamp': function() {
+        return moment().format('HH:mm:ss');
+    },
+    'colorize': true,
+    'level': 'debug',
+});
 
 let config = require('./helpers/config').load();
 let state = JSON.parse(fs.readFileSync('data/state.json', 'utf8'));

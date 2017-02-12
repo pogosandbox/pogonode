@@ -1,6 +1,6 @@
 engines:
     duplication:
-        enabled: true
+        enabled: false
         config:
             languages:
                 - javascript
@@ -10,4 +10,4 @@ engines:
         enabled: true
 
 exclude_paths:
-    - debug.js
+    - src/debug.js
