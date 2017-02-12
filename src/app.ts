@@ -1,31 +1,33 @@
 require('dotenv').config({silent: true});
 
-const pogobuf = require('./pogobuf/pogobuf/pogobuf');
-// const pogobuf = require('pogobuf');
-const POGOProtos = require('node-pogo-protos');
-const EventEmitter = require('events');
-const logger = require('winston');
-const fs = require('fs');
-const Promise = require('bluebird');
-const _ = require('lodash');
-const moment = require('moment');
+import * as pogobuf from '../pogobuf/pogobuf';
+// import * as pogobuf from 'pogobuf';
+import * as POGOProtos from 'node-pogo-protos';
+import {EventEmitter} from 'events';
+import * as logger from 'winston';
+import * as Bluebird from 'bluebird';
+import * as _ from 'lodash';
+import * as moment from 'moment';
 
-const APIHelper = require('./helpers/api');
-const ProxyHelper = require('./helpers/proxy');
+const fs = require('fs');
+
+import APIHelper from './helpers/api';
+import ProxyHelper from './helpers/proxy';
+import Walker from './helpers/walker';
+import Player from './helpers/player';
+import SocketServer from './ui/socket.server';
+
 const signaturehelper = require('./helpers/signature');
-const Walker = require('./helpers/walker');
-const Player = require('./helpers/player');
-const SocketServer = require('./ui/socket.server');
 
 let config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
-    logger.error('Invalid credentials. Please fill data/config.yaml.').
-    logger.errro('look at config.example.yaml or config.actual.yaml for example.');
+    logger.error('Invalid credentials. Please fill data/config.yaml.');
+    logger.error('look at config.example.yaml or config.actual.yaml for example.');
     process.exit();
 }
 
-let state = {
+let state: any = {
     pos: {
         lat: config.pos.lat,
         lng: config.pos.lng,
@@ -51,9 +53,9 @@ let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
-let login = (config.credentials.type == 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
+let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
 
-let client = {};
+let client: pogobuf.Client;
 
 logger.info('App starting...');
 
@@ -68,8 +70,7 @@ proxyhelper.checkProxy().then(valid => {
 
 }).then(() => {
     logger.info('Login...');
-
-    if (proxyhelper.proxy) login.setProxy(proxyhelper.proxy);
+    if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
     return login.login(config.credentials.user, config.credentials.password);
 
 }).then(token => {
@@ -127,9 +128,9 @@ proxyhelper.checkProxy().then(valid => {
 }).then(() => {
     // initial player state
     logger.debug('Get player info...');
-    return client.batchStart()
-                 .getPlayer(config.api.country, config.api.language, config.api.timezone)
-                 .batchCall();
+    let batch = client.batchStart();
+    batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
+    return client.batchCall();
 
 }).then(responses => {
     apihelper.parse(responses);
@@ -163,7 +164,7 @@ proxyhelper.checkProxy().then(valid => {
         logger.info('Game master updating...');
         let batch = client.batchStart();
         // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
-        batch.downloadItemTemplates();
+        batch.downloadItemTemplates(false);
         return apihelper.alwaysinit(batch)
                 .batchCall().then(resp => {
                     return apihelper.parse(resp);
@@ -198,7 +199,7 @@ proxyhelper.checkProxy().then(valid => {
     return true;
 
 }).catch(e => {
-    if (e.name == 'ChallengeError') {
+    if (e.name === 'ChallengeError') {
         resolveChallenge(e.url)
         .then(responses => {
             apihelper.parse(responses);
@@ -208,7 +209,7 @@ proxyhelper.checkProxy().then(valid => {
     } else {
         logger.error(e);
 
-        if (e.code == 'ECONNRESET') proxyhelper.badProxy();
+        if (e.code === 'ECONNRESET') proxyhelper.badProxy();
         else if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
         else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
         else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
@@ -242,153 +243,133 @@ function resolveChallenge(url) {
             });
 }
 
-App.on('apiReady', () => {
+App.on('apiReady', async () => {
     logger.info('Initial flow done.');
     App.emit('saveState');
     socket.ready();
 
     // Wait a bit, call a getMapObjects() then start walking around
-    Promise.delay(config.delay.walk * _.random(900, 1100))
-            .then(() => {
-                return mapRefresh();
-            })
-            .delay(config.delay.walk * _.random(900, 1100))
-            .then(() => {
-                App.emit('updatePos');
-            });
+    await Bluebird.delay(config.delay.walk * _.random(900, 1100));
+    await mapRefresh();
+    await Bluebird.delay(config.delay.walk * _.random(900, 1100));
+
+    App.emit('updatePos');
 });
 
-App.on('updatePos', () => {
-    walker
-        .checkPath()
-        .then(path => {
-            if (path) socket.sendRoute(path.waypoints);
-        })
-        .then(() => {
-            walker.walk();
-            return walker.getAltitude(state.pos);
-        })
-        .then(altitude => {
-            let pos = walker.fuzzedLocation(state.pos);
-            client.setPosition({
-                latitude: pos.lat,
-                longitude: pos.lng,
-                altitude: altitude,
-            });
+App.on('updatePos', async () => {
+    let path = await walker.checkPath();
+    if (path) socket.sendRoute(path.waypoints);
 
-            socket.sendPosition();
+    await walker.walk();
+    let altitude = await walker.getAltitude(state.pos);
 
-        })
-        .then(() => {
-            // actions have been requested, but we only call them if
-            // there is nothing going down at the same time
-            if (state.todo.length > 0) {
-                let todo = state.todo.shift();
-                if (todo.call == 'level_up') {
-                    let batch = client.batchStart();
-                    batch.levelUpRewards(state.inventory.player.level);
-                    return apihelper.always(batch).batchCall()
-                            .then(responses => apihelper.parse(responses))
-                            .delay(config.delay.levelUp * _.random(900, 1100));
+    let pos = walker.fuzzedLocation(state.pos);
+    client.setPosition({
+        latitude: pos.lat,
+        longitude: pos.lng,
+        altitude: altitude,
+    });
 
-                } else if (todo.call == 'release_pokemon') {
-                    let batch = client.batchStart();
-                    batch.releasePokemon(todo.pokemons);
-                    return apihelper.always(batch).batchCall()
-                            .then(responses => apihelper.parse(responses))
-                            .then(info => {
-                                if (info.result == 1) {
-                                    logger.info('Pokemon released', todo.pokemons, info);
-                                } else {
-                                    logger.warn('Error releasing pokemon', info);
-                                }
-                            })
-                            .delay(config.delay.release * _.random(900, 1100));
+    socket.sendPosition();
 
-                } else if (todo.call == 'evolve_pokemon') {
-                    let batch = client.batchStart();
-                    batch.evolvePokemon(todo.pokemon);
-                    return apihelper.always(batch).batchCall()
-                            .then(responses => apihelper.parse(responses))
-                            .then(info => {
-                                if (info.result == 1) {
-                                    logger.info('Pokemon evolved', todo.pokemon, info);
-                                } else {
-                                    logger.warn('Error evolving pokemon', info);
-                                }
-                            })
-                            .delay(config.delay.evolve * _.random(900, 1100));
+    // actions have been requested, but we only call them if
+    // there is nothing going down at the same time
+    if (state.todo.length > 0) {
+        let todo = state.todo.shift();
+        if (todo.call === 'level_up') {
+            let batch = client.batchStart();
+            batch.levelUpRewards(state.inventory.player.level);
+            let responses = await apihelper.always(batch).batchCall();
+            apihelper.parse(responses);
+            await Bluebird.delay(config.delay.levelUp * _.random(900, 1100));
 
-                } else {
-                    logger.warn('Unhandled todo: ' + todo.call);
-                }
+        } else if (todo.call === 'release_pokemon') {
+            let batch = client.batchStart();
+            batch.releasePokemon(todo.pokemons);
+            let responses = apihelper.always(batch).batchCall();
+            let info = apihelper.parse(responses);
+            if (info.result === 1) {
+                logger.info('Pokemon released', todo.pokemons, info);
+            } else {
+                logger.warn('Error releasing pokemon', info);
             }
+            await Bluebird.delay(config.delay.release * _.random(900, 1100));
 
-        })
-        .then(() => {
-            let min = state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
-            let max = state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
-            let mindist = state.download_settings.map_settings.get_map_objects_min_distance_meters;
-
-            if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
-                // no previous call, fire a getMapObjects
-                // or if it's been enough time since last getMapObjects
-                return mapRefresh();
-
-            } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
-                // if we travelled enough distance, fire a getMapObjects
-                if (walker.distance(state.api.last_pos) > mindist) return mapRefresh();
-
+        } else if (todo.call === 'evolve_pokemon') {
+            let batch = client.batchStart();
+            batch.evolvePokemon(todo.pokemon);
+            let responses = apihelper.always(batch).batchCall();
+            let info = apihelper.parse(responses);
+            if (info.result === 1) {
+                logger.info('Pokemon evolved', todo.pokemon, info);
+            } else {
+                logger.warn('Error evolving pokemon', info);
             }
+            await Bluebird.delay(config.delay.evolve * _.random(900, 1100));
 
-            return Promise.resolve();
-        })
-        .delay(config.delay.walk * _.random(900, 1100))
-        .then(() => App.emit('updatePos'));
+        } else {
+            logger.warn('Unhandled todo: ' + todo.call);
+        }
+    }
+
+    let min: number = +state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
+    let max: number = +state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
+    let mindist: number = +state.download_settings.map_settings.get_map_objects_min_distance_meters;
+
+    if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
+        // no previous call, fire a getMapObjects
+        // or if it's been enough time since last getMapObjects
+        await mapRefresh();
+
+    } else if (moment().subtract(min, 's').isAfter(state.api.last_gmo)) {
+        // if we travelled enough distance, fire a getMapObjects
+        if (walker.distance(state.api.last_pos) > mindist) {
+            await mapRefresh();
+        }
+    }
+
+    await Bluebird.delay(config.delay.walk * _.random(900, 1100));
+    App.emit('updatePos');
 });
 
 /**
  * Refresh map information based on current location
  * @return {Promise}
  */
-function mapRefresh() {
+async function mapRefresh(): Promise<void> {
     logger.info('Map Refresh', {pos: state.pos});
-    let cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
+    try {
+        let cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
 
-    // save where and when, usefull to know when to call next getMapObjects
-    state.api.last_gmo = moment();
-    state.api.last_pos = {lat: state.pos.lat, lng: state.pos.lng};
+        // save where and when, usefull to know when to call next getMapObjects
+        state.api.last_gmo = moment();
+        state.api.last_pos = {lat: state.pos.lat, lng: state.pos.lng};
 
-    let batch = client.batchStart();
-    batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
-    return apihelper.always(batch).batchCall().then(responses => {
+        let batch = client.batchStart();
+        batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
+        let responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
         App.emit('saveState');
 
-    }).then(() => {
         // send pokestop info to the ui
         socket.sendPokestops();
 
-    }).then(() => {
         // spin pokestop that are close enough
         let stops = player.findSpinnablePokestops();
-        return player.spinPokestops(stops);
+        await player.spinPokestops(stops);
 
-    }).then(done => {
         // encounter available pokemons
-        return player.encounterPokemons(config.behavior.catch);
+        await player.encounterPokemons(config.behavior.catch);
 
-    }).then(() => {
         if (Math.random() < 0.3) {
             logger.info('Dispatch incubators...');
-            return player.dispatchIncubators();
+            await player.dispatchIncubators();
         }
 
-    }).then(() => {
         App.emit('saveState');
 
-    }).catch(e => {
-        if (e.name == 'ChallengeError') {
+    } catch (e) {
+        if (e.name === 'ChallengeError') {
             return resolveChallenge(e.url);
         }
 
@@ -396,7 +377,7 @@ function mapRefresh() {
         debugger;
         // e.status_code == 102
         // detect token expiration
-    });
+    }
 }
 
 App.on('spinned', stop => {

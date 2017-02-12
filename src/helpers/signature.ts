@@ -1,5 +1,5 @@
 const Random = require('simjs-random');
-const _ = require('lodash');
+import * as _ from 'lodash';
 
 let timer = null;
 let start = 0; // time from start, get updated at register();
@@ -8,7 +8,7 @@ let course = random.uniform(0, 359.9); // last course, used to calculate next on
 let lastLocationFixTimeStamp = new Date().getTime() - _.random(1000, 2000);
 let lastLocationFix = null;
 let locationFixes = []; // location fixes get generated all the taime and added as batch when api called
-let lastPos = {};
+let lastPos = {latitude: 0.0, longitude: 0.0};
 
 module.exports.register = function(config, client, state) {
 
@@ -16,7 +16,7 @@ module.exports.register = function(config, client, state) {
     lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
 
     let updateLocFixes = function() {
-        let moving = (state.pos.lat != lastPos.latitude) || (state.pos.lng != lastPos.longitude);
+        let moving = (state.pos.lat !== lastPos.latitude) || (state.pos.lng !== lastPos.longitude);
         lastPos = {latitude: state.pos.lat, longitude: state.pos.lng};
         if (lastLocationFix == null || moving || Math.random() > 0.85) {
             let values = [5, 5, 5, 5, 10, 10, 10, 30, 30, 50, 65];
@@ -24,7 +24,7 @@ module.exports.register = function(config, client, state) {
             client.playerLocationAccuracy = values[Math.floor(values.length * Math.random())];
 
             let junk = Math.random() < 0.03;
-            let loc = {
+            let loc: any = {
                             provider: 'fused',
                             latitude: junk ? 360.0 : client.playerLatitude,
                             longitude: junk ? -360.0 : client.playerLongitude,
@@ -32,11 +32,10 @@ module.exports.register = function(config, client, state) {
                             provider_status: 3,
                             location_type: 1,
                             floor: 0,
+                            course: -1,
+                            speed: -1,
                         };
-            if (Math.random() > 0.95) {
-                loc.course = -1;
-                loc.speed = -1;
-            } else {
+            if (Math.random() < 0.95) {
                 loc.course = random.triangular(0, 359.9, course);
                 loc.speed = random.triangular(0.2, 4.25, 1);
                 course = loc.course;
@@ -65,7 +64,7 @@ module.exports.register = function(config, client, state) {
     updateLocFixes();
 
     client.setOption('signatureInfo', function(envelope) {
-        let infos = {};
+        let infos: any = {};
 
         if (locationFixes.length > 0) {
             infos.location_fix = locationFixes;
@@ -113,5 +112,4 @@ module.exports.register = function(config, client, state) {
 
         return infos;
     });
-
 };

@@ -8,21 +8,20 @@
             "type": "node",
             "request": "launch",
             "name": "Launch",
-            "program": "${workspaceRoot}\\app.js",
+            "program": "${workspaceRoot}/bin/app.js",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development",
                 "NODE_TLS_REJECT_UNAUTHORIZED": 0
             },
-            "args": [
-                "--trace-warnings"
-            ]
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Launch  Captcha Helper",
-            "program": "${workspaceRoot}\\captcha\\app.js",
+            "program": "${workspaceRoot}/captcha/app.js",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development",
@@ -36,15 +35,13 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Debug",
-            "program": "${workspaceRoot}\\debug.js",
+            "program": "${workspaceRoot}/bin/debug.js",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development"
             },
-            "args": [
-                "--trace-warnings"
-            ]
-
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         }
     ]
 }
