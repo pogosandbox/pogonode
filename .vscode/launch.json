@@ -33,7 +33,7 @@
             "type": "node",
             "request": "launch",
             "name": "Catpcha",
-            "program": "${workspaceRoot}/bin/captcha/app.js",
+            "program": "${workspaceRoot}/bin/captcha/launch.js",
             "cwd": "${workspaceRoot}",
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
             "sourceMaps": true
