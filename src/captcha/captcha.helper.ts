@@ -16,7 +16,7 @@ declare var window: any;
  * There is two mode, one using an embed browser,
  * the other one using 2captcha.com.
  */
-class CaptchaHelper {
+export default class CaptchaHelper {
     config: any;
     state: any;
     options: any;
@@ -35,8 +35,8 @@ class CaptchaHelper {
             //     mode: 'detach',
             // },
             switches: {},
-            waitTimeout: 60 * 1000, // 1 min
-            executionTimeout: 120 * 1000, // 2 min
+            waitTimeout: 90 * 1000, // 1 min 30
+            executionTimeout: 180 * 1000, // 3 min
             webPreferences: {
                 webSecurity: false,
             },
@@ -59,16 +59,20 @@ class CaptchaHelper {
             })
             .evaluate(function() {
                 try {
-                    window.___grecaptcha_cfg.clients[0].W.tk.callback = function() {};
-                } catch (e) {}
+                    window.___grecaptcha_cfg.clients[0].T.Mk.callback = function() {};
+                } catch (e) {
+                    console.log(e);
+                }
             })
             .wait(4000)
             .wait(function() {
+                console.log('wait...');
                 let input = document.querySelector('.g-recaptcha-response');
                 return input && input.value.length > 0;
             })
             .wait('iframe[title="recaptcha challenge"]')
             .wait(function() {
+                console.log('wait ' + window.grecaptcha.getResponse());
                 return window.grecaptcha.getResponse() !== '';
             })
             .evaluate(function() {
@@ -112,5 +116,3 @@ class CaptchaHelper {
         });
     }
 }
-
-module.exports = CaptchaHelper;

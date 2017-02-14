@@ -20,26 +20,21 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch  Captcha Helper",
-            "program": "${workspaceRoot}/captcha/app.js",
-            "cwd": "${workspaceRoot}",
-            "env": {
-				"NODE_ENV": "development",
-                "NODE_TLS_REJECT_UNAUTHORIZED": 0
-            },
-            "args": [
-                "--trace-warnings"
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Launch Debug",
             "program": "${workspaceRoot}/bin/debug.js",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development"
             },
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Catpcha",
+            "program": "${workspaceRoot}/bin/captcha/app.js",
+            "cwd": "${workspaceRoot}",
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
             "sourceMaps": true
         }

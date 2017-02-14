@@ -237,9 +237,13 @@ function resolveChallenge(url) {
     return helper
             .solveCaptchaManual(url)
             .then(token => {
-                let batch = client.batchStart();
-                batch.verifyChallenge(token);
-                return apihelper.always(batch).batchCall();
+                if (token) {
+                    let batch = client.batchStart();
+                    batch.verifyChallenge(token);
+                    return apihelper.always(batch).batchCall();
+                } else {
+                    logger.error('Token is null');
+                }
             });
 }
 

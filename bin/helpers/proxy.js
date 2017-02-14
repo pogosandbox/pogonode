@@ -1,12 +1,20 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const _ = require("lodash");
-const Promise = require('bluebird');
-const request = require('request');
+const Bluebird = require("bluebird");
 const logger = require("winston");
+const moment = require("moment");
+const request = require('request');
 const cheerio = require('cheerio');
 const fs = require('fs');
-const moment = require("moment");
-Promise.promisifyAll(request);
+Bluebird.promisifyAll(request);
 /**
  * Helper class to deal with proxies
  */
@@ -36,21 +44,22 @@ class ProxyHelper {
      * @return {Promise} with a proxy url as param.
      */
     findProxy() {
-        if (this.config.proxy.url != 'auto')
-            return Promise.resolve(this.config.proxy.url);
-        let trToProxy = function ($, tr) {
-            return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
-        };
-        let badUrls = _.map(this.badProxies, p => p.proxy);
-        let url = 'https://www.sslp' + 'roxies.org/';
-        return request.getAsync(url).then(response => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config.proxy.url !== 'auto')
+                return Promise.resolve(this.config.proxy.url);
+            let trToProxy = function ($, tr) {
+                return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
+            };
+            let badUrls = _.map(this.badProxies, p => p.proxy);
+            let url = 'https://www.sslp' + 'roxies.org/';
+            let response = yield request.getAsync(url);
             let $ = cheerio.load(response.body);
             let proxylist = $('#proxylisttable tr');
             let proxy = _.find(proxylist, tr => {
-                return $(tr).find('td').eq(6).text() == 'yes' && badUrls.indexOf(trToProxy($, tr)) < 0;
+                return $(tr).find('td').eq(6).text() === 'yes' && badUrls.indexOf(trToProxy($, tr)) < 0;
             }, 1);
             if (!proxy)
-                return false;
+                return null;
             else
                 return trToProxy($, proxy);
         });
@@ -61,46 +70,46 @@ class ProxyHelper {
      * @return {Promise} with true or false
      */
     checkProxy() {
-        if (!this.config.proxy.url) {
-            return Promise.resolve(true);
-        }
-        return this.findProxy().then(proxy => {
-            if (!proxy)
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.config.proxy.url) {
+                return true;
+            }
+            try {
+                let proxy = yield this.findProxy();
+                if (!proxy)
+                    return false;
+                this.proxy = proxy;
+                this.state.proxy = proxy;
+                logger.info('Using proxy: %s', proxy);
+                let response = request.getAsync('https://api.ipify.org/?format=json');
+                if (!response)
+                    return false;
+                this.clearIp = JSON.parse(response.body).ip;
+                logger.debug('Clear ip: ' + this.clearIp);
+                if (!this.clearIp)
+                    return false;
+                response = request.getAsync('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
+                if (!response)
+                    return false;
+                let ip = JSON.parse(response.body).ip;
+                logger.debug('Proxified ip: ' + ip);
+                let valid = !this.config.proxy.check || (this.clearIp !== ip);
+                if (!valid)
+                    this.badProxy();
+                return valid;
+            }
+            catch (e) {
+                logger.error(e);
                 return false;
-            this.proxy = proxy;
-            this.state.proxy = proxy;
-            logger.info('Using proxy: %s', proxy);
-            return request.getAsync('https://api.ipify.org/?format=json');
-        }).then(response => {
-            if (!response)
-                return false;
-            this.clearIp = JSON.parse(response.body).ip;
-            logger.debug('Clear ip: ' + this.clearIp);
-            return this.clearIp;
-        }).then(ip => {
-            if (!ip)
-                return false;
-            return request.getAsync('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
-        }).then(response => {
-            if (!response)
-                return false;
-            let ip = JSON.parse(response.body).ip;
-            logger.debug('Proxified ip: ' + ip);
-            let valid = !this.config.proxy.check || (this.clearIp != ip);
-            if (!valid)
-                this.badProxy();
-            return valid;
-        }).catch(e => {
-            debugger;
-            return false;
+            }
         });
     }
     /**
      * Add the current proxy in our bad proxy database so we won't use it anymore.
      */
     badProxy() {
-        if (!_.find(this.badProxies, p => p.proxy == this.proxy)) {
-            if (this.config.proxy.url != 'auto')
+        if (!_.find(this.badProxies, p => p.proxy === this.proxy)) {
+            if (this.config.proxy.url !== 'auto')
                 logger.warn('Configured proxy looks bad.');
             this.badProxies.push({
                 proxy: this.proxy,

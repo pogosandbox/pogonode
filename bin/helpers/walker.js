@@ -1,10 +1,18 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const _ = require("lodash");
+const Bluebird = require("bluebird");
+const logger = require("winston");
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
-const _ = require("lodash");
-const Promise = require('bluebird');
-const logger = require("winston");
-Promise.promisifyAll(GoogleMapsAPI.prototype);
+Bluebird.promisifyAll(GoogleMapsAPI.prototype);
 const api_1 = require("./api");
 /**
  * Helper class to deal with our walker.
@@ -27,7 +35,7 @@ class Walker {
     findNextPokestop() {
         let pokestops = this.state.map.pokestops;
         // get pokestops not already visited
-        pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms == 0 &&
+        pokestops = _.filter(pokestops, pk => !pk.done && pk.cooldown_complete_timestamp_ms === 0 &&
             this.state.path.visited_pokestops.indexOf(pk.id) < 0);
         if (pokestops.length > 1) {
             // order by distance
@@ -43,57 +51,61 @@ class Walker {
     /**
      * Use Google Map API to get a path to nearest pokestop.
      * Update state with path.
-     * @return {Promise}
+     * @return {Promise<void>}
      */
     generatePath() {
-        // logger.debug("Get new path.");
-        let state = this.state;
-        let target = state.path.target = this.findNextPokestop();
-        if (target) {
-            let gmAPI = new GoogleMapsAPI({
-                key: this.config.gmapKey,
-            });
-            return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking' })
-                .then(result => {
-                if (result.error_message)
-                    throw new Error(result.error_message);
-                state.path.waypoints = [];
-                if (result.routes.length > 0 && result.routes[0].legs) {
-                    _.each(result.routes[0].legs, l => {
-                        _.each(l.steps, s => state.path.waypoints.push(s.end_location));
-                    });
-                }
-                state.path.waypoints.push({ lat: target.latitude, lng: target.longitude });
-                return state.path;
-            });
-        }
-        else {
-            logger.warn('No stop to go to, stand still.');
-            return Promise.resolve();
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            // logger.debug("Get new path.");
+            let state = this.state;
+            let target = state.path.target = this.findNextPokestop();
+            if (target) {
+                let gmAPI = new GoogleMapsAPI({
+                    key: this.config.gmapKey,
+                });
+                return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking' })
+                    .then(result => {
+                    if (result.error_message)
+                        throw new Error(result.error_message);
+                    state.path.waypoints = [];
+                    if (result.routes.length > 0 && result.routes[0].legs) {
+                        _.each(result.routes[0].legs, l => {
+                            _.each(l.steps, s => state.path.waypoints.push(s.end_location));
+                        });
+                    }
+                    state.path.waypoints.push({ lat: target.latitude, lng: target.longitude });
+                    return state.path;
+                });
+            }
+            else {
+                logger.warn('No stop to go to, stand still.');
+                return null;
+            }
+        });
     }
     /**
      * Check is current path is still valid, generate a new path if not.
      * Update state if needed.
-     * @return {Promise}
+     * @return {Promise<any>}
      */
     checkPath() {
-        if (this.state.path.waypoints.length == 0) {
-            if (this.state.path.target) {
-                // we arrive at target
-                this.state.path.target.done = true;
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.state.path.waypoints.length === 0) {
+                if (this.state.path.target) {
+                    // we arrive at target
+                    this.state.path.target.done = true;
+                }
+                // get a new target and path to go there
+                return yield this.generatePath();
             }
-            // get a new target and path to go there
-            return this.generatePath();
-        }
-        return Promise.resolve(false);
+            return null;
+        });
     }
     /**
      * Move toward target, get call each second or so.
      * Update state.
      */
     walk() {
-        if (!this.state.path || this.state.path.waypoints.length == 0)
+        if (!this.state.path || this.state.path.waypoints.length === 0)
             return;
         // move towards next target
         let dest = this.state.path.waypoints[0];
@@ -146,21 +158,25 @@ class Walker {
      * @return {Promise<altitude>} Promise returning altitude
      */
     getAltitude(latlng) {
-        let gmAPI = new GoogleMapsAPI({
-            key: this.config.gmapKey,
-        });
-        return gmAPI.elevationFromLocationsAsync({
-            locations: `${latlng.lat},${latlng.lng}`,
-        }).then(data => {
-            if (data && data.results.length > 0) {
-                return data.results[0].elevation;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let gmAPI = new GoogleMapsAPI({
+                    key: this.config.gmapKey,
+                });
+                let data = yield gmAPI.elevationFromLocationsAsync({
+                    locations: `${latlng.lat},${latlng.lng}`,
+                });
+                if (data && data.results.length > 0) {
+                    return data.results[0].elevation;
+                }
+                else {
+                    return 0;
+                }
             }
-            else {
+            catch (e) {
+                logger.warn('Unable to get altitude.', e);
                 return 0;
             }
-        }).catch(e => {
-            logger.warn('Unable to get altitude.', e);
-            return 0;
         });
     }
 }

@@ -1,9 +1,10 @@
+"use strict";
 const logger = require('winston');
 const nightmare = require('nightmare');
 const request = require('request');
-const Promise = require('bluebird');
+const Bluebird = require('bluebird');
 const cheerio = require('cheerio');
-Promise.promisifyAll(request);
+Bluebird.promisifyAll(request);
 const useragent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36';
 /**
  * Class to help with captcha solving.
@@ -25,8 +26,8 @@ class CaptchaHelper {
             //     mode: 'detach',
             // },
             switches: {},
-            waitTimeout: 60 * 1000,
-            executionTimeout: 120 * 1000,
+            waitTimeout: 90 * 1000,
+            executionTimeout: 180 * 1000,
             webPreferences: {
                 webSecurity: false,
             },
@@ -49,18 +50,22 @@ class CaptchaHelper {
         })
             .evaluate(function () {
             try {
-                window.___grecaptcha_cfg.clients[0].W.tk.callback = function () { };
+                window.___grecaptcha_cfg.clients[0].T.Mk.callback = function () { };
             }
-            catch (e) { }
+            catch (e) {
+                console.log(e);
+            }
         })
             .wait(4000)
             .wait(function () {
+            console.log('wait...');
             let input = document.querySelector('.g-recaptcha-response');
             return input && input.value.length > 0;
         })
             .wait('iframe[title="recaptcha challenge"]')
             .wait(function () {
-            return window.grecaptcha.getResponse() != '';
+            console.log('wait ' + window.grecaptcha.getResponse());
+            return window.grecaptcha.getResponse() !== '';
         })
             .evaluate(function () {
             return window.grecaptcha.getResponse();
@@ -102,5 +107,6 @@ class CaptchaHelper {
         });
     }
 }
-module.exports = CaptchaHelper;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CaptchaHelper;
 //# sourceMappingURL=captcha.helper.js.map

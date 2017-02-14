@@ -65,12 +65,12 @@ class APIHelper {
                 // add new pokemon to inventory, removing it if already there (to be sure)
                 if (pkm.is_egg) {
                     let eggs = this.state.inventory.eggs;
-                    this.state.inventory.eggs = _.filter(eggs, e => e.id != pkm.id);
+                    this.state.inventory.eggs = _.filter(eggs, e => e.id !== pkm.id);
                     this.state.inventory.eggs.push(pkm);
                 }
                 else {
                     let pokemons = this.state.inventory.pokemon;
-                    this.state.inventory.pokemon = _.filter(pokemons, e => e.id != pkm.id);
+                    this.state.inventory.pokemon = _.filter(pokemons, e => e.id !== pkm.id);
                     this.state.inventory.pokemon.push(pkm);
                 }
             });
@@ -83,7 +83,7 @@ class APIHelper {
             // replace any modified item in inventory
             _.each(split.items, i => {
                 let items = this.state.inventory.items;
-                let item = _.find(items, it => it.item_id == i.item_id);
+                let item = _.find(items, it => it.item_id === i.item_id);
                 if (item) {
                     item.count = i.count;
                     item.unseen = i.unseen;
@@ -96,7 +96,7 @@ class APIHelper {
         if (split.player) {
             let lvl = this.state.inventory.player.level;
             this.state.inventory.player = split.player;
-            if (this.state.inventory.player.level != lvl) {
+            if (this.state.inventory.player.level !== lvl) {
                 // level up
                 this.state.todo.push({ call: 'level_up' });
             }
@@ -113,7 +113,7 @@ class APIHelper {
     completeTutorial() {
         let tuto = this.state.player.tutorial_state || [];
         let client = this.state.client;
-        if (_.difference([0, 1, 3, 4, 7], tuto).length == 0) {
+        if (_.difference([0, 1, 3, 4, 7], tuto).length === 0) {
             // tuto done, do a getPlayerProfile()
             // like the actual app (not used later)
             let batch = client.batchStart();
@@ -229,13 +229,13 @@ class APIHelper {
      * @return {object} information about api call (like status, depends of the call)
      */
     parse(responses) {
-        if (!responses || responses.length == 0 || responses == true)
+        if (!responses || responses.length === 0 || responses === true)
             return null;
         if (!(responses instanceof Array))
             responses = [responses];
         let info = {};
-        if (responses[0]._requestType == RequestType.LEVEL_UP_REWARDS) {
-            if (responses[0].result == 1) {
+        if (responses[0]._requestType === RequestType.LEVEL_UP_REWARDS) {
+            if (responses[0].result === 1) {
                 // check if new item are also in get_inventory
                 debugger;
             }
@@ -292,10 +292,10 @@ class APIHelper {
                     this.state.api.item_templates_timestamp = r.item_templates_timestamp_ms;
                     break;
                 case RequestType.FORT_SEARCH:
-                    if (r.result == 1) {
+                    if (r.result === 1) {
                         _.each(r.items_awarded, i => {
                             let items = this.state.inventory.items;
-                            let item = _.find(items, it => it.item_id == i.item_id);
+                            let item = _.find(items, it => it.item_id === i.item_id);
                             if (item)
                                 item.count += i.item_count;
                         });
@@ -326,7 +326,7 @@ class APIHelper {
                         this.state.inventory.pokemon.push(r.pokemon_data);
                     }
                     info = {
-                        caught: r.status == CatchPokemonResult.CATCH_SUCCESS,
+                        caught: r.status === CatchPokemonResult.CATCH_SUCCESS,
                         status: r.status,
                         id: r.captured_pokemon_id,
                         capture_reason: r.capture_reason,
@@ -336,8 +336,8 @@ class APIHelper {
                     break;
                 case RequestType.GET_MAP_OBJECTS:
                     let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
-                    let pokestops = forts.filter(f => f.type == 1);
-                    let gyms = forts.filter(f => f.type == 0);
+                    let pokestops = forts.filter(f => f.type === 1);
+                    let gyms = forts.filter(f => f.type === 0);
                     let wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
                     let catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
                     let nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
@@ -365,12 +365,12 @@ class APIHelper {
                     this.state.inventory.pokemon.push(r.pokemon_data);
                     break;
                 case RequestType.LEVEL_UP_REWARDS:
-                    if (r.result == 1) {
+                    if (r.result === 1) {
                         logger.debug('levelUpRewards()', r);
                         logger.debug(' todo: see if also in inventory_delta?');
                         _.each(r.items_awarded, i => {
                             let items = this.state.inventory.items;
-                            let item = _.find(items, it => it && it.item_id == i.item_id);
+                            let item = _.find(items, it => it && it.item_id === i.item_id);
                             if (item)
                                 item.count += i.item_count;
                             else

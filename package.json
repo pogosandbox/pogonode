@@ -5,6 +5,7 @@
   "main": "app.js",
   "author": "niico",
   "license": "MIT",
+  "engines" : { "node" : ">=7.0" },
   "dependencies": {
     "bluebird-retry": "^0.10.1",
     "cheerio": "^0.22.0",

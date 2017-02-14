@@ -8,4 +8,5 @@ data
 
 pogobuf
 node-pogo-signature
-pogonode.log
+
+*.log
