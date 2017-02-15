@@ -17,35 +17,6 @@ const APIHelper = require('./helpers/api');
 let apihelper = new APIHelper(config, state);
 const Walker = require('./helpers/walker');
 let walker = new Walker(config, state);
-function walk(socket) {
-    return walker
-        .checkPath()
-        .then(path => {
-        if (path)
-            socket.sendRoute(path.waypoints);
-    })
-        .then(() => {
-        walker.walk();
-    })
-        .then(() => {
-        socket.sendPosition();
-    })
-        .then(() => {
-        setTimeout(() => {
-            walk(socket);
-        }, 1000);
-    });
-}
-function testSocket() {
-    const SocketServer = require('./socket.server');
-    let socket = new SocketServer(config, state);
-    socket.start().then(() => {
-        socket.ready();
-        setTimeout(() => {
-            walk(socket);
-        }, 1000);
-    });
-}
 function testVersion() {
     config.api.version = '5500';
     logger.info('Version', config.api.version);

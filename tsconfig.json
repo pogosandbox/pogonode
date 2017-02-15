@@ -7,5 +7,10 @@
         "outDir": "bin",
         "watch": true,
         "allowJs": true
-    }
+    },
+    "exclude": [
+        "node_modules",
+        "pogobuf",
+        "bin"
+    ]
 }

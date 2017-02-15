@@ -234,7 +234,7 @@ class APIHelper {
         if (!(responses instanceof Array))
             responses = [responses];
         let info = {};
-        if (responses[0]._requestType === RequestType.LEVEL_UP_REWARDS) {
+        if (responses[0]._requestType === 128 /* LEVEL_UP_REWARDS */) {
             if (responses[0].result === 1) {
                 // check if new item are also in get_inventory
                 debugger;
@@ -243,7 +243,7 @@ class APIHelper {
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
-                case RequestType.GET_PLAYER:
+                case 2 /* GET_PLAYER */:
                     this.state.player = r.player_data;
                     this.state.player.banned = r.banned;
                     this.state.player.warn = r.warn;
@@ -252,7 +252,7 @@ class APIHelper {
                     if (r.warn)
                         logger.error('Ban warning.');
                     break;
-                case RequestType.GET_INVENTORY:
+                case 4 /* GET_INVENTORY */:
                     this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
                     if (!this.state.hasOwnProperty('inventory')) {
                         // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
@@ -266,7 +266,7 @@ class APIHelper {
                     }
                     _.map(this.state.inventory.pokemon, this.addIv);
                     break;
-                case RequestType.DOWNLOAD_SETTINGS:
+                case 5 /* DOWNLOAD_SETTINGS */:
                     this.state.api.settings_hash = r.hash;
                     if (r.settings) {
                         let clientversion = this.versionToClientVersion(this.config.api.version);
@@ -282,16 +282,16 @@ class APIHelper {
                         this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                     }
                     break;
-                case RequestType.DOWNLOAD_ITEM_TEMPLATES:
+                case 6 /* DOWNLOAD_ITEM_TEMPLATES */:
                     if (r.item_templates.length > 0) {
                         this.state.api.item_templates = r.item_templates;
                         info.timestamp_ms = r.timestamp_ms;
                     }
                     break;
-                case RequestType.DOWNLOAD_REMOTE_CONFIG_VERSION:
+                case 7 /* DOWNLOAD_REMOTE_CONFIG_VERSION */:
                     this.state.api.item_templates_timestamp = r.item_templates_timestamp_ms;
                     break;
-                case RequestType.FORT_SEARCH:
+                case 101 /* FORT_SEARCH */:
                     if (r.result === 1) {
                         _.each(r.items_awarded, i => {
                             let items = this.state.inventory.items;
@@ -312,21 +312,21 @@ class APIHelper {
                         logger.warn('fortSearch() returned %s', r.result);
                     }
                     break;
-                case RequestType.ENCOUNTER:
+                case 102 /* ENCOUNTER */:
                     info.status = r.status;
                     if (r.wild_pokemon) {
                         info.pokemon = r.wild_pokemon.pokemon_data;
                         info.position = { lat: r.wild_pokemon.latitude, lng: r.wild_pokemon.longitude };
                     }
                     break;
-                case RequestType.CATCH_POKEMON:
+                case 103 /* CATCH_POKEMON */:
                     if (r.pokemon_data) {
                         // init capture
                         this.addIv(r.pokemon_data);
                         this.state.inventory.pokemon.push(r.pokemon_data);
                     }
                     info = {
-                        caught: r.status === CatchPokemonResult.CATCH_SUCCESS,
+                        caught: r.status === 1 /* CATCH_SUCCESS */,
                         status: r.status,
                         id: r.captured_pokemon_id,
                         capture_reason: r.capture_reason,
@@ -334,7 +334,7 @@ class APIHelper {
                         xp: _.sum(r.capture_award.xp),
                     };
                     break;
-                case RequestType.GET_MAP_OBJECTS:
+                case 106 /* GET_MAP_OBJECTS */:
                     let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
                     let pokestops = forts.filter(f => f.type === 1);
                     let gyms = forts.filter(f => f.type === 0);
@@ -350,21 +350,21 @@ class APIHelper {
                         nearby_pokemons: nearbyPokemons,
                     };
                     break;
-                case RequestType.GET_PLAYER_PROFILE:
+                case 121 /* GET_PLAYER_PROFILE */:
                     // nothing
                     break;
-                case RequestType.GET_HATCHED_EGGS:
+                case 126 /* GET_HATCHED_EGGS */:
                     if (r.hatched_pokemon && r.hatched_pokemon.length > 0) {
                         let pkm = r.hatched_pokemon[0];
                         logger.info('An egg has hatched, pokemon_id: %d.', pkm.pokemon_id);
                     }
                     break;
-                case RequestType.ENCOUNTER_TUTORIAL_COMPLETE:
+                case 127 /* ENCOUNTER_TUTORIAL_COMPLETE */:
                     // TODO: check if not already in getInventory()
                     this.addIv(r.pokemon_data);
                     this.state.inventory.pokemon.push(r.pokemon_data);
                     break;
-                case RequestType.LEVEL_UP_REWARDS:
+                case 128 /* LEVEL_UP_REWARDS */:
                     if (r.result === 1) {
                         logger.debug('levelUpRewards()', r);
                         logger.debug(' todo: see if also in inventory_delta?');
@@ -378,36 +378,36 @@ class APIHelper {
                         });
                     }
                     break;
-                case RequestType.CHECK_AWARDED_BADGES:
+                case 129 /* CHECK_AWARDED_BADGES */:
                     // nothing
                     break;
-                case RequestType.USE_ITEM_EGG_INCUBATOR:
+                case 140 /* USE_ITEM_EGG_INCUBATOR */:
                     info.result = r.result;
                     break;
-                case RequestType.GET_BUDDY_WALKED:
+                case 153 /* GET_BUDDY_WALKED */:
                     if (r.family_candy_id || r.candy_earned_count) {
                         logger.info('getBuddyWalked()', r);
                     }
                     break;
-                case RequestType.GET_ASSET_DIGEST:
+                case 300 /* GET_ASSET_DIGEST */:
                     // nothing
                     break;
-                case RequestType.CHECK_CHALLENGE:
+                case 600 /* CHECK_CHALLENGE */:
                     if (r.show_challenge) {
                         logger.error('Challenge!', { challenge_url: r.challenge_url });
                         throw new ChallengeError(r.challenge_url);
                     }
                     break;
-                case RequestType.RELEASE_POKEMON:
+                case 112 /* RELEASE_POKEMON */:
                     info = {
                         result: r.result,
                         candy_awarded: r.candy_awarded,
                     };
                     break;
-                case RequestType.REGISTER_BACKGROUND_DEVICE:
+                case 8 /* REGISTER_BACKGROUND_DEVICE */:
                     // nothing
                     break;
-                case RequestType.EVOLVE_POKEMON:
+                case 125 /* EVOLVE_POKEMON */:
                     info = {
                         result: r.result,
                     };

@@ -1,11 +1,19 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const POGOProtos = require("node-pogo-protos");
+const _ = require("lodash");
+const Bluebird = require("bluebird");
+const logger = require("winston");
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
-const _ = require("lodash");
-const Promise = require('bluebird');
-const logger = require("winston");
-Promise.promisifyAll(GoogleMapsAPI.prototype);
+Bluebird.promisifyAll(GoogleMapsAPI.prototype);
 let EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
 let FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
 let UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
@@ -33,7 +41,7 @@ class Player {
         let pokestops = this.state.map.pokestops;
         let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
         // get pokestops not in cooldown that are close enough to spin it
-        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms == 0 && this.distance(pk) < range);
+        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms === 0 && this.distance(pk) < range);
         return pokestops;
     }
     /**
@@ -42,24 +50,25 @@ class Player {
      * @return {Promise}
      */
     spinPokestops(pokestops) {
-        if (pokestops.length == 0)
-            return Promise.resolve(0);
-        return Promise.map(pokestops, ps => {
-            logger.debug('Spin %s', ps.id);
-            let batch = this.state.client.batchStart();
-            batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-            this.apihelper.always(batch);
-            return batch.batchCall().then(responses => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (pokestops.length === 0)
+                return;
+            yield Bluebird.map(pokestops, (ps) => __awaiter(this, void 0, void 0, function* () {
+                logger.debug('Spin %s', ps.id);
+                let batch = this.state.client.batchStart();
+                batch.fortSearch(ps.id, ps.latitude, ps.longitude);
+                this.apihelper.always(batch);
+                let responses = yield batch.batchCall();
                 let info = this.apihelper.parse(responses);
-                if (info.status == FortSearchResult.SUCCESS) {
+                if (info.status === FortSearchResult.SUCCESS) {
                     let stops = this.state.map.pokestops;
-                    let stop = _.find(stops, p => p.id == ps.id);
+                    let stop = _.find(stops, p => p.id === ps.id);
                     stop.cooldown_complete_timestamp_ms = info.cooldown;
                     this.state.events.emit('spinned', stop);
                 }
-                return Promise.resolve();
-            }).delay(this.config.delay.spin * 1000);
-        }, { concurrency: 1 });
+                yield Bluebird.delay(this.config.delay.spin * 1000);
+            }), { concurrency: 1 });
+        });
     }
     /**
      * Encounter all pokemons in range (based on current state)
@@ -71,14 +80,14 @@ class Player {
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
         pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
-        if (pokemons.length == 0)
+        if (pokemons.length === 0)
             return Promise.resolve(0);
         // take the first 3 only so we don't spend to much time in here
         pokemons = _.take(pokemons, 3);
         logger.debug('Start encounters...');
         let client = this.state.client;
-        return Promise.map(pokemons, pk => {
-            return Promise.delay(this.config.delay.encounter * _.random(900, 1100))
+        return Bluebird.map(pokemons, pk => {
+            return Bluebird.delay(this.config.delay.encounter * _.random(900, 1100))
                 .then(() => {
                 logger.debug('Encounter %s', pk.pokemon_id);
                 let batch = client.batchStart();
@@ -87,10 +96,10 @@ class Player {
                 return batch.batchCall();
             }).then(responses => {
                 let info = this.apihelper.parse(responses);
-                if (info.status == EncounterResult.POKEMON_INVENTORY_FULL) {
+                if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
                     logger.warn('Pokemon bag full.');
                 }
-                else if (info.status != EncounterResult.ENCOUNTER_SUCCESS) {
+                else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
                     logger.warn('Error while encountering pokemon: %d', info.status);
                 }
                 else {
@@ -106,7 +115,7 @@ class Player {
             })
                 .then(encounter => {
                 if (catchPokemon) {
-                    return Promise.delay(this.config.delay.catch * 1000)
+                    return Bluebird.delay(this.config.delay.catch * 1000)
                         .then(() => this.catchPokemon(encounter))
                         .then(pokemon => this.releaseIfNotGoodEnough(pokemon))
                         .then(() => encounter);
@@ -175,7 +184,7 @@ class Player {
             let info = this.apihelper.parse(responses);
             if (info.caught) {
                 let pokemons = this.state.inventory.pokemon;
-                let pokemon = _.find(pokemons, pk => pk.id == info.id);
+                let pokemon = _.find(pokemons, pk => pk.id === info.id);
                 logger.info('Pokemon caught.', { pokemon_id: pokemon.pokemon_id });
                 this.state.events.emit('pokemon_caught', pokemon);
                 return pokemon;
@@ -193,27 +202,26 @@ class Player {
      * @return {Promise}
      */
     releaseIfNotGoodEnough(pokemon) {
-        if (!pokemon || !this.config.behavior.autorelease)
-            return;
-        // find same pokemons, with better iv and better cp
-        let pokemons = this.state.inventory.pokemon;
-        let better = _.find(pokemons, pkm => {
-            return pkm.pokemon_id == pokemon.pokemon_id &&
-                pkm.iv > pokemon.iv * 1.1 &&
-                pkm.cp > pokemon.cp * 0.8;
-        });
-        if (better) {
-            return Promise.delay(this.config.delay * _.random(900, 1100))
-                .then(() => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!pokemon || !this.config.behavior.autorelease)
+                return;
+            // find same pokemons, with better iv and better cp
+            let pokemons = this.state.inventory.pokemon;
+            let better = _.find(pokemons, pkm => {
+                return pkm.pokemon_id === pokemon.pokemon_id &&
+                    pkm.iv > pokemon.iv * 1.1 &&
+                    pkm.cp > pokemon.cp * 0.8;
+            });
+            if (better) {
+                yield Bluebird.delay(this.config.delay * _.random(900, 1100));
                 // release pokemon
                 logger.info('Release pokemon', pokemon.pokemon_id);
                 let batch = this.state.client.batchStart();
                 batch.releasePokemon(pokemon.id);
-                return this.apihelper.always(batch).batchCall();
-            }).then(responses => {
+                let responses = yield this.apihelper.always(batch).batchCall();
                 this.apihelper.parse(responses);
-            });
-        }
+            }
+        });
     }
     /**
      * Get a Pokéball from inventory for pokemon passed in params.
@@ -246,40 +254,41 @@ class Player {
      * @return {Promise} Promise
      */
     dispatchIncubators() {
-        let incubators = this.state.inventory.egg_incubators;
-        let eggs = this.state.inventory.eggs;
-        let freeIncubators = _.filter(incubators, i => i.pokemon_id == 0);
-        let freeEggs = _.filter(eggs, e => e.egg_incubator_id == '');
-        if (freeIncubators.length > 0 && freeEggs.length > 0) {
-            // we have some free eggs and some free incubators
-            freeEggs = _.sortBy(freeEggs, e => e.egg_km_walked_target);
-            let infiniteOnes = _.filter(freeIncubators, i => i.item_id == 901);
-            let others = _.filter(freeIncubators, i => i.item_id != 901);
-            let association = [];
-            _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
-                // eggs to associate with infinite incubators
-                association.push({ egg: e.id, incubator: infiniteOnes[i].id });
-            });
-            _.each(_.takeRight(freeEggs, _.min([others.length, freeEggs.length - infiniteOnes.length])), (e, i) => {
-                // eggs to associate with disposable incubators
-                association.push({ egg: e.id, incubator: others[i].id });
-            });
-            return Promise.map(association, a => {
-                let batch = this.state.client.batchStart();
-                batch.useItemEggIncubator(a.incubator, a.egg);
-                this.apihelper.always(batch);
-                return batch.batchCall().then(responses => {
+        return __awaiter(this, void 0, void 0, function* () {
+            let incubators = this.state.inventory.egg_incubators;
+            let eggs = this.state.inventory.eggs;
+            let freeIncubators = _.filter(incubators, i => i.pokemon_id === 0);
+            let freeEggs = _.filter(eggs, e => e.egg_incubator_id === '');
+            if (freeIncubators.length > 0 && freeEggs.length > 0) {
+                // we have some free eggs and some free incubators
+                freeEggs = _.sortBy(freeEggs, e => e.egg_km_walked_target);
+                let infiniteOnes = _.filter(freeIncubators, i => i.item_id === 901);
+                let others = _.filter(freeIncubators, i => i.item_id !== 901);
+                let association = [];
+                _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
+                    // eggs to associate with infinite incubators
+                    association.push({ egg: e.id, incubator: infiniteOnes[i].id });
+                });
+                _.each(_.takeRight(freeEggs, _.min([others.length, freeEggs.length - infiniteOnes.length])), (e, i) => {
+                    // eggs to associate with disposable incubators
+                    association.push({ egg: e.id, incubator: others[i].id });
+                });
+                yield Bluebird.map(association, (a) => __awaiter(this, void 0, void 0, function* () {
+                    let batch = this.state.client.batchStart();
+                    batch.useItemEggIncubator(a.incubator, a.egg);
+                    let responses = yield this.apihelper.always(batch).batchCall();
                     let info = this.apihelper.parse(responses);
-                    if (info.result != UseIncubatorResult.SUCCESS) {
+                    if (info.result !== UseIncubatorResult.SUCCESS) {
                         logger.warn('Error using incubator.', {
                             result: info.result,
                             incubator: a.incubator,
                             egg: a.egg,
                         });
                     }
-                }).delay(this.config.delay.incubator * 1000);
-            }, { concurrency: 1 });
-        }
+                    yield Bluebird.delay(this.config.delay.incubator * _.random(900, 1100));
+                }), { concurrency: 1 });
+            }
+        });
     }
     /**
      * Calculte distance from current pos to a target.

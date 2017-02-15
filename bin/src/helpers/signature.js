@@ -23,7 +23,7 @@ module.exports.register = function (config, client, state) {
             let loc = {
                 provider: 'fused',
                 latitude: junk ? 360.0 : client.playerLatitude,
-                longitude: junk ? -360.0 : client.playerLongitude,
+                longitude: junk ? 360.0 : client.playerLongitude,
                 altitude: junk ? 0.0 : (client.playerAltitude || random.triangular(300, 400, 350)),
                 provider_status: 3,
                 location_type: 1,

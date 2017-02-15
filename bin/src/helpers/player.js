@@ -60,7 +60,7 @@ class Player {
                 this.apihelper.always(batch);
                 let responses = yield batch.batchCall();
                 let info = this.apihelper.parse(responses);
-                if (info.status === FortSearchResult.SUCCESS) {
+                if (info.status === 1 /* SUCCESS */) {
                     let stops = this.state.map.pokestops;
                     let stop = _.find(stops, p => p.id === ps.id);
                     stop.cooldown_complete_timestamp_ms = info.cooldown;
@@ -96,10 +96,10 @@ class Player {
                 return batch.batchCall();
             }).then(responses => {
                 let info = this.apihelper.parse(responses);
-                if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
+                if (info.status === 7 /* POKEMON_INVENTORY_FULL */) {
                     logger.warn('Pokemon bag full.');
                 }
-                else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
+                else if (info.status !== 1 /* ENCOUNTER_SUCCESS */) {
                     logger.warn('Error while encountering pokemon: %d', info.status);
                 }
                 else {
@@ -278,7 +278,7 @@ class Player {
                     batch.useItemEggIncubator(a.incubator, a.egg);
                     let responses = yield this.apihelper.always(batch).batchCall();
                     let info = this.apihelper.parse(responses);
-                    if (info.result !== UseIncubatorResult.SUCCESS) {
+                    if (info.result !== 1 /* SUCCESS */) {
                         logger.warn('Error using incubator.', {
                             result: info.result,
                             incubator: a.incubator,

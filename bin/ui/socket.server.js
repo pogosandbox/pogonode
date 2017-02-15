@@ -159,7 +159,7 @@ class SocketServer {
      */
     transferPokemon(client, msg) {
         let todos = this.state.todo;
-        let release = _.find(todos, todo => todo.call == 'release_pokemon');
+        let release = _.find(todos, todo => todo.call === 'release_pokemon');
         if (release) {
             release.pokemons.push(msg.id);
         }

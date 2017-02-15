@@ -13,7 +13,7 @@ module.exports.register = function (config, client, state) {
     start = new Date().getTime() - _.random(4500, 5500);
     lastPos = { latitude: state.pos.lat, longitude: state.pos.lng };
     let updateLocFixes = function () {
-        let moving = (state.pos.lat != lastPos.latitude) || (state.pos.lng != lastPos.longitude);
+        let moving = (state.pos.lat !== lastPos.latitude) || (state.pos.lng !== lastPos.longitude);
         lastPos = { latitude: state.pos.lat, longitude: state.pos.lng };
         if (lastLocationFix == null || moving || Math.random() > 0.85) {
             let values = [5, 5, 5, 5, 10, 10, 10, 30, 30, 50, 65];
@@ -23,7 +23,7 @@ module.exports.register = function (config, client, state) {
             let loc = {
                 provider: 'fused',
                 latitude: junk ? 360.0 : client.playerLatitude,
-                longitude: junk ? -360.0 : client.playerLongitude,
+                longitude: junk ? 360.0 : client.playerLongitude,
                 altitude: junk ? 0.0 : (client.playerAltitude || random.triangular(300, 400, 350)),
                 provider_status: 3,
                 location_type: 1,
