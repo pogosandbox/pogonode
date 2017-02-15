@@ -57,8 +57,7 @@ class Player {
                 logger.debug('Spin %s', ps.id);
                 let batch = this.state.client.batchStart();
                 batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-                this.apihelper.always(batch);
-                let responses = yield batch.batchCall();
+                let responses = yield this.apihelper.always(batch).batchCall();
                 let info = this.apihelper.parse(responses);
                 if (info.status === FortSearchResult.SUCCESS) {
                     let stops = this.state.map.pokestops;
@@ -76,59 +75,50 @@ class Player {
      * @return {Promise}
      */
     encounterPokemons(catchPokemon) {
-        let pokemons = this.state.map.catchable_pokemons;
-        pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
-        pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
-        pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
-        if (pokemons.length === 0)
-            return Promise.resolve(0);
-        // take the first 3 only so we don't spend to much time in here
-        pokemons = _.take(pokemons, 3);
-        logger.debug('Start encounters...');
-        let client = this.state.client;
-        return Bluebird.map(pokemons, pk => {
-            return Bluebird.delay(this.config.delay.encounter * _.random(900, 1100))
-                .then(() => {
+        return __awaiter(this, void 0, void 0, function* () {
+            let pokemons = this.state.map.catchable_pokemons;
+            pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
+            pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
+            pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
+            if (pokemons.length === 0)
+                return 0;
+            // take the first 3 only so we don't spend to much time in here
+            pokemons = _.take(pokemons, 3);
+            logger.debug('Start encounters...');
+            let client = this.state.client;
+            let result = yield Bluebird.map(pokemons, (pk) => __awaiter(this, void 0, void 0, function* () {
+                yield Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
                 logger.debug('Encounter %s', pk.pokemon_id);
                 let batch = client.batchStart();
                 batch.encounter(pk.encounter_id, pk.spawn_point_id);
-                this.apihelper.always(batch);
-                return batch.batchCall();
-            }).then(responses => {
+                let responses = yield this.apihelper.always(batch).batchCall();
                 let info = this.apihelper.parse(responses);
                 if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
                     logger.warn('Pokemon bag full.');
+                    return null;
                 }
                 else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
                     logger.warn('Error while encountering pokemon: %d', info.status);
+                    return null;
                 }
                 else {
                     // encounter success
                     this.state.encountered.push(pk.encounter_id);
                     this.state.events.emit('encounter', info.pokemon);
-                    return {
+                    let encounter = {
                         encounter_id: pk.encounter_id,
                         spawn_point_id: pk.spawn_point_id,
                         pokemon_id: pk.pokemon_id,
                     };
-                }
-            })
-                .then(encounter => {
-                if (catchPokemon) {
-                    return Bluebird.delay(this.config.delay.catch * 1000)
-                        .then(() => this.catchPokemon(encounter))
-                        .then(pokemon => this.releaseIfNotGoodEnough(pokemon))
-                        .then(() => encounter);
-                }
-                else {
+                    if (catchPokemon) {
+                        yield Bluebird.delay(this.config.delay.catch * 1000);
+                        let pokemon = yield this.catchPokemon(encounter);
+                        yield this.releaseIfNotGoodEnough(pokemon);
+                    }
                     return encounter;
                 }
-            });
-        }, { concurrency: 1 })
-            .then(done => {
-            if (done)
-                logger.debug('Encounter done.');
-            return done;
+            }), { concurrency: 1 });
+            return result;
         });
     }
     /**
@@ -167,20 +157,21 @@ class Player {
     /**
      * Catch pokemon passed in parameters.
      * @param {object} encounter - Encounter result
-     * @return {Promise}
+     * @return {Promise<pokemon>} Pokemon caught or null
      */
     catchPokemon(encounter) {
-        if (!encounter)
-            return Promise.resolve();
-        let lancer = this.getThrowParameter(encounter.pokemon_id);
-        if (lancer.ball < 0) {
-            logger.warn('No pokéball found for catching.');
-            return;
-        }
-        let batch = this.state.client.batchStart();
-        batch.catchPokemon(encounter.encounter_id, lancer.ball, lancer.reticleSize, encounter.spawn_point_id, lancer.hit, lancer.spinModifier, lancer.normalizedHitPosition);
-        return this.apihelper.always(batch).batchCall()
-            .then(responses => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!encounter)
+                return null;
+            ;
+            let lancer = this.getThrowParameter(encounter.pokemon_id);
+            if (lancer.ball < 0) {
+                logger.warn('No pokéball found for catching.');
+                return null;
+            }
+            let batch = this.state.client.batchStart();
+            batch.catchPokemon(encounter.encounter_id, lancer.ball, lancer.reticleSize, encounter.spawn_point_id, lancer.hit, lancer.spinModifier, lancer.normalizedHitPosition);
+            let responses = yield this.apihelper.always(batch).batchCall();
             let info = this.apihelper.parse(responses);
             if (info.caught) {
                 let pokemons = this.state.inventory.pokemon;

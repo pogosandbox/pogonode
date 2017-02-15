@@ -1,6 +1,6 @@
 require('dotenv').config({silent: true});
 
-import * as pogobuf from '../pogobuf/pogobuf';
+import * as pogobuf from '../pogobuf';
 // import * as pogobuf from 'pogobuf';
 import * as POGOProtos from 'node-pogo-protos';
 import {EventEmitter} from 'events';
@@ -16,6 +16,7 @@ import ProxyHelper from './helpers/proxy';
 import Walker from './helpers/walker';
 import Player from './helpers/player';
 import SocketServer from './ui/socket.server';
+import CaptchaHelper from './captcha/captcha.helper';
 
 const signaturehelper = require('./helpers/signature');
 
@@ -202,7 +203,6 @@ proxyhelper.checkProxy().then(valid => {
     if (e.name === 'ChallengeError') {
         resolveChallenge(e.url)
         .then(responses => {
-            apihelper.parse(responses);
             logger.warn('Catcha response sent. Please restart.');
             process.exit();
         });
@@ -232,14 +232,24 @@ proxyhelper.checkProxy().then(valid => {
  */
 function resolveChallenge(url) {
     // Manually solve challenge using embeded Browser.
-    const CaptchaHelper = require('./captcha/captcha.helper');
     let helper = new CaptchaHelper(config, state);
     return helper
             .solveCaptchaManual(url)
             .then(token => {
-                let batch = client.batchStart();
-                batch.verifyChallenge(token);
-                return apihelper.always(batch).batchCall();
+                if (token) {
+                    let batch = client.batchStart();
+                    batch.verifyChallenge(token);
+                    return apihelper.always(batch).batchCall()
+                            .then(responses => {
+                                let info = apihelper.parse(responses);
+                                if (!info.success) {
+                                    logger.error('Incorrect captcha token sent.');
+                                }
+                                return responses;
+                            });
+                } else {
+                    logger.error('Token is null');
+                }
             });
 }
 
@@ -286,7 +296,7 @@ App.on('updatePos', async () => {
         } else if (todo.call === 'release_pokemon') {
             let batch = client.batchStart();
             batch.releasePokemon(todo.pokemons);
-            let responses = apihelper.always(batch).batchCall();
+            let responses = await apihelper.always(batch).batchCall();
             let info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon released', todo.pokemons, info);
@@ -298,7 +308,7 @@ App.on('updatePos', async () => {
         } else if (todo.call === 'evolve_pokemon') {
             let batch = client.batchStart();
             batch.evolvePokemon(todo.pokemon);
-            let responses = apihelper.always(batch).batchCall();
+            let responses = await apihelper.always(batch).batchCall();
             let info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon evolved', todo.pokemon, info);
@@ -370,7 +380,11 @@ async function mapRefresh(): Promise<void> {
 
     } catch (e) {
         if (e.name === 'ChallengeError') {
-            return resolveChallenge(e.url);
+            return resolveChallenge(e.url)
+                    .then(responses => {
+                        logger.warn('Catcha response sent. Please restart.');
+                        process.exit();
+                    });
         }
 
         logger.error(e);

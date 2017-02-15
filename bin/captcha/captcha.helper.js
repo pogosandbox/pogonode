@@ -1,3 +1,4 @@
+"use strict";
 const logger = require('winston');
 const nightmare = require('nightmare');
 const request = require('request');
@@ -21,12 +22,12 @@ class CaptchaHelper {
         this.state = state;
         this.options = {
             show: true,
-            // openDevTools: {
-            //     mode: 'detach',
-            // },
+            openDevTools: {
+                mode: 'detach',
+            },
             switches: {},
-            waitTimeout: 60 * 1000,
-            executionTimeout: 120 * 1000,
+            waitTimeout: 5 * 60 * 1000,
+            executionTimeout: 5 * 60 * 1000,
             webPreferences: {
                 webSecurity: false,
             },
@@ -40,26 +41,34 @@ class CaptchaHelper {
      * @return {Promise} response token
      */
     solveCaptchaManual(url) {
+        logger.info('Solving captcha', url);
         let browser = nightmare(this.options);
         return browser.useragent(useragent)
             .goto(url)
             .evaluate(function () {
-            document.querySelector('.g-recaptcha').scrollIntoView(true);
-            return true;
+            try {
+                document.querySelector('.g-recaptcha').scrollIntoView(true);
+            }
+            catch (e) {
+                console.log(e);
+            }
         })
             .evaluate(function () {
             try {
-                window.___grecaptcha_cfg.clients[0].W.tk.callback = function () { };
+                window.___grecaptcha_cfg.clients[0].T.Mk.callback = function () { };
             }
-            catch (e) { }
+            catch (e) {
+                console.log(e);
+            }
         })
-            .wait(4000)
+            .wait(6000)
             .wait(function () {
             let input = document.querySelector('.g-recaptcha-response');
             return input && input.value.length > 0;
         })
             .wait('iframe[title="recaptcha challenge"]')
             .wait(function () {
+            console.log('wait ' + window.grecaptcha.getResponse());
             return window.grecaptcha.getResponse() !== '';
         })
             .evaluate(function () {
@@ -102,5 +111,6 @@ class CaptchaHelper {
         });
     }
 }
-module.exports = CaptchaHelper;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = CaptchaHelper;
 //# sourceMappingURL=captcha.helper.js.map

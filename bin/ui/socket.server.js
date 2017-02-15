@@ -150,7 +150,9 @@ class SocketServer {
      * @param {object} client - the socket client to send info to
      */
     sendPlayerStats(client) {
-        client.emit('player_stats', this.state.inventory.player);
+        if (this.state.inventory) {
+            client.emit('player_stats', this.state.inventory.player);
+        }
     }
     /**
      * Transfer a pokemon after the client request it
