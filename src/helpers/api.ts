@@ -128,13 +128,13 @@ export default class APIHelper {
             let batch = client.batchStart();
             batch.getPlayerProfile();
             return this.always(batch).batchCall()
-            .then(responses => this.parse(responses))
-            .then(() => {
-                batch = client.batchStart();
-                batch.registerBackgroundDevice('apple_watch', '');
-                return this.alwaysinit(batch).batchCall();
-            })
-            .then(responses => this.parse(responses));
+                .then(responses => this.parse(responses))
+                .then(() => {
+                    batch = client.batchStart();
+                    batch.registerBackgroundDevice('apple_watch', '');
+                    return this.alwaysinit(batch).batchCall();
+                })
+                .then(responses => this.parse(responses));
 
         } else {
             logger.info('Completing tutorial...');

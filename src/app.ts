@@ -296,7 +296,7 @@ App.on('updatePos', async () => {
         } else if (todo.call === 'release_pokemon') {
             let batch = client.batchStart();
             batch.releasePokemon(todo.pokemons);
-            let responses = apihelper.always(batch).batchCall();
+            let responses = await apihelper.always(batch).batchCall();
             let info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon released', todo.pokemons, info);
@@ -308,7 +308,7 @@ App.on('updatePos', async () => {
         } else if (todo.call === 'evolve_pokemon') {
             let batch = client.batchStart();
             batch.evolvePokemon(todo.pokemon);
-            let responses = apihelper.always(batch).batchCall();
+            let responses = await apihelper.always(batch).batchCall();
             let info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon evolved', todo.pokemon, info);

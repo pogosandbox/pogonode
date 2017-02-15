@@ -58,17 +58,19 @@ export default class Player {
 
         await Bluebird.map(pokestops, async ps => {
             logger.debug('Spin %s', ps.id);
+
             let batch = this.state.client.batchStart();
             batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-            this.apihelper.always(batch);
-            let responses = await batch.batchCall();
+            let responses = await this.apihelper.always(batch).batchCall();
             let info = this.apihelper.parse(responses);
+
             if (info.status === FortSearchResult.SUCCESS) {
                 let stops: any[] = this.state.map.pokestops;
                 let stop = _.find(stops, p => p.id === ps.id);
                 stop.cooldown_complete_timestamp_ms = info.cooldown;
                 this.state.events.emit('spinned', stop);
             }
+
             await Bluebird.delay(this.config.delay.spin * 1000);
         }, {concurrency: 1});
     }
@@ -78,62 +80,60 @@ export default class Player {
      * @param {bool} catchPokemon true to catch pokemons, by default only encounter them
      * @return {Promise}
      */
-    encounterPokemons(catchPokemon) {
+    async encounterPokemons(catchPokemon) {
         let pokemons: any[] = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
         pokemons = _.filter(pokemons, pk => this.distance(pk) <= this.state.download_settings.map_settings.pokemon_visible_range);
 
-        if (pokemons.length === 0) return Promise.resolve(0);
+        if (pokemons.length === 0) return 0;
 
         // take the first 3 only so we don't spend to much time in here
         pokemons = _.take(pokemons, 3);
 
         logger.debug('Start encounters...');
         let client = this.state.client;
-        return Bluebird.map(pokemons, pk => {
-                    return Bluebird.delay(this.config.delay.encounter * _.random(900, 1100))
-                    .then(() => {
-                        logger.debug('Encounter %s', pk.pokemon_id);
-                        let batch = client.batchStart();
-                        batch.encounter(pk.encounter_id, pk.spawn_point_id);
-                        this.apihelper.always(batch);
-                        return batch.batchCall();
+        let result = await Bluebird.map(pokemons, async pk => {
 
-                    }).then(responses => {
-                        let info = this.apihelper.parse(responses);
-                        if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
-                            logger.warn('Pokemon bag full.');
-                        } else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
-                            logger.warn('Error while encountering pokemon: %d', info.status);
-                        } else {
-                            // encounter success
-                            this.state.encountered.push(pk.encounter_id);
-                            this.state.events.emit('encounter', info.pokemon);
+            await Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
 
-                            return {
-                                encounter_id: pk.encounter_id,
-                                spawn_point_id: pk.spawn_point_id,
-                                pokemon_id: pk.pokemon_id,
-                            };
-                        }
+            logger.debug('Encounter %s', pk.pokemon_id);
+            let batch = client.batchStart();
+            batch.encounter(pk.encounter_id, pk.spawn_point_id);
+            let responses = await this.apihelper.always(batch).batchCall();
+            let info = this.apihelper.parse(responses);
 
-                    })
-                    .then(encounter => {
-                        if (catchPokemon) {
-                            return Bluebird.delay(this.config.delay.catch * 1000)
-                                            .then(() => this.catchPokemon(encounter))
-                                            .then(pokemon => this.releaseIfNotGoodEnough(pokemon))
-                                            .then(() => encounter);
-                        } else {
-                            return encounter;
-                        }
-                    });
-                }, {concurrency: 1})
-            .then(done => {
-                if (done) logger.debug('Encounter done.');
-                return done;
-            });
+            if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
+                logger.warn('Pokemon bag full.');
+                return null;
+
+            } else if (info.status !== EncounterResult.ENCOUNTER_SUCCESS) {
+                logger.warn('Error while encountering pokemon: %d', info.status);
+                return null;
+
+            } else {
+                // encounter success
+                this.state.encountered.push(pk.encounter_id);
+                this.state.events.emit('encounter', info.pokemon);
+
+                let encounter = {
+                    encounter_id: pk.encounter_id,
+                    spawn_point_id: pk.spawn_point_id,
+                    pokemon_id: pk.pokemon_id,
+                };
+
+                if (catchPokemon) {
+                    await Bluebird.delay(this.config.delay.catch * 1000);
+                    let pokemon = await this.catchPokemon(encounter);
+                    await this.releaseIfNotGoodEnough(pokemon);
+                }
+
+                return encounter;
+            }
+
+        }, {concurrency: 1});
+
+        return result;
     }
 
     /**
@@ -143,7 +143,7 @@ export default class Player {
      * @param {int} pokemonId Pokemon Id
      * @return {object} throw parameters
      */
-    getThrowParameter(pokemonId) {
+    getThrowParameter(pokemonId: string) {
         let ball = this.getPokeBallForPokemon(pokemonId);
         let lancer = {
             ball: ball,
@@ -245,7 +245,7 @@ export default class Player {
      * @param {int} pokemondId pokemon id to get a ball for
      * @return {int} id of pokemon
      */
-    getPokeBallForPokemon(pokemondId: number): number {
+    getPokeBallForPokemon(pokemondId: string): number {
         let items: any[] = this.state.inventory.items;
         let balls = _.filter(items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
