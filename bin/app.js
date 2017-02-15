@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 require('dotenv').config({ silent: true });
-const pogobuf = require("../pogobuf/pogobuf");
+const pogobuf = require("../pogobuf");
 // import * as pogobuf from 'pogobuf';
 const POGOProtos = require("node-pogo-protos");
 const events_1 = require("events");
@@ -22,6 +22,7 @@ const proxy_1 = require("./helpers/proxy");
 const walker_1 = require("./helpers/walker");
 const player_1 = require("./helpers/player");
 const socket_server_1 = require("./ui/socket.server");
+const captcha_helper_1 = require("./captcha/captcha.helper");
 const signaturehelper = require('./helpers/signature');
 let config = require('./helpers/config').load();
 if (!config.credentials.user) {
@@ -177,7 +178,6 @@ proxyhelper.checkProxy().then(valid => {
     if (e.name === 'ChallengeError') {
         resolveChallenge(e.url)
             .then(responses => {
-            apihelper.parse(responses);
             logger.warn('Catcha response sent. Please restart.');
             process.exit();
         });
@@ -212,15 +212,21 @@ proxyhelper.checkProxy().then(valid => {
  */
 function resolveChallenge(url) {
     // Manually solve challenge using embeded Browser.
-    const CaptchaHelper = require('./captcha/captcha.helper');
-    let helper = new CaptchaHelper(config, state);
+    let helper = new captcha_helper_1.default(config, state);
     return helper
         .solveCaptchaManual(url)
         .then(token => {
         if (token) {
             let batch = client.batchStart();
             batch.verifyChallenge(token);
-            return apihelper.always(batch).batchCall();
+            return apihelper.always(batch).batchCall()
+                .then(responses => {
+                let info = apihelper.parse(responses);
+                if (!info.success) {
+                    logger.error('Incorrect captcha token sent.');
+                }
+                return responses;
+            });
         }
         else {
             logger.error('Token is null');
@@ -340,7 +346,11 @@ function mapRefresh() {
         }
         catch (e) {
             if (e.name === 'ChallengeError') {
-                return resolveChallenge(e.url);
+                return resolveChallenge(e.url)
+                    .then(responses => {
+                    logger.warn('Catcha response sent. Please restart.');
+                    process.exit();
+                });
             }
             logger.error(e);
             debugger;

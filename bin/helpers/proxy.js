@@ -81,14 +81,14 @@ class ProxyHelper {
                 this.proxy = proxy;
                 this.state.proxy = proxy;
                 logger.info('Using proxy: %s', proxy);
-                let response = request.getAsync('https://api.ipify.org/?format=json');
+                let response = yield request.getAsync('https://api.ipify.org/?format=json');
                 if (!response)
                     return false;
                 this.clearIp = JSON.parse(response.body).ip;
                 logger.debug('Clear ip: ' + this.clearIp);
                 if (!this.clearIp)
                     return false;
-                response = request.getAsync('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
+                response = yield request.getAsync('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
                 if (!response)
                     return false;
                 let ip = JSON.parse(response.body).ip;

@@ -22,12 +22,12 @@ class CaptchaHelper {
         this.state = state;
         this.options = {
             show: true,
-            // openDevTools: {
-            //     mode: 'detach',
-            // },
+            openDevTools: {
+                mode: 'detach',
+            },
             switches: {},
-            waitTimeout: 90 * 1000,
-            executionTimeout: 180 * 1000,
+            waitTimeout: 5 * 60 * 1000,
+            executionTimeout: 5 * 60 * 1000,
             webPreferences: {
                 webSecurity: false,
             },
@@ -41,12 +41,17 @@ class CaptchaHelper {
      * @return {Promise} response token
      */
     solveCaptchaManual(url) {
+        logger.info('Solving captcha', url);
         let browser = nightmare(this.options);
         return browser.useragent(useragent)
             .goto(url)
             .evaluate(function () {
-            document.querySelector('.g-recaptcha').scrollIntoView(true);
-            return true;
+            try {
+                document.querySelector('.g-recaptcha').scrollIntoView(true);
+            }
+            catch (e) {
+                console.log(e);
+            }
         })
             .evaluate(function () {
             try {
@@ -56,9 +61,8 @@ class CaptchaHelper {
                 console.log(e);
             }
         })
-            .wait(4000)
+            .wait(6000)
             .wait(function () {
-            console.log('wait...');
             let input = document.querySelector('.g-recaptcha-response');
             return input && input.value.length > 0;
         })

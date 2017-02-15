@@ -1,9 +1,10 @@
-const pogobuf = require('../pogobuf/pogobuf/pogobuf');
+import * as pogobuf from '../../pogobuf';
 import * as POGOProtos from 'node-pogo-protos';
 import * as logger from 'winston';
-const vercmp = require('semver-compare');
 import * as _ from 'lodash';
-const Promise = require('bluebird');
+import * as Bluebird from 'bluebird';
+
+const vercmp = require('semver-compare');
 const util = require('util');
 
 /**
@@ -137,7 +138,7 @@ export default class APIHelper {
 
         } else {
             logger.info('Completing tutorial...');
-            return Promise.delay(_.random(2000.0, 5000.0))
+            return Bluebird.delay(_.random(2000.0, 5000.0))
             .then(() => {
                 if (!_.includes(tuto, 0)) {
                     // complete tutorial
@@ -150,7 +151,7 @@ export default class APIHelper {
                 this.parse(responses);
                 if (!_.includes(tuto, 1)) {
                     // set avatar
-                    return Promise.delay(_.random(8000.0, 14500))
+                    return Bluebird.delay(_.random(8000.0, 14500))
                             .then(() => {
                                 let batch = client.batchStart();
                                 batch.setAvatar(
@@ -166,7 +167,7 @@ export default class APIHelper {
                                 );
                                 return this.alwaysinit(batch).batchCall();
 
-                            }).delay(1000, 1700).then(responses => {
+                            }).delay(_.random(1000, 1700)).then(responses => {
                                 this.parse(responses);
                                 let batch = client.batchStart();
                                 batch.markTutorialComplete(1, false, false);
@@ -222,7 +223,7 @@ export default class APIHelper {
             }).then(responses => {
                 this.parse(responses);
                 if (!_.includes(tuto, 4)) {
-                    Promise.delay(_.random(5000, 11500))
+                    Bluebird.delay(_.random(5000, 11500))
                     .then(() => {
                         let batch = client.batchStart();
                         batch.claimCodename(this.config.credentials.user);
@@ -455,6 +456,12 @@ export default class APIHelper {
                 case RequestType.EVOLVE_POKEMON:
                     info = {
                         result: r.result,
+                    };
+                    break;
+
+                case RequestType.VERIFY_CHALLENGE:
+                    info = {
+                        success: r.success,
                     };
                     break;
 
