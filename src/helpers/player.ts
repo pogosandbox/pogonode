@@ -173,15 +173,15 @@ export default class Player {
     /**
      * Catch pokemon passed in parameters.
      * @param {object} encounter - Encounter result
-     * @return {Promise}
+     * @return {Promise<pokemon>} Pokemon caught or null
      */
-    catchPokemon(encounter) {
-        if (!encounter) return Promise.resolve();
+    async catchPokemon(encounter) {
+        if (!encounter) return null;;
 
         let lancer = this.getThrowParameter(encounter.pokemon_id);
         if (lancer.ball < 0) {
             logger.warn('No pokéball found for catching.');
-            return;
+            return null;
         }
 
         let batch = this.state.client.batchStart();
@@ -195,20 +195,18 @@ export default class Player {
             lancer.normalizedHitPosition
         );
 
-        return this.apihelper.always(batch).batchCall()
-                .then(responses => {
-                    let info = this.apihelper.parse(responses);
-                    if (info.caught) {
-                        let pokemons: any[] = this.state.inventory.pokemon;
-                        let pokemon = _.find(pokemons, pk => pk.id === info.id);
-                        logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
-                        this.state.events.emit('pokemon_caught', pokemon);
-                        return pokemon;
-                    } else {
-                        logger.info('Pokemon missed.', info);
-                        return null;
-                    }
-                });
+        let responses = await this.apihelper.always(batch).batchCall();
+        let info = this.apihelper.parse(responses);
+        if (info.caught) {
+            let pokemons: any[] = this.state.inventory.pokemon;
+            let pokemon = _.find(pokemons, pk => pk.id === info.id);
+            logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
+            this.state.events.emit('pokemon_caught', pokemon);
+            return pokemon;
+        } else {
+            logger.info('Pokemon missed.', info);
+            return null;
+        }
     }
 
     /**

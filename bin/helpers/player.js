@@ -157,20 +157,21 @@ class Player {
     /**
      * Catch pokemon passed in parameters.
      * @param {object} encounter - Encounter result
-     * @return {Promise}
+     * @return {Promise<pokemon>} Pokemon caught or null
      */
     catchPokemon(encounter) {
-        if (!encounter)
-            return Promise.resolve();
-        let lancer = this.getThrowParameter(encounter.pokemon_id);
-        if (lancer.ball < 0) {
-            logger.warn('No pokéball found for catching.');
-            return;
-        }
-        let batch = this.state.client.batchStart();
-        batch.catchPokemon(encounter.encounter_id, lancer.ball, lancer.reticleSize, encounter.spawn_point_id, lancer.hit, lancer.spinModifier, lancer.normalizedHitPosition);
-        return this.apihelper.always(batch).batchCall()
-            .then(responses => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!encounter)
+                return null;
+            ;
+            let lancer = this.getThrowParameter(encounter.pokemon_id);
+            if (lancer.ball < 0) {
+                logger.warn('No pokéball found for catching.');
+                return null;
+            }
+            let batch = this.state.client.batchStart();
+            batch.catchPokemon(encounter.encounter_id, lancer.ball, lancer.reticleSize, encounter.spawn_point_id, lancer.hit, lancer.spinModifier, lancer.normalizedHitPosition);
+            let responses = yield this.apihelper.always(batch).batchCall();
             let info = this.apihelper.parse(responses);
             if (info.caught) {
                 let pokemons = this.state.inventory.pokemon;
