@@ -15,6 +15,7 @@
 
 # PTC Credentials
 credentials:
+  type: ptc
   user: username
   password: password
 
@@ -39,7 +40,7 @@ api:
   country: US
   language: en
   timezone: Europe/Paris
-  version: '5100'
+  version: '5702'
 
 # configuration for hashserver
 # if active=true, use hashserver, if not using native hashing (ver=0.45)
