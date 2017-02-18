@@ -20,7 +20,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Debug",
+            "name": "debug.js",
             "program": "${workspaceRoot}/bin/debug.js",
             "cwd": "${workspaceRoot}",
             "env": {
