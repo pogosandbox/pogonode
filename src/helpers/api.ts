@@ -119,7 +119,7 @@ export default class APIHelper {
      * If not needed, do the minmum getPlayerProfile and registerBackgroundDevice
      * @return {Promise} Promise
      */
-    completeTutorial() {
+    async completeTutorial(): Promise<any> {
         let tuto = this.state.player.tutorial_state || [];
         let client = this.state.client;
         if (_.difference([0, 1, 3, 4, 7], tuto).length === 0) {

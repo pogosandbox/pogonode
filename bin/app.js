@@ -56,125 +56,113 @@ let proxyhelper = new proxy_1.default(config, state);
 let socket = new socket_server_1.default(config, state);
 let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
 let client;
-logger.info('App starting...');
-proxyhelper.checkProxy().then(valid => {
-    // find a proxy if 'auto' is set in config
-    // then test if to be sure it works
-    // if ok, set proxy in api
-    if (config.proxy.url && !valid) {
-        throw new Error('Invalid proxy. Exiting.');
-    }
-    return socket.start();
-}).then(() => {
-    logger.info('Login...');
-    if (proxyhelper.proxy && config.credentials.type === 'ptc')
-        login.setProxy(proxyhelper.proxy);
-    return login.login(config.credentials.user, config.credentials.password);
-}).then(token => {
-    if (config.hashserver.active) {
-        logger.info('Using hashserver...');
-    }
-    client = new pogobuf.Client({
-        authType: 'ptc',
-        authToken: token,
-        version: config.api.version,
-        useHashingServer: config.hashserver.active,
-        hashingKey: config.hashserver.key,
-        mapObjectsThrottling: false,
-        includeRequestTypeInResponse: true,
-        proxy: proxyhelper.proxy,
-    });
-    state.client = client;
-    // set initial position
-    client.setPosition({
-        latitude: state.pos.lat,
-        longitude: state.pos.lng,
-    });
-    signaturehelper.register(config, client, state);
-    return walker.getAltitude(state.pos);
-}).then(altitude => {
-    let pos = walker.fuzzedLocation(state.pos);
-    client.setPosition({
-        latitude: pos.lat,
-        longitude: pos.lng,
-        altitude: altitude,
-    });
-    // init api (false = don't call anything yet')
-    return client.init(false);
-}).then(() => {
-    // first empty request
-    logger.debug('First empty request.');
-    return client.batchStart().batchCall();
-}).then(responses => {
-    apihelper.parse(responses);
-    logger.info('Logged In.');
-    let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
-    logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
-    logger.info('Starting initial flow...');
-}).then(() => {
-    // initial player state
-    logger.debug('Get player info...');
-    let batch = client.batchStart();
-    batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
-    return client.batchCall();
-}).then(responses => {
-    apihelper.parse(responses);
-    logger.debug('Download remote config...');
-    let batch = client.batchStart();
-    batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    return apihelper.alwaysinit(batch).batchCall();
-}).then(responses => {
-    apihelper.parse(responses);
-    logger.debug('Get asset digest...');
-    let batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    return apihelper.alwaysinit(batch).batchCall();
-}).then(responses => {
-    apihelper.parse(responses);
-    logger.debug('Checking if item_templates need a refresh...');
-    let last = 0;
-    if (fs.existsSync('data/item_templates.json')) {
-        let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
-        let data = JSON.parse(json);
-        state.api.item_templates = data.templates;
-        last = data.timestamp_ms || 0;
-    }
-    if (!last || last < state.api.item_templates_timestamp) {
-        logger.info('Game master updating...');
+function loginFlow() {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info('App starting...');
+        let valid = yield proxyhelper.checkProxy();
+        // find a proxy if 'auto' is set in config
+        // then test if to be sure it works
+        // if ok, set proxy in api
+        if (config.proxy.url && !valid) {
+            throw new Error('Invalid proxy. Exiting.');
+        }
+        yield socket.start();
+        logger.info('Login...');
+        if (proxyhelper.proxy && config.credentials.type === 'ptc')
+            login.setProxy(proxyhelper.proxy);
+        let token = yield login.login(config.credentials.user, config.credentials.password);
+        if (config.hashserver.active) {
+            logger.info('Using hashserver...');
+        }
+        client = new pogobuf.Client({
+            authType: 'ptc',
+            authToken: token,
+            version: config.api.version,
+            useHashingServer: config.hashserver.active,
+            hashingKey: config.hashserver.key,
+            mapObjectsThrottling: false,
+            includeRequestTypeInResponse: true,
+            proxy: proxyhelper.proxy,
+        });
+        state.client = client;
+        // set initial position
+        client.setPosition({
+            latitude: state.pos.lat,
+            longitude: state.pos.lng,
+        });
+        signaturehelper.register(config, client, state);
+        let altitude = yield walker.getAltitude(state.pos);
+        let pos = walker.fuzzedLocation(state.pos);
+        client.setPosition({
+            latitude: pos.lat,
+            longitude: pos.lng,
+            altitude: altitude,
+        });
+        // init api (false = don't call anything yet')
+        yield client.init(false);
+        // first empty request
+        logger.debug('First empty request.');
+        let responses = yield client.batchStart().batchCall();
+        apihelper.parse(responses);
+        logger.info('Logged In.');
+        let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
+        logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+        logger.info('Starting initial flow...');
+        // initial player state
+        logger.debug('Get player info...');
         let batch = client.batchStart();
-        // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
-        batch.downloadItemTemplates(false);
-        return apihelper.alwaysinit(batch)
-            .batchCall().then(resp => {
-            return apihelper.parse(resp);
-        }).then(info => {
+        batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
+        responses = yield client.batchCall();
+        apihelper.parse(responses);
+        logger.debug('Download remote config...');
+        batch = client.batchStart();
+        batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        responses = yield apihelper.alwaysinit(batch).batchCall();
+        apihelper.parse(responses);
+        logger.debug('Get asset digest...');
+        batch = client.batchStart();
+        batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        responses = yield apihelper.alwaysinit(batch).batchCall();
+        apihelper.parse(responses);
+        logger.debug('Checking if item_templates need a refresh...');
+        let last = 0;
+        if (fs.existsSync('data/item_templates.json')) {
+            let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
+            let data = JSON.parse(json);
+            state.api.item_templates = data.templates;
+            last = data.timestamp_ms || 0;
+        }
+        if (!last || last < state.api.item_templates_timestamp) {
+            logger.info('Game master updating...');
+            batch = client.batchStart();
+            // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
+            batch.downloadItemTemplates(false);
+            responses = yield apihelper.alwaysinit(batch).batchCall();
+            let info = apihelper.parse(responses);
             let json = JSON.stringify({
                 templates: state.api.item_templates,
                 timestamp_ms: info.timestamp_ms,
             }, null, 4);
             fs.writeFile('data/item_templates.json', json, (err) => { });
-        });
-    }
-    else {
-        return Promise.resolve();
-    }
-}).then(() => {
-    // complete tutorial if needed,
-    // at minimum, getPlayerProfile() is called
-    logger.debug('Checking tutorial state...');
-    return apihelper.completeTutorial();
-}).then(responses => {
-    logger.debug('Level up rewards...');
-    apihelper.parse(responses);
-    let batch = client.batchStart();
-    batch.levelUpRewards(state.inventory.player.level);
-    return apihelper.always(batch).batchCall();
-}).then(responses => {
-    // ok api is ready to go
-    apihelper.parse(responses);
-    App.emit('apiReady');
-    return true;
-}).catch(e => {
+        }
+        // complete tutorial if needed,
+        // at minimum, getPlayerProfile() is called
+        logger.debug('Checking tutorial state...');
+        responses = yield apihelper.completeTutorial();
+        apihelper.parse(responses);
+        logger.debug('Level up rewards...');
+        apihelper.parse(responses);
+        batch = client.batchStart();
+        batch.levelUpRewards(state.inventory.player.level);
+        responses = yield apihelper.always(batch).batchCall();
+        apihelper.parse(responses);
+    });
+}
+try {
+    loginFlow()
+        .then(() => App.emit('apiReady'));
+}
+catch (e) {
     if (e.name === 'ChallengeError') {
         resolveChallenge(e.url)
             .then(responses => {
@@ -204,33 +192,30 @@ proxyhelper.checkProxy().then(valid => {
         logger.error('Exiting.');
         process.exit();
     }
-});
+}
 /**
  * Launch internal browser to solve captcha and pass result to api
  * @param {string} url - captcha url sent from checkChallenge
  * @return {Promise} result from verifyChallenge() call
  */
 function resolveChallenge(url) {
-    // Manually solve challenge using embeded Browser.
-    let helper = new captcha_helper_1.default(config, state);
-    return helper
-        .solveCaptchaManual(url)
-        .then(token => {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Manually solve challenge using embeded Browser.
+        let helper = new captcha_helper_1.default(config, state);
+        let token = yield helper.solveCaptchaManual(url);
         if (token) {
             let batch = client.batchStart();
             batch.verifyChallenge(token);
-            return apihelper.always(batch).batchCall()
-                .then(responses => {
-                let info = apihelper.parse(responses);
-                if (!info.success) {
-                    logger.error('Incorrect captcha token sent.');
-                }
-                return responses;
-            });
+            let responses = yield apihelper.always(batch).batchCall();
+            let info = apihelper.parse(responses);
+            if (!info.success) {
+                logger.error('Incorrect captcha token sent.');
+            }
         }
         else {
             logger.error('Token is null');
         }
+        return token;
     });
 }
 App.on('apiReady', () => __awaiter(this, void 0, void 0, function* () {
@@ -339,18 +324,16 @@ function mapRefresh() {
             // encounter available pokemons
             yield player.encounterPokemons(config.behavior.catch);
             if (Math.random() < 0.3) {
-                logger.info('Dispatch incubators...');
+                logger.debug('Dispatch incubators...');
                 yield player.dispatchIncubators();
             }
             App.emit('saveState');
         }
         catch (e) {
             if (e.name === 'ChallengeError') {
-                return resolveChallenge(e.url)
-                    .then(responses => {
-                    logger.warn('Catcha response sent. Please restart.');
-                    process.exit();
-                });
+                yield resolveChallenge(e.url);
+                logger.warn('Catcha response sent. Please restart.');
+                process.exit();
             }
             logger.error(e);
             debugger;

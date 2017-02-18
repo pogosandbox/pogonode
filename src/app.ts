@@ -58,23 +58,23 @@ let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new p
 
 let client: pogobuf.Client;
 
-logger.info('App starting...');
+async function loginFlow() {
+    logger.info('App starting...');
 
-proxyhelper.checkProxy().then(valid => {
+    let valid = await proxyhelper.checkProxy();
+
     // find a proxy if 'auto' is set in config
     // then test if to be sure it works
     // if ok, set proxy in api
     if (config.proxy.url && !valid) {
         throw new Error('Invalid proxy. Exiting.');
     }
-    return socket.start();
+    await socket.start();
 
-}).then(() => {
     logger.info('Login...');
     if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
-    return login.login(config.credentials.user, config.credentials.password);
+    let token = await login.login(config.credentials.user, config.credentials.password);
 
-}).then(token => {
     if (config.hashserver.active) {
         logger.info('Using hashserver...');
     }
@@ -99,9 +99,8 @@ proxyhelper.checkProxy().then(valid => {
 
     signaturehelper.register(config, client, state);
 
-    return walker.getAltitude(state.pos);
+    let altitude = await walker.getAltitude(state.pos);
 
-}).then(altitude => {
     let pos = walker.fuzzedLocation(state.pos);
     client.setPosition({
         latitude: pos.lat,
@@ -110,15 +109,14 @@ proxyhelper.checkProxy().then(valid => {
     });
 
     // init api (false = don't call anything yet')
-    return client.init(false);
+    await client.init(false);
 
-}).then(() => {
     // first empty request
     logger.debug('First empty request.');
-    return client.batchStart().batchCall();
 
-}).then(responses => {
+    let responses = await client.batchStart().batchCall();
     apihelper.parse(responses);
+
     logger.info('Logged In.');
 
     let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
@@ -126,31 +124,25 @@ proxyhelper.checkProxy().then(valid => {
 
     logger.info('Starting initial flow...');
 
-}).then(() => {
     // initial player state
     logger.debug('Get player info...');
     let batch = client.batchStart();
     batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
-    return client.batchCall();
-
-}).then(responses => {
+    responses = await client.batchCall();
     apihelper.parse(responses);
 
     logger.debug('Download remote config...');
-    let batch = client.batchStart();
+    batch = client.batchStart();
     batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    return apihelper.alwaysinit(batch).batchCall();
-
-}).then(responses => {
+    responses = await apihelper.alwaysinit(batch).batchCall();
     apihelper.parse(responses);
 
     logger.debug('Get asset digest...');
-    let batch = client.batchStart();
+    batch = client.batchStart();
     batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    return apihelper.alwaysinit(batch).batchCall();
-
-}).then(responses => {
+    responses = await apihelper.alwaysinit(batch).batchCall();
     apihelper.parse(responses);
+
     logger.debug('Checking if item_templates need a refresh...');
 
     let last = 0;
@@ -163,43 +155,36 @@ proxyhelper.checkProxy().then(valid => {
 
     if (!last || last < state.api.item_templates_timestamp) {
         logger.info('Game master updating...');
-        let batch = client.batchStart();
+        batch = client.batchStart();
         // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
         batch.downloadItemTemplates(false);
-        return apihelper.alwaysinit(batch)
-                .batchCall().then(resp => {
-                    return apihelper.parse(resp);
-                }).then(info => {
-                    let json = JSON.stringify({
-                        templates: state.api.item_templates,
-                        timestamp_ms: info.timestamp_ms,
-                    }, null, 4);
-                    fs.writeFile('data/item_templates.json', json, (err) => {});
-                });
-    } else {
-        return Promise.resolve();
+        responses = await apihelper.alwaysinit(batch).batchCall();
+        let info = apihelper.parse(responses);
+        let json = JSON.stringify({
+            templates: state.api.item_templates,
+            timestamp_ms: info.timestamp_ms,
+        }, null, 4);
+        fs.writeFile('data/item_templates.json', json, (err) => {});
     }
 
-}).then(() => {
     // complete tutorial if needed,
     // at minimum, getPlayerProfile() is called
     logger.debug('Checking tutorial state...');
-    return apihelper.completeTutorial();
+    responses = await apihelper.completeTutorial();
+    apihelper.parse(responses);
 
-}).then(responses => {
     logger.debug('Level up rewards...');
     apihelper.parse(responses);
-    let batch = client.batchStart();
+    batch = client.batchStart();
     batch.levelUpRewards(state.inventory.player.level);
-    return apihelper.always(batch).batchCall();
-
-}).then(responses => {
-    // ok api is ready to go
+    responses = await apihelper.always(batch).batchCall();
     apihelper.parse(responses);
-    App.emit('apiReady');
-    return true;
+}
 
-}).catch(e => {
+try {
+    loginFlow()
+    .then(() => App.emit('apiReady'));
+} catch (e) {
     if (e.name === 'ChallengeError') {
         resolveChallenge(e.url)
         .then(responses => {
@@ -223,34 +208,31 @@ proxyhelper.checkProxy().then(valid => {
         logger.error('Exiting.');
         process.exit();
     }
-});
+}
 
 /**
  * Launch internal browser to solve captcha and pass result to api
  * @param {string} url - captcha url sent from checkChallenge
  * @return {Promise} result from verifyChallenge() call
  */
-function resolveChallenge(url) {
+async function resolveChallenge(url) {
     // Manually solve challenge using embeded Browser.
     let helper = new CaptchaHelper(config, state);
-    return helper
-            .solveCaptchaManual(url)
-            .then(token => {
-                if (token) {
-                    let batch = client.batchStart();
-                    batch.verifyChallenge(token);
-                    return apihelper.always(batch).batchCall()
-                            .then(responses => {
-                                let info = apihelper.parse(responses);
-                                if (!info.success) {
-                                    logger.error('Incorrect captcha token sent.');
-                                }
-                                return responses;
-                            });
-                } else {
-                    logger.error('Token is null');
-                }
-            });
+
+    let token = await helper.solveCaptchaManual(url);
+    if (token) {
+        let batch = client.batchStart();
+        batch.verifyChallenge(token);
+        let responses = await apihelper.always(batch).batchCall();
+        let info = apihelper.parse(responses);
+        if (!info.success) {
+            logger.error('Incorrect captcha token sent.');
+        }
+    } else {
+        logger.error('Token is null');
+    }
+
+    return token;
 }
 
 App.on('apiReady', async () => {
@@ -372,7 +354,7 @@ async function mapRefresh(): Promise<void> {
         await player.encounterPokemons(config.behavior.catch);
 
         if (Math.random() < 0.3) {
-            logger.info('Dispatch incubators...');
+            logger.debug('Dispatch incubators...');
             await player.dispatchIncubators();
         }
 
@@ -380,11 +362,9 @@ async function mapRefresh(): Promise<void> {
 
     } catch (e) {
         if (e.name === 'ChallengeError') {
-            return resolveChallenge(e.url)
-                    .then(responses => {
-                        logger.warn('Catcha response sent. Please restart.');
-                        process.exit();
-                    });
+            await resolveChallenge(e.url);
+            logger.warn('Catcha response sent. Please restart.');
+            process.exit();
         }
 
         logger.error(e);
