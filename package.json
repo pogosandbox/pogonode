@@ -20,7 +20,7 @@
     "moment": "^2.17.1",
     "nightmare": "^2.9.1",
     "node-pogo-protos": "pogosandbox/node-pogo-protos#no.const",
-    "node-pogo-signature": "pogosandbox/node-pogo-signature",
+    "node-pogo-signature": "pogosandbox/node-pogo-signature#0.57.2",
     "pogobuf": "pogosandbox/pogobuf",
     "request": "^2.79.0",
     "semver-compare": "^1.0.0",
