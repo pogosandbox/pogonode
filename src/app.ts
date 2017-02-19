@@ -60,152 +60,151 @@ let client: pogobuf.Client;
 
 async function loginFlow() {
     logger.info('App starting...');
+    try {
+        let valid = await proxyhelper.checkProxy();
 
-    let valid = await proxyhelper.checkProxy();
+        // find a proxy if 'auto' is set in config
+        // then test if to be sure it works
+        // if ok, set proxy in api
+        if (config.proxy.url && !valid) {
+            throw new Error('Invalid proxy.');
+        }
+        await socket.start();
 
-    // find a proxy if 'auto' is set in config
-    // then test if to be sure it works
-    // if ok, set proxy in api
-    if (config.proxy.url && !valid) {
-        throw new Error('Invalid proxy. Exiting.');
-    }
-    await socket.start();
+        logger.info('Login...');
+        if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
+        let token = await login.login(config.credentials.user, config.credentials.password);
 
-    logger.info('Login...');
-    if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
-    let token = await login.login(config.credentials.user, config.credentials.password);
-
-    if (config.hashserver.active) {
-        logger.info('Using hashserver...');
-    }
-
-    client = new pogobuf.Client({
-        authType: 'ptc',
-        authToken: token,
-        version: config.api.version,
-        useHashingServer: config.hashserver.active,
-        hashingKey: config.hashserver.key,
-        mapObjectsThrottling: false,
-        includeRequestTypeInResponse: true,
-        proxy: proxyhelper.proxy,
-    });
-    state.client = client;
-
-    // set initial position
-    client.setPosition({
-        latitude: state.pos.lat,
-        longitude: state.pos.lng,
-    });
-
-    signaturehelper.register(config, client, state);
-
-    let altitude = await walker.getAltitude(state.pos);
-
-    let pos = walker.fuzzedLocation(state.pos);
-    client.setPosition({
-        latitude: pos.lat,
-        longitude: pos.lng,
-        altitude: altitude,
-    });
-
-    // init api (false = don't call anything yet')
-    await client.init(false);
-
-    // first empty request
-    logger.debug('First empty request.');
-
-    let responses = await client.batchStart().batchCall();
-    apihelper.parse(responses);
-
-    logger.info('Logged In.');
-
-    let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
-    logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
-
-    logger.info('Starting initial flow...');
-
-    // initial player state
-    logger.debug('Get player info...');
-    let batch = client.batchStart();
-    batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
-    responses = await client.batchCall();
-    apihelper.parse(responses);
-
-    logger.debug('Download remote config...');
-    batch = client.batchStart();
-    batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    responses = await apihelper.alwaysinit(batch).batchCall();
-    apihelper.parse(responses);
-
-    logger.debug('Get asset digest...');
-    batch = client.batchStart();
-    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-    responses = await apihelper.alwaysinit(batch).batchCall();
-    apihelper.parse(responses);
-
-    logger.debug('Checking if item_templates need a refresh...');
-
-    let last = 0;
-    if (fs.existsSync('data/item_templates.json')) {
-        let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
-        let data = JSON.parse(json);
-        state.api.item_templates = data.templates;
-        last = data.timestamp_ms || 0;
-    }
-
-    if (!last || last < state.api.item_templates_timestamp) {
-        logger.info('Game master updating...');
-        batch = client.batchStart();
-        // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
-        batch.downloadItemTemplates(false);
-        responses = await apihelper.alwaysinit(batch).batchCall();
-        let info = apihelper.parse(responses);
-        let json = JSON.stringify({
-            templates: state.api.item_templates,
-            timestamp_ms: info.timestamp_ms,
-        }, null, 4);
-        fs.writeFile('data/item_templates.json', json, (err) => {});
-    }
-
-    // complete tutorial if needed,
-    // at minimum, getPlayerProfile() is called
-    logger.debug('Checking tutorial state...');
-    await apihelper.completeTutorial();
-
-    logger.debug('Level up rewards...');
-    apihelper.parse(responses);
-    batch = client.batchStart();
-    batch.levelUpRewards(state.inventory.player.level);
-    responses = await apihelper.always(batch).batchCall();
-    apihelper.parse(responses);
-}
-
-try {
-    loginFlow()
-    .then(() => App.emit('apiReady'));
-} catch (e) {
-    if (e.name === 'ChallengeError') {
-        resolveChallenge(e.url)
-        .then(responses => {
-            logger.warn('Catcha response sent. Please restart.');
-            process.exit();
-        });
-    } else {
-        logger.error(e);
-
-        if (e.code === 'ECONNRESET') proxyhelper.badProxy();
-        else if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
-        else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
-        else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
-        else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
-        else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
-        else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
-        else {
-            debugger;
+        if (config.hashserver.active) {
+            logger.info('Using hashserver...');
         }
 
-        logger.error('Exiting.');
-        process.exit();
+        client = new pogobuf.Client({
+            authType: 'ptc',
+            authToken: token,
+            version: config.api.version,
+            useHashingServer: config.hashserver.active,
+            hashingKey: config.hashserver.key,
+            mapObjectsThrottling: false,
+            includeRequestTypeInResponse: true,
+            proxy: proxyhelper.proxy,
+        });
+        state.client = client;
+
+        // set initial position
+        client.setPosition({
+            latitude: state.pos.lat,
+            longitude: state.pos.lng,
+        });
+
+        signaturehelper.register(config, client, state);
+
+        let altitude = await walker.getAltitude(state.pos);
+
+        let pos = walker.fuzzedLocation(state.pos);
+        client.setPosition({
+            latitude: pos.lat,
+            longitude: pos.lng,
+            altitude: altitude,
+        });
+
+        // init api (false = don't call anything yet')
+        await client.init(false);
+
+        // first empty request
+        logger.debug('First empty request.');
+
+        let responses = await client.batchStart().batchCall();
+        apihelper.parse(responses);
+
+        logger.info('Logged In.');
+
+        let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
+        logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+
+        logger.info('Starting initial flow...');
+
+        // initial player state
+        logger.debug('Get player info...');
+        let batch = client.batchStart();
+        batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
+        responses = await client.batchCall();
+        apihelper.parse(responses);
+
+        logger.debug('Download remote config...');
+        batch = client.batchStart();
+        batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        responses = await apihelper.alwaysinit(batch).batchCall();
+        apihelper.parse(responses);
+
+        logger.debug('Get asset digest...');
+        batch = client.batchStart();
+        batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        responses = await apihelper.alwaysinit(batch).batchCall();
+        apihelper.parse(responses);
+
+        logger.debug('Checking if item_templates need a refresh...');
+
+        let last = 0;
+        if (fs.existsSync('data/item_templates.json')) {
+            let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
+            let data = JSON.parse(json);
+            state.api.item_templates = data.templates;
+            last = data.timestamp_ms || 0;
+        }
+
+        if (!last || last < state.api.item_templates_timestamp) {
+            logger.info('Game master updating...');
+            batch = client.batchStart();
+            // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
+            batch.downloadItemTemplates(false);
+            responses = await apihelper.alwaysinit(batch).batchCall();
+            let info = apihelper.parse(responses);
+            let json = JSON.stringify({
+                templates: state.api.item_templates,
+                timestamp_ms: info.timestamp_ms,
+            }, null, 4);
+            fs.writeFile('data/item_templates.json', json, (err) => {});
+        }
+
+        // complete tutorial if needed,
+        // at minimum, getPlayerProfile() is called
+        logger.debug('Checking tutorial state...');
+        await apihelper.completeTutorial();
+
+        logger.debug('Level up rewards...');
+        apihelper.parse(responses);
+        batch = client.batchStart();
+        batch.levelUpRewards(state.inventory.player.level);
+        responses = await apihelper.always(batch).batchCall();
+        apihelper.parse(responses);
+
+    } catch (e) {
+        if (e.name === 'ChallengeError') {
+            resolveChallenge(e.url)
+            .then(responses => {
+                logger.warn('Catcha response sent. Please restart.');
+                process.exit();
+            });
+        } else {
+            logger.error(e);
+
+            if (e.code === 'ECONNRESET') proxyhelper.badProxy();
+            else if (e.message === 'Invalid proxy.') proxyhelper.badProxy();
+            else if (e.message.indexOf('tunneling socket could not be established') >= 0) proxyhelper.badProxy(); // no connection
+            else if (e.message.indexOf('Unexpected response received from PTC login') >= 0) proxyhelper.badProxy(); // proxy block?
+            else if (e.message.indexOf('Status code 403') >= 0) proxyhelper.badProxy(); // ip probably banned
+            else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
+            else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
+            else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
+            else {
+                debugger;
+            }
+
+            logger.error('Exiting.');
+            process.exit();
+        }
+
     }
 }
 
@@ -392,3 +391,5 @@ App.on('saveState', () => {
     lightstate.events = {};
     fs.writeFile('data/state.json', JSON.stringify(lightstate, null, 4), (err) => {});
 });
+
+loginFlow().then(() => App.emit('apiReady'));
