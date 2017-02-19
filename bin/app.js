@@ -106,7 +106,8 @@ function loginFlow() {
             let responses = yield client.batchStart().batchCall();
             apihelper.parse(responses);
             logger.info('Logged In.');
-            let hashExpiration = moment.unix(+client.signatureBuilder.rateInfos.expiration);
+            let rateInfos = client.getSignatureRateInfo();
+            let hashExpiration = moment.unix(+rateInfos['expiration']);
             logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
             logger.info('Starting initial flow...');
             // initial player state
@@ -266,7 +267,7 @@ App.on('updatePos', () => __awaiter(this, void 0, void 0, function* () {
         }
         else if (todo.call === 'evolve_pokemon') {
             let batch = client.batchStart();
-            batch.evolvePokemon(todo.pokemon);
+            batch.evolvePokemon(todo.pokemon, 0);
             let responses = yield apihelper.always(batch).batchCall();
             let info = apihelper.parse(responses);
             if (info.result === 1) {
