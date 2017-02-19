@@ -170,8 +170,7 @@ async function loginFlow() {
     // complete tutorial if needed,
     // at minimum, getPlayerProfile() is called
     logger.debug('Checking tutorial state...');
-    responses = await apihelper.completeTutorial();
-    apihelper.parse(responses);
+    await apihelper.completeTutorial();
 
     logger.debug('Level up rewards...');
     apihelper.parse(responses);

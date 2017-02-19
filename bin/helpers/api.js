@@ -116,7 +116,7 @@ class APIHelper {
     /**
      * Complete tutorial if needed, setting a random avatar
      * If not needed, do the minmum getPlayerProfile and registerBackgroundDevice
-     * @return {Promise} Promise
+     * @return {Promise<void>} Promise
      */
     completeTutorial() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -127,109 +127,96 @@ class APIHelper {
                 // like the actual app (not used later)
                 let batch = client.batchStart();
                 batch.getPlayerProfile();
-                return this.always(batch).batchCall()
-                    .then(responses => this.parse(responses))
-                    .then(() => {
-                    batch = client.batchStart();
-                    batch.registerBackgroundDevice('apple_watch', '');
-                    return this.alwaysinit(batch).batchCall();
-                })
-                    .then(responses => this.parse(responses));
+                let responses = yield this.always(batch).batchCall();
+                this.parse(responses);
+                batch = client.batchStart();
+                batch.registerBackgroundDevice('apple_watch', '');
+                responses = yield this.alwaysinit(batch).batchCall();
+                this.parse(responses);
             }
             else {
                 logger.info('Completing tutorial...');
-                return Bluebird.delay(_.random(2000.0, 5000.0))
-                    .then(() => {
-                    if (!_.includes(tuto, 0)) {
-                        // complete tutorial
-                        let batch = client.batchStart();
-                        batch.markTutorialComplete(0, false, false);
-                        return this.alwaysinit(batch).batchCall();
-                    }
-                }).then(responses => {
-                    this.parse(responses);
-                    if (!_.includes(tuto, 1)) {
-                        // set avatar
-                        return Bluebird.delay(_.random(8000.0, 14500))
-                            .then(() => {
-                            let batch = client.batchStart();
-                            batch.setAvatar(_.random(0, 3), // skin
-                            _.random(0, 5), // hair
-                            _.random(0, 3), // shirt
-                            _.random(0, 2), // pants
-                            _.random(0, 4), // hat
-                            _.random(0, 6), // shoes,
-                            0, // gender,
-                            _.random(0, 4), // eyes,
-                            _.random(0, 5) // backpack
-                            );
-                            return this.alwaysinit(batch).batchCall();
-                        }).delay(_.random(1000, 1700)).then(responses => {
-                            this.parse(responses);
-                            let batch = client.batchStart();
-                            batch.markTutorialComplete(1, false, false);
-                            return this.alwaysinit(batch).batchCall();
-                        });
-                    }
-                }).then(responses => {
-                    this.parse(responses);
+                if (!_.includes(tuto, 0)) {
+                    logger.debug('Tutorial 0');
+                    yield Bluebird.delay(_.random(2000.0, 5000.0));
+                    // complete tutorial
                     let batch = client.batchStart();
+                    batch.markTutorialComplete(0, false, false);
+                    let responses = yield this.alwaysinit(batch).batchCall();
+                    this.parse(responses);
+                }
+                if (!_.includes(tuto, 1)) {
+                    logger.debug('Tutorial 1');
+                    // set avatar
+                    yield Bluebird.delay(_.random(8000.0, 14500));
+                    let batch = client.batchStart();
+                    batch.setAvatar(_.random(0, 3), // skin
+                    _.random(0, 5), // hair
+                    _.random(0, 3), // shirt
+                    _.random(0, 2), // pants
+                    _.random(0, 4), // hat
+                    _.random(0, 6), // shoes,
+                    0, // gender,
+                    _.random(0, 4), // eyes,
+                    _.random(0, 5) // backpack
+                    );
+                    let responses = yield this.alwaysinit(batch).batchCall();
+                    this.parse(responses);
+                    yield Bluebird.delay(_.random(1000, 1700));
+                    batch = client.batchStart();
+                    batch.markTutorialComplete(1, false, false);
+                    responses = yield this.alwaysinit(batch).batchCall();
+                    this.parse(responses);
+                    batch = client.batchStart();
                     batch.getPlayerProfile();
-                    return this.always(batch).batchCall();
-                }).then(responses => {
+                    responses = yield this.always(batch).batchCall();
                     this.parse(responses);
-                    let batch = client.batchStart();
+                    batch = client.batchStart();
                     batch.registerBackgroundDevice('apple_watch', '');
-                    return this.alwaysinit(batch).batchCall();
-                }).then(responses => {
+                    responses = yield this.alwaysinit(batch).batchCall();
                     this.parse(responses);
-                    if (!_.includes(tuto, 3)) {
-                        // encounter starter pokemon
-                        let batch = client.batchStart();
-                        batch.getDownloadURLs([
-                            '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
-                            'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
-                        ]);
-                        return this.always(batch).batchCall()
-                            .delay(_.random(7000, 10000)).then(responses => {
-                            this.parse(responses);
-                            let batch = client.batchStart();
-                            let pkmId = [1, 4, 7][_.random(3)];
-                            batch.encounterTutorialComplete(pkmId);
-                            return this.always(batch).batchCall();
-                        }).then(responses => {
-                            this.parse(responses);
-                            let batch = client.batchStart();
-                            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-                            return this.always(batch).batchCall();
-                        });
-                    }
-                }).then(responses => {
-                    // wait a bit
+                }
+                if (!_.includes(tuto, 3)) {
+                    logger.debug('Tutorial 3');
+                    // encounter starter pokemon
+                    let batch = client.batchStart();
+                    batch.getDownloadURLs([
+                        '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
+                        'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
+                    ]);
+                    let responses = yield this.always(batch).batchCall();
                     this.parse(responses);
-                }).then(responses => {
+                    yield Bluebird.delay(_.random(7000, 10000));
+                    batch = client.batchStart();
+                    let pkmId = [1, 4, 7][_.random(3)];
+                    batch.encounterTutorialComplete(pkmId);
+                    responses = yield this.always(batch).batchCall();
                     this.parse(responses);
-                    if (!_.includes(tuto, 4)) {
-                        Bluebird.delay(_.random(5000, 11500))
-                            .then(() => {
-                            let batch = client.batchStart();
-                            batch.claimCodename(this.config.credentials.user);
-                            return this.always(batch).batchCall();
-                        }).then(responses => {
-                            this.parse(responses);
-                            let batch = client.batchStart();
-                            batch.markTutorialComplete(4, false, false);
-                            return this.alwaysinit(batch).batchCall();
-                        });
-                    }
-                }).delay(_.random(3500, 6000)).then(responses => {
+                    batch = client.batchStart();
+                    batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+                    responses = yield this.always(batch).batchCall();
                     this.parse(responses);
-                    if (!_.includes(tuto, 7)) {
-                        let batch = client.batchStart();
-                        batch.markTutorialComplete(7, false, false);
-                        return this.always(batch).batchCall();
-                    }
-                });
+                }
+                if (!_.includes(tuto, 4)) {
+                    logger.debug('Tutorial 4');
+                    yield Bluebird.delay(_.random(5000, 11500));
+                    let batch = client.batchStart();
+                    batch.claimCodename(this.config.credentials.user);
+                    let responses = yield this.always(batch).batchCall();
+                    this.parse(responses);
+                    batch = client.batchStart();
+                    batch.markTutorialComplete(4, false, false);
+                    responses = yield this.alwaysinit(batch).batchCall();
+                    this.parse(responses);
+                }
+                if (!_.includes(tuto, 7)) {
+                    logger.debug('Tutorial 7');
+                    yield Bluebird.delay(_.random(3500, 6000));
+                    let batch = client.batchStart();
+                    batch.markTutorialComplete(7, false, false);
+                    let responses = yield this.always(batch).batchCall();
+                    this.parse(responses);
+                }
             }
         });
     }

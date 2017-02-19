@@ -148,8 +148,7 @@ function loginFlow() {
         // complete tutorial if needed,
         // at minimum, getPlayerProfile() is called
         logger.debug('Checking tutorial state...');
-        responses = yield apihelper.completeTutorial();
-        apihelper.parse(responses);
+        yield apihelper.completeTutorial();
         logger.debug('Level up rewards...');
         apihelper.parse(responses);
         batch = client.batchStart();

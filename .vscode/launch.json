@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch",
-            "program": "${workspaceRoot}/bin/app.js",
+            "program": "${workspaceRoot}/src/app.ts",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development",
@@ -21,7 +21,7 @@
             "type": "node",
             "request": "launch",
             "name": "debug.js",
-            "program": "${workspaceRoot}/bin/debug.js",
+            "program": "${workspaceRoot}/src/debug.ts",
             "cwd": "${workspaceRoot}",
             "env": {
 				"NODE_ENV": "development"
@@ -33,7 +33,7 @@
             "type": "node",
             "request": "launch",
             "name": "Catpcha",
-            "program": "${workspaceRoot}/bin/captcha/launch.js",
+            "program": "${workspaceRoot}/src/captcha/launch.ts",
             "cwd": "${workspaceRoot}",
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
             "sourceMaps": true
