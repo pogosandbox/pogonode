@@ -231,12 +231,6 @@ class APIHelper {
         if (!(responses instanceof Array))
             responses = [responses];
         let info = {};
-        if (responses[0]._requestType === RequestType.LEVEL_UP_REWARDS) {
-            if (responses[0].result === 1) {
-                // check if new item are also in get_inventory
-                debugger;
-            }
-        }
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
@@ -355,6 +349,23 @@ class APIHelper {
                         let pkm = r.hatched_pokemon[0];
                         logger.info('An egg has hatched, pokemon_id: %d.', pkm.pokemon_id);
                     }
+                    break;
+                case RequestType.MARK_TUTORIAL_COMPLETE:
+                    info = {
+                        success: r.success,
+                    };
+                    break;
+                case RequestType.SET_AVATAR:
+                    // nothing
+                    break;
+                case RequestType.GET_DOWNLOAD_URLS:
+                    // nothing
+                    break;
+                case RequestType.CLAIM_CODENAME:
+                    info = {
+                        status: r.status,
+                        codename: r.codename,
+                    };
                     break;
                 case RequestType.ENCOUNTER_TUTORIAL_COMPLETE:
                     // TODO: check if not already in getInventory()
