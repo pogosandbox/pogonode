@@ -8,8 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 require('dotenv').config({ silent: true });
-const pogobuf = require("../pogobuf");
-// import * as pogobuf from 'pogobuf';
+// import * as pogobuf from '../pogobuf';
+const pogobuf = require("pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const events_1 = require("events");
 const logger = require("winston");
