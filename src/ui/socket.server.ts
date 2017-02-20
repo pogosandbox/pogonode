@@ -31,6 +31,8 @@ export default class SocketServer {
      * @return {Promise}
      */
     start() {
+        if (!this.config.ui.enabled) return;
+
         let app = express();
         let httpserver = http.createServer(app);
         Promise.promisifyAll(httpserver);
@@ -61,6 +63,8 @@ export default class SocketServer {
      * @param {object} client - optional socket client to send into to
      */
     ready(client?) {
+        if (!this.config.ui.enabled) return;
+
         logger.debug('Send ready message to the ui.');
         let data = {
             username: this.state.player.username,
@@ -85,6 +89,8 @@ export default class SocketServer {
      * Send position to connected clients
      */
     sendPosition() {
+        if (!this.config.ui.enabled) return;
+
         this.io.emit('position', this.state.pos);
     }
 
@@ -93,6 +99,8 @@ export default class SocketServer {
      * @param {object} route - route info
      */
     sendRoute(route) {
+        if (!this.config.ui.enabled) return;
+
         this.io.emit('route', _.concat([this.state.pos], route));
     }
 
@@ -100,6 +108,8 @@ export default class SocketServer {
      * Send available pokestops to connected clients
      */
     sendPokestops() {
+        if (!this.config.ui.enabled) return;
+
         this.io.emit('pokestops', this.state.map.pokestops);
     }
 
@@ -108,6 +118,8 @@ export default class SocketServer {
      * @param {object} pokemon - the pokemon we've just caught
      */
     sendPokemonCaught(pokemon) {
+        if (!this.config.ui.enabled) return;
+
         this.io.emit('pokemon_caught', {
             pokemon: pokemon,
             position: this.state.pos,
@@ -119,6 +131,8 @@ export default class SocketServer {
      * @param {object} pokestop - the pokestop we've just visited
      */
     sendVisitedPokestop(pokestop) {
+        if (!this.config.ui.enabled) return;
+
         this.io.emit('pokestop_visited', pokestop);
     }
 

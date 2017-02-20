@@ -18,6 +18,9 @@ module.exports.load = function () {
         speed: 5,
         gmapKey: '',
         device: { id: 0 },
+        ui: {
+            enabled: false,
+        },
         api: {
             version: '4500',
             checkversion: true,
@@ -56,7 +59,7 @@ module.exports.load = function () {
         'timestamp': function () {
             return moment().format('HH:mm:ss');
         },
-        'colorize': false,
+        'colorize': true,
         'level': config.loglevel,
     });
     logger.add(logger.transports.File, {
@@ -65,6 +68,7 @@ module.exports.load = function () {
         },
         'filename': 'data/pogonode.log',
         'json': false,
+        'level': config.loglevel,
     });
     if (!config.device.id) {
         config.device.id = _.times(32, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');

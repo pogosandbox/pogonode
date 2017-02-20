@@ -19,6 +19,9 @@ module.exports.load = function() {
         speed: 5,
         gmapKey: '',
         device: {id: 0},
+        ui: {
+            enabled: false,
+        },
         api: {
             version: '4500',
             checkversion: true,
@@ -59,7 +62,7 @@ module.exports.load = function() {
         'timestamp': function() {
             return moment().format('HH:mm:ss');
         },
-        'colorize': false,
+        'colorize': true,
         'level': config.loglevel,
     });
 
@@ -69,6 +72,7 @@ module.exports.load = function() {
         },
         'filename': 'data/pogonode.log',
         'json': false,
+        'level': config.loglevel,
     });
 
     if (!config.device.id) {
