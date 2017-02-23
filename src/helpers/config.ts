@@ -29,6 +29,7 @@ module.exports.load = function() {
             language: 'en',
         },
         behavior: {
+            walk: true,
             catch: false,
             autorelease: true,
         },

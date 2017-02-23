@@ -76,6 +76,7 @@ function loginFlow() {
                 logger.info('Using hashserver...');
             }
             client = new pogobuf.Client({
+                deviceId: config.device.id,
                 authType: 'ptc',
                 authToken: token,
                 version: config.api.version,
@@ -91,7 +92,7 @@ function loginFlow() {
                 latitude: state.pos.lat,
                 longitude: state.pos.lng,
             });
-            signaturehelper.register(config, client, state);
+            // signaturehelper.register(config, client, state);
             let altitude = yield walker.getAltitude(state.pos);
             let pos = walker.fuzzedLocation(state.pos);
             client.setPosition({

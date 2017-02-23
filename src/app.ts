@@ -80,6 +80,7 @@ async function loginFlow() {
         }
 
         client = new pogobuf.Client({
+            deviceId: config.device.id,
             authType: 'ptc',
             authToken: token,
             version: config.api.version,
@@ -97,7 +98,7 @@ async function loginFlow() {
             longitude: state.pos.lng,
         });
 
-        signaturehelper.register(config, client, state);
+        // signaturehelper.register(config, client, state);
 
         let altitude = await walker.getAltitude(state.pos);
 
