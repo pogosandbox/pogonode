@@ -293,8 +293,10 @@ export default class APIHelper {
 
                 case RequestType.DOWNLOAD_ITEM_TEMPLATES:
                     if (r.item_templates.length > 0) {
-                        this.state.api.item_templates = r.item_templates;
+                        info.success = r.success;
+                        info.item_templates = r.item_templates;
                         info.timestamp_ms = r.timestamp_ms;
+                        info.page_offset = r.page_offset;
                     }
                     break;
 

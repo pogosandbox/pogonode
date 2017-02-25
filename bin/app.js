@@ -132,12 +132,18 @@ function loginFlow() {
             if (!last || last < state.api.item_templates_timestamp) {
                 logger.info('Game master updating...');
                 batch = client.batchStart();
-                // batch.downloadItemTemplates(false, 0, state.api.item_templates_timestamp);
                 batch.downloadItemTemplates(false);
                 responses = yield apihelper.alwaysinit(batch).batchCall();
                 let info = apihelper.parse(responses);
+                let item_templates = info.item_templates;
+                while (info.page_offset !== 0) {
+                    batch = client.batchStart();
+                    batch.downloadItemTemplates(false, info.page_offset, info.timestamp_ms);
+                    responses = yield apihelper.alwaysinit(batch).batchCall();
+                    item_templates = item_templates.concat(info.item_templates);
+                }
                 let json = JSON.stringify({
-                    templates: state.api.item_templates,
+                    templates: item_templates,
                     timestamp_ms: info.timestamp_ms,
                 }, null, 4);
                 fs.writeFile('data/item_templates.json', json, (err) => { });
