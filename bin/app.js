@@ -87,12 +87,6 @@ function loginFlow() {
                 proxy: proxyhelper.proxy,
             });
             state.client = client;
-            // set initial position
-            client.setPosition({
-                latitude: state.pos.lat,
-                longitude: state.pos.lng,
-            });
-            // signaturehelper.register(config, client, state);
             let altitude = yield walker.getAltitude(state.pos);
             let pos = walker.fuzzedLocation(state.pos);
             client.setPosition({

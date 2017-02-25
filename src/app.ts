@@ -92,14 +92,6 @@ async function loginFlow() {
         });
         state.client = client;
 
-        // set initial position
-        client.setPosition({
-            latitude: state.pos.lat,
-            longitude: state.pos.lng,
-        });
-
-        // signaturehelper.register(config, client, state);
-
         let altitude = await walker.getAltitude(state.pos);
 
         let pos = walker.fuzzedLocation(state.pos);
