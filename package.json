@@ -2,7 +2,7 @@
   "name": "pogonode",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "bin/app.js",
   "author": "niico",
   "license": "MIT",
   "engines" : { "node" : ">=6.0.0" },

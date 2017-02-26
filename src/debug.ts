@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import APIHelper from './helpers/api';
 import Walker from './helpers/walker';
 
-const pogobuf = require('./pogobuf/pogobuf/pogobuf');
+import * as pogobuf from '../pogobuf';
 
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -29,5 +29,12 @@ function testVersion(version) {
     logger.info('iOS Version', apihelper.versionToiOSVersion(version));
 }
 
-testVersion(5100);
-testVersion(5300);
+function testRequestIds() {
+    let client = new pogobuf.Client();
+    for (let i = 0; i < 10; i++) {
+        let id = (<any>client).getRequestID();
+        logger.info('%s', id.toString(16));
+    }
+}
+
+testRequestIds();
