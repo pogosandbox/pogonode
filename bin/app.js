@@ -54,7 +54,6 @@ let walker = new walker_1.default(config, state);
 let player = new player_1.default(config, state);
 let proxyhelper = new proxy_1.default(config, state);
 let socket = new socket_server_1.default(config, state);
-let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
 let client;
 function loginFlow() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -68,17 +67,14 @@ function loginFlow() {
                 throw new Error('Invalid proxy.');
             }
             yield socket.start();
-            logger.info('Login...');
-            if (proxyhelper.proxy && config.credentials.type === 'ptc')
-                login.setProxy(proxyhelper.proxy);
-            let token = yield login.login(config.credentials.user, config.credentials.password);
             if (config.hashserver.active) {
                 logger.info('Using hashserver...');
             }
             client = new pogobuf.Client({
                 deviceId: config.device.id,
                 authType: 'ptc',
-                authToken: token,
+                username: config.credentials.user,
+                password: config.credentials.password,
                 version: config.api.version,
                 useHashingServer: config.hashserver.active,
                 hashingKey: config.hashserver.key,
@@ -94,6 +90,7 @@ function loginFlow() {
                 longitude: pos.lng,
                 altitude: altitude,
             });
+            logger.info('Init api...');
             // init api (false = don't call anything yet')
             yield client.init(false);
             // first empty request
@@ -101,9 +98,11 @@ function loginFlow() {
             let responses = yield client.batchStart().batchCall();
             apihelper.parse(responses);
             logger.info('Logged In.');
-            let rateInfos = client.getSignatureRateInfo();
-            let hashExpiration = moment.unix(+rateInfos['expiration']);
-            logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+            if (config.hashserver.active) {
+                let rateInfos = client.getSignatureRateInfo();
+                let hashExpiration = moment.unix(+rateInfos['expiration']);
+                logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+            }
             logger.info('Starting initial flow...');
             // initial player state
             logger.debug('Get player info...');

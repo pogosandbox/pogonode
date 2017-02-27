@@ -54,8 +54,6 @@ let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
 
-let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
-
 let client: pogobuf.Client;
 
 async function loginFlow() {
@@ -71,10 +69,6 @@ async function loginFlow() {
         }
         await socket.start();
 
-        logger.info('Login...');
-        if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
-        let token = await login.login(config.credentials.user, config.credentials.password);
-
         if (config.hashserver.active) {
             logger.info('Using hashserver...');
         }
@@ -82,7 +76,8 @@ async function loginFlow() {
         client = new pogobuf.Client({
             deviceId: config.device.id,
             authType: 'ptc',
-            authToken: token,
+            username: config.credentials.user,
+            password: config.credentials.password,
             version: config.api.version,
             useHashingServer: config.hashserver.active,
             hashingKey: config.hashserver.key,
@@ -101,6 +96,8 @@ async function loginFlow() {
             altitude: altitude,
         });
 
+        logger.info('Init api...');
+
         // init api (false = don't call anything yet')
         await client.init(false);
 
@@ -112,9 +109,11 @@ async function loginFlow() {
 
         logger.info('Logged In.');
 
-        let rateInfos = client.getSignatureRateInfo();
-        let hashExpiration = moment.unix(+rateInfos['expiration']);
-        logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+        if (config.hashserver.active) {
+            let rateInfos = client.getSignatureRateInfo();
+            let hashExpiration = moment.unix(+rateInfos['expiration']);
+            logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
+        }
 
         logger.info('Starting initial flow...');
 
