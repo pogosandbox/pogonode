@@ -109,7 +109,7 @@ class Player {
                         spawn_point_id: pk.spawn_point_id,
                         pokemon_id: pk.pokemon_id,
                     };
-                    if (config.behavior.catch) {
+                    if (this.config.behavior.catch) {
                         yield Bluebird.delay(this.config.delay.catch * 1000);
                         let pokemon = yield this.catchPokemon(encounter);
                         yield this.releaseIfNotGoodEnough(pokemon);
@@ -162,7 +162,6 @@ class Player {
         return __awaiter(this, void 0, void 0, function* () {
             if (!encounter)
                 return null;
-            ;
             let lancer = this.getThrowParameter(encounter.pokemon_id);
             if (lancer.ball < 0) {
                 logger.warn('No pokéball found for catching.');

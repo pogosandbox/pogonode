@@ -121,7 +121,7 @@ export default class Player {
                     pokemon_id: pk.pokemon_id,
                 };
 
-                if (config.behavior.catch) {
+                if (this.config.behavior.catch) {
                     await Bluebird.delay(this.config.delay.catch * 1000);
                     let pokemon = await this.catchPokemon(encounter);
                     await this.releaseIfNotGoodEnough(pokemon);
@@ -175,7 +175,7 @@ export default class Player {
      * @return {Promise<pokemon>} Pokemon caught or null
      */
     async catchPokemon(encounter) {
-        if (!encounter) return null;;
+        if (!encounter) return null;
 
         let lancer = this.getThrowParameter(encounter.pokemon_id);
         if (lancer.ball < 0) {
