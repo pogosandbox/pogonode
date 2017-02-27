@@ -322,7 +322,7 @@ function mapRefresh() {
             let stops = player.findSpinnablePokestops();
             yield player.spinPokestops(stops);
             // encounter available pokemons
-            yield player.encounterPokemons(config.behavior.catch);
+            yield player.encounterPokemons();
             if (Math.random() < 0.3) {
                 logger.debug('Dispatch incubators...');
                 yield player.dispatchIncubators();

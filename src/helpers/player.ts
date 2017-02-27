@@ -77,10 +77,9 @@ export default class Player {
 
     /**
      * Encounter all pokemons in range (based on current state)
-     * @param {bool} catchPokemon true to catch pokemons, by default only encounter them
      * @return {Promise}
      */
-    async encounterPokemons(catchPokemon) {
+    async encounterPokemons() {
         let pokemons: any[] = this.state.map.catchable_pokemons;
         pokemons = _.uniqBy(pokemons, pk => pk.encounter_id);
         pokemons = _.filter(pokemons, pk => this.state.encountered.indexOf(pk.encounter_id) < 0);
@@ -122,7 +121,7 @@ export default class Player {
                     pokemon_id: pk.pokemon_id,
                 };
 
-                if (catchPokemon) {
+                if (config.behavior.catch) {
                     await Bluebird.delay(this.config.delay.catch * 1000);
                     let pokemon = await this.catchPokemon(encounter);
                     await this.releaseIfNotGoodEnough(pokemon);

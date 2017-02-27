@@ -350,7 +350,7 @@ async function mapRefresh(): Promise<void> {
         await player.spinPokestops(stops);
 
         // encounter available pokemons
-        await player.encounterPokemons(config.behavior.catch);
+        await player.encounterPokemons();
 
         if (Math.random() < 0.3) {
             logger.debug('Dispatch incubators...');
