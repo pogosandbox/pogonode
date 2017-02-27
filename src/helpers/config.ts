@@ -1,8 +1,9 @@
-const fs = require('fs');
+import * as fs from 'fs';
 import * as logger from 'winston';
-const yaml = require('js-yaml');
 import * as _ from 'lodash';
 import * as moment from 'moment';
+
+const yaml = require('js-yaml');
 
 module.exports.load = function() {
 
@@ -52,6 +53,10 @@ module.exports.load = function() {
         },
         loglevel: 'info',
     };
+
+    try {
+        fs.mkdirSync('data');
+    } catch (e) {}
 
     if (fs.existsSync('data/config.yaml')) {
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));

@@ -1,9 +1,9 @@
 "use strict";
-const fs = require('fs');
+const fs = require("fs");
 const logger = require("winston");
-const yaml = require('js-yaml');
 const _ = require("lodash");
 const moment = require("moment");
+const yaml = require('js-yaml');
 module.exports.load = function () {
     let config = {
         credentials: {
@@ -51,6 +51,10 @@ module.exports.load = function () {
         },
         loglevel: 'info',
     };
+    try {
+        fs.mkdirSync('data');
+    }
+    catch (e) { }
     if (fs.existsSync('data/config.yaml')) {
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         config = _.defaultsDeep(loaded, config);
