@@ -58,6 +58,9 @@ let client: pogobuf.Client;
 
 async function loginFlow() {
     logger.info('App starting...');
+    if (config.ui.enabled) {
+        logger.info('go to http://openui.nicontoso.eu/ for ui');
+    }
     try {
         let valid = await proxyhelper.checkProxy();
 
@@ -85,6 +88,7 @@ async function loginFlow() {
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
         });
+
         state.client = client;
 
         let altitude = await walker.getAltitude(state.pos);
@@ -368,8 +372,6 @@ async function mapRefresh(): Promise<void> {
 
         logger.error(e);
         debugger;
-        // e.status_code == 102
-        // detect token expiration
     }
 }
 

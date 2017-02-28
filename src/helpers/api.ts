@@ -409,16 +409,17 @@ export default class APIHelper {
                     break;
 
                 case RequestType.LEVEL_UP_REWARDS:
-                    if (r.result === 1) {
-                        logger.debug('levelUpRewards()', r);
-                        logger.debug(' todo: see if also in inventory_delta?');
-                        _.each(r.items_awarded, i => {
-                            let items:  any[] = this.state.inventory.items;
-                            let item = _.find(items, it => it && it.item_id === i.item_id);
-                            if (item) item.count += i.item_count;
-                            else this.state.inventory.items.push(i);
-                        });
-                    }
+                    // if (r.result === 1) {
+                    //     logger.debug('levelUpRewards()', r);
+                    //     logger.debug(' todo: see if also in inventory_delta?');
+                    //     _.each(r.items_awarded, i => {
+                    //         let items:  any[] = this.state.inventory.items;
+                    //         let item = _.find(items, it => it && it.item_id === i.item_id);
+                    //         if (item) item.count += i.item_count;
+                    //         else this.state.inventory.items.push(i);
+                    //     });
+                    // }
+                    info.result = r.result;
                     break;
 
                 case RequestType.CHECK_AWARDED_BADGES:

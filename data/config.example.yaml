@@ -61,5 +61,10 @@ behavior:
 proxy: 
   url: auto
 
+# true to enable ui
+# available at http://openui.nicontoso.eu
+ui:
+  enabled: false
+
 # loglevel (debug, info, warn, error)
 loglevel: debug
