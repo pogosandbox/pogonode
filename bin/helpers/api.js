@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const pogobuf = require("../../pogobuf");
+const pogobuf = require("pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
 const _ = require("lodash");
