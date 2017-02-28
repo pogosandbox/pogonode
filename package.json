@@ -18,7 +18,7 @@
     "js-yaml": "^3.8.1",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
-    "nightmare": "^2.9.1",
+    "nightmare": "^2.10.0",
     "node-pogo-protos": "pogosandbox/node-pogo-protos#2.7.1",
     "node-pogo-signature": "pogosandbox/node-pogo-signature#0.57.2",
     "pogobuf": "pogosandbox/pogobuf",
@@ -32,11 +32,11 @@
     "@types/bluebird": "^3.0.37",
     "@types/bytebuffer": "^5.0.33",
     "@types/fs-promise": "^1.0.1",
-    "@types/lodash": "^4.14.52",
+    "@types/lodash": "^4.14.53",
     "@types/long": "^3.0.31",
     "@types/node": "^7.0.5",
     "@types/winston": "^2.2.0",
-    "tslint": "^4.4.2",
-    "typescript": "^2.1.6"
+    "tslint": "^4.5.1",
+    "typescript": "^2.2.1"
   }
 }
