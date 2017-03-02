@@ -5,7 +5,9 @@
   "main": "bin/app.js",
   "author": "niico",
   "license": "MIT",
-  "engines" : { "node" : ">=6.0.0" },
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "dependencies": {
     "bluebird-retry": "^0.10.1",
     "cheerio": "^0.22.0",
@@ -20,11 +22,10 @@
     "moment": "^2.17.1",
     "nightmare": "^2.10.0",
     "node-pogo-protos": "pogosandbox/node-pogo-protos#2.7.1",
-    "node-pogo-signature": "pogosandbox/node-pogo-signature#0.57.2",
+    "pogobuf-signature": "pogosandbox/pogobuf-signature",
     "pogobuf": "pogosandbox/pogobuf",
     "request": "^2.79.0",
     "semver-compare": "^1.0.0",
-    "simjs-random": "^0.2.6",
     "socket.io": "^1.7.3",
     "winston": "^2.3.1"
   },
