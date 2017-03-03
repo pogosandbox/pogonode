@@ -225,7 +225,7 @@ export default class Player {
                     pkm.cp > pokemon.cp * 0.8;
         });
         if (better) {
-            await Bluebird.delay(this.config.delay * _.random(900, 1100));
+            await Bluebird.delay(this.config.delay.release * _.random(900, 1100));
 
             // release pokemon
             logger.info('Release pokemon', pokemon.pokemon_id);
