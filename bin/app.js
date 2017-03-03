@@ -57,6 +57,9 @@ let client;
 function loginFlow() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info('App starting...');
+        if (config.ui.enabled) {
+            logger.info('go to http://openui.nicontoso.eu/ for ui');
+        }
         try {
             let valid = yield proxyhelper.checkProxy();
             // find a proxy if 'auto' is set in config

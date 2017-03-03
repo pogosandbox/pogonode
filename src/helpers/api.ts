@@ -475,7 +475,6 @@ export default class APIHelper {
                     logger.debug(r);
                     break;
             }
-
         });
 
         return info;
