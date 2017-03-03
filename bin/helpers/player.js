@@ -202,7 +202,7 @@ class Player {
                     pkm.cp > pokemon.cp * 0.8;
             });
             if (better) {
-                yield Bluebird.delay(this.config.delay * _.random(900, 1100));
+                yield Bluebird.delay(this.config.delay.release * _.random(900, 1100));
                 // release pokemon
                 logger.info('Release pokemon', pokemon.pokemon_id);
                 let batch = this.state.client.batchStart();
