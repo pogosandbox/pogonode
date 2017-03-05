@@ -1,10 +1,10 @@
 "use strict";
-const express = require('express');
-const http = require('http');
-const Promise = require('bluebird');
+const Bluebird = require("bluebird");
 const logger = require("winston");
 const _ = require("lodash");
-Promise.promisifyAll(http);
+const express = require('express');
+const http = require('http');
+Bluebird.promisifyAll(http);
 /**
  * Socket server to communicate to the web ui through socket.io
  */
@@ -29,7 +29,7 @@ class SocketServer {
             return;
         let app = express();
         let httpserver = http.createServer(app);
-        Promise.promisifyAll(httpserver);
+        Bluebird.promisifyAll(httpserver);
         this.io = require('socket.io')(httpserver);
         this.io.on('connection', socket => {
             logger.debug('UI connected.');

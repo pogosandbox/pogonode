@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 require('dotenv').config({ silent: true });
 const pogobuf = require("../pogobuf");
-// import * as pogobuf from 'pogobuf';
 const POGOProtos = require("node-pogo-protos");
 const events_1 = require("events");
 const logger = require("winston");
@@ -73,9 +72,14 @@ function loginFlow() {
             if (config.hashserver.active) {
                 logger.info('Using hashserver...');
             }
+            let token = null;
+            // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
+            // if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
+            // token = await login.login(config.credentials.user, config.credentials.password);
             client = new pogobuf.Client({
                 deviceId: config.device.id,
                 authType: 'ptc',
+                authToken: token,
                 username: config.credentials.user,
                 password: config.credentials.password,
                 version: config.api.version,
@@ -93,6 +97,8 @@ function loginFlow() {
                 longitude: pos.lng,
                 altitude: altitude,
             });
+            let version = yield apihelper.getRpcVersion();
+            logger.info('Minimum app version: %s', version);
             logger.info('Init api...');
             // init api (false = don't call anything yet')
             yield client.init(false);

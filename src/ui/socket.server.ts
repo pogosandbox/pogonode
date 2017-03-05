@@ -1,10 +1,11 @@
-const express = require('express');
-const http = require('http');
-const Promise = require('bluebird');
+import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 import * as _ from 'lodash';
 
-Promise.promisifyAll(http);
+const express = require('express');
+const http = require('http');
+
+Bluebird.promisifyAll(http);
 
 /**
  * Socket server to communicate to the web ui through socket.io
@@ -35,7 +36,7 @@ export default class SocketServer {
 
         let app = express();
         let httpserver = http.createServer(app);
-        Promise.promisifyAll(httpserver);
+        Bluebird.promisifyAll(httpserver);
         this.io = require('socket.io')(httpserver);
 
         this.io.on('connection', socket => {
