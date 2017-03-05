@@ -12,6 +12,7 @@ const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
+const request = require("request-promise");
 const vercmp = require('semver-compare');
 const util = require('util');
 /**
@@ -441,6 +442,26 @@ class APIHelper {
     addIv(pokemon) {
         pokemon.iv = 100 * (pokemon.individual_attack + pokemon.individual_defense + pokemon.individual_stamina) / 45.0;
         pokemon.iv = Math.round(pokemon.iv);
+    }
+    /**
+     * Make a request to niantic /pfe/version to get minimum version
+     * @return {Promise<string>} Minimum app version
+     */
+    getRpcVersion() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let options = {
+                uri: 'https://pgorelease.nianticlabs.com/plfe/version',
+                headers: {
+                    'accept': '*/*',
+                    'user-agent': 'pokemongo/1 CFNetwork/808.3 Darwin/16.3.0',
+                    'accept-language': 'en-us',
+                    'x-unity-version': '5.5.1f1'
+                },
+                gzip: true,
+            };
+            let version = yield request.get(options);
+            return version.replace('\n', '');
+        });
     }
     /**
      * Convert version string (like 5100) to iOS (like 1.21)

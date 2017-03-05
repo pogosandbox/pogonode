@@ -15,7 +15,7 @@ const logger = require("winston");
 const Bluebird = require("bluebird");
 const _ = require("lodash");
 const moment = require("moment");
-const fs = require('fs');
+const fs = require("fs");
 const api_1 = require("./helpers/api");
 const proxy_1 = require("./helpers/proxy");
 const walker_1 = require("./helpers/walker");
@@ -72,9 +72,14 @@ function loginFlow() {
             if (config.hashserver.active) {
                 logger.info('Using hashserver...');
             }
+            let token = null;
+            // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
+            // if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
+            // token = await login.login(config.credentials.user, config.credentials.password);
             client = new pogobuf.Client({
                 deviceId: config.device.id,
                 authType: 'ptc',
+                authToken: token,
                 username: config.credentials.user,
                 password: config.credentials.password,
                 version: config.api.version,
@@ -92,6 +97,8 @@ function loginFlow() {
                 longitude: pos.lng,
                 altitude: altitude,
             });
+            let version = yield apihelper.getRpcVersion();
+            logger.info('Minimum app version: %s', version);
             logger.info('Init api...');
             // init api (false = don't call anything yet')
             yield client.init(false);

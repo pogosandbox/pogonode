@@ -8,13 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const _ = require("lodash");
-const Bluebird = require("bluebird");
 const logger = require("winston");
 const moment = require("moment");
-const request = require('request');
+const request = require("request-promise");
 const cheerio = require('cheerio');
 const fs = require('fs');
-Bluebird.promisifyAll(request);
 /**
  * Helper class to deal with proxies
  */
@@ -52,7 +50,7 @@ class ProxyHelper {
             };
             let badUrls = _.map(this.badProxies, p => p.proxy);
             let url = 'https://www.sslp' + 'roxies.org/';
-            let response = yield request.getAsync(url);
+            let response = yield request.get(url);
             let $ = cheerio.load(response.body);
             let proxylist = $('#proxylisttable tr');
             let proxy = _.find(proxylist, tr => {
@@ -81,17 +79,17 @@ class ProxyHelper {
                 this.proxy = proxy;
                 this.state.proxy = proxy;
                 logger.info('Using proxy: %s', proxy);
-                let response = yield request.getAsync('https://api.ipify.org/?format=json');
+                let response = yield request.get('https://api.ipify.org/?format=json');
                 if (!response)
                     return false;
-                this.clearIp = JSON.parse(response.body).ip;
+                this.clearIp = JSON.parse(response).ip;
                 logger.debug('Clear ip: ' + this.clearIp);
                 if (!this.clearIp)
                     return false;
-                response = yield request.getAsync('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
+                response = yield request.get('https://api.ipify.org/?format=json', { proxy: this.proxy, timeout: 5000 });
                 if (!response)
                     return false;
-                let ip = JSON.parse(response.body).ip;
+                let ip = JSON.parse(response).ip;
                 logger.debug('Proxified ip: ' + ip);
                 let valid = !this.config.proxy.check || (this.clearIp !== ip);
                 if (!valid)
