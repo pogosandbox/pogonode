@@ -75,9 +75,15 @@ async function loginFlow() {
             logger.info('Using hashserver...');
         }
 
+        let token = null;
+        // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
+        // if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
+        // token = await login.login(config.credentials.user, config.credentials.password);
+
         client = new pogobuf.Client({
             deviceId: config.device.id,
             authType: 'ptc',
+            authToken: token,
             username: config.credentials.user,
             password: config.credentials.password,
             version: config.api.version,
@@ -98,6 +104,9 @@ async function loginFlow() {
             longitude: pos.lng,
             altitude: altitude,
         });
+
+        let version = await apihelper.getRpcVersion();
+        logger.info('Minimum app version: %s', version);
 
         logger.info('Init api...');
 

@@ -2,12 +2,10 @@ import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 import * as moment from 'moment';
+import * as request from 'request-promise';
 
-const request = require('request');
 const cheerio = require('cheerio');
 const fs = require('fs');
-
-Bluebird.promisifyAll(request);
 
 /**
  * Helper class to deal with proxies
@@ -55,7 +53,7 @@ export default class ProxyHelper {
         let badUrls = _.map(this.badProxies, p => p.proxy);
 
         let url = 'https://www.sslp' + 'roxies.org/';
-        let response = await request.getAsync(url);
+        let response = await request.get(url);
         let $ = cheerio.load(response.body);
         let proxylist = $('#proxylisttable tr');
         let proxy = _.find(proxylist, tr => {
@@ -84,17 +82,17 @@ export default class ProxyHelper {
             this.state.proxy = proxy;
             logger.info('Using proxy: %s', proxy);
 
-            let response = await request.getAsync('https://api.ipify.org/?format=json');
+            let response = await request.get('https://api.ipify.org/?format=json');
             if (!response) return false;
 
-            this.clearIp = JSON.parse(response.body).ip;
+            this.clearIp = JSON.parse(response).ip;
             logger.debug('Clear ip: ' + this.clearIp);
             if (!this.clearIp) return false;
 
-            response = await request.getAsync('https://api.ipify.org/?format=json', {proxy: this.proxy, timeout: 5000});
+            response = await request.get('https://api.ipify.org/?format=json', {proxy: this.proxy, timeout: 5000});
             if (!response) return false;
 
-            let ip = JSON.parse(response.body).ip;
+            let ip = JSON.parse(response).ip;
             logger.debug('Proxified ip: ' + ip);
             let valid = !this.config.proxy.check || (this.clearIp !== ip);
             if (!valid) this.badProxy();
