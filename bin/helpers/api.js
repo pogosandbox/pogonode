@@ -227,12 +227,12 @@ class APIHelper {
     verifyMinimumVersion(minimum) {
         return __awaiter(this, void 0, void 0, function* () {
             let clientversion = this.versionToClientVersion(this.config.api.version);
-            if (vercmp(clientversion, minimum) < 0) {
+            if (vercmp(minimum, clientversion) < 0) {
                 if (this.config.api.checkversion) {
-                    throw new Error('Minimum client version=' + r.settings.minimum_client_version);
+                    throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
                 }
                 else {
-                    logger.warn('Minimum client version=' + r.settings.minimum_client_version);
+                    logger.warn(`Minimum client version=${minimum}, ${clientversion} is too low.`);
                 }
             }
         });
@@ -468,7 +468,7 @@ class APIHelper {
                 gzip: true,
             };
             let version = yield request.get(options);
-            return version.replace('\n', '');
+            return version.replace(/[^(\d|\.)+]/g, '');
         });
     }
     /**
