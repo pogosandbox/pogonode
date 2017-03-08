@@ -238,6 +238,20 @@ export default class APIHelper {
     }
 
     /**
+     * Verify client version
+     */
+    async verifyMinimumVersion(minimum: string) {
+        let clientversion = this.versionToClientVersion(this.config.api.version);
+        if (vercmp(clientversion, minimum) < 0) {
+            if (this.config.api.checkversion) {
+                throw new Error('Minimum client version=' + r.settings.minimum_client_version);
+            } else {
+                logger.warn('Minimum client version=' + r.settings.minimum_client_version);
+            }
+        }
+    }
+
+    /**
      * Parse reponse and update state accordingly
      * @param {object} responses - response from pogobuf.batchCall()
      * @return {object} information about api call (like status, depends of the call)
@@ -279,14 +293,7 @@ export default class APIHelper {
                 case RequestType.DOWNLOAD_SETTINGS:
                     this.state.api.settings_hash = r.hash;
                     if (r.settings) {
-                        let clientversion = this.versionToClientVersion(this.config.api.version);
-                        if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
-                            if (this.config.api.checkversion) {
-                                throw new Error('Minimum client version=' + r.settings.minimum_client_version);
-                            } else {
-                                logger.warn('Minimum client version=' + r.settings.minimum_client_version);
-                            }
-                        }
+                        this.verifyMinimumVersion(r.settings.minimum_client_version);
                         this.state.download_settings = r.settings;
                         this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                     }

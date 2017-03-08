@@ -99,6 +99,7 @@ function loginFlow() {
             });
             let version = yield apihelper.getRpcVersion();
             logger.info('Minimum app version: %s', version);
+            apihelper.verifyMinimumVersion(version);
             logger.info('Init api...');
             // init api (false = don't call anything yet')
             yield client.init(false);
