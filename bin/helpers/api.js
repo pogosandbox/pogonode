@@ -227,7 +227,7 @@ class APIHelper {
     verifyMinimumVersion(minimum) {
         return __awaiter(this, void 0, void 0, function* () {
             let clientversion = this.versionToClientVersion(this.config.api.version);
-            if (vercmp(minimum, clientversion) < 0) {
+            if (vercmp(minimum, clientversion) > 0) {
                 if (this.config.api.checkversion) {
                     throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
                 }
