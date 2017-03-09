@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const pogobuf = require("../../pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
@@ -484,6 +485,5 @@ class APIHelper {
         return ver;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = APIHelper;
 //# sourceMappingURL=api.js.map

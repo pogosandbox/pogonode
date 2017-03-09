@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const logger = require("winston");
 const moment = require("moment");
@@ -117,6 +118,5 @@ class ProxyHelper {
         }
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ProxyHelper;
 //# sourceMappingURL=proxy.js.map
