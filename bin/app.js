@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config({ silent: true });
-const pogobuf = require("../pogobuf");
+const pogobuf = require("pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const events_1 = require("events");
 const logger = require("winston");
@@ -100,6 +100,7 @@ function loginFlow() {
             });
             let version = yield apihelper.getRpcVersion();
             logger.info('Minimum app version: %s', version);
+            apihelper.verifyMinimumVersion(version);
             logger.info('Init api...');
             // init api (false = don't call anything yet')
             yield client.init(false);

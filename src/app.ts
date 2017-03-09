@@ -106,6 +106,7 @@ async function loginFlow() {
 
         let version = await apihelper.getRpcVersion();
         logger.info('Minimum app version: %s', version);
+        apihelper.verifyMinimumVersion(version);
 
         logger.info('Init api...');
 
