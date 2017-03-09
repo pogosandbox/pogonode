@@ -5,9 +5,7 @@
   "main": "bin/app.js",
   "author": "niico",
   "license": "MIT",
-  "engines": {
-    "node": ">=6.0.0"
-  },
+  "engines" : { "node" : ">=6.0.0" },
   "dependencies": {
     "bluebird": "^3.5.0",
     "bluebird-retry": "^0.10.1",
@@ -21,13 +19,15 @@
     "js-yaml": "^3.8.2",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
-    "nightmare": "^2.10.0",
+    "nightmare": "^2.9.1",
     "node-pogo-protos": "pogosandbox/node-pogo-protos#2.7.1",
+    "node-pogo-signature": "pogosandbox/node-pogo-signature#0.57.3",
     "pogobuf": "pogosandbox/pogobuf",
     "pogobuf-signature": "pogosandbox/pogobuf-signature",
     "request": "^2.80.0",
     "request-promise": "^4.1.1",
     "semver-compare": "^1.0.0",
+    "simjs-random": "^0.2.6",
     "socket.io": "^1.7.3",
     "winston": "^2.3.1"
   },
@@ -35,12 +35,12 @@
     "@types/bluebird": "^3.0.37",
     "@types/bytebuffer": "^5.0.33",
     "@types/fs-promise": "^1.0.1",
-    "@types/lodash": "^4.14.53",
+    "@types/lodash": "^4.14.52",
     "@types/long": "^3.0.31",
     "@types/node": "^7.0.5",
     "@types/request-promise": "^4.1.33",
     "@types/winston": "^2.2.0",
-    "tslint": "^4.5.1",
-    "typescript": "^2.2.1"
+    "tslint": "^4.4.2",
+    "typescript": "^2.1.6"
   }
 }

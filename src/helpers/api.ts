@@ -1,4 +1,4 @@
-import * as pogobuf from '../../pogobuf';
+import * as pogobuf from 'pogobuf';
 import * as POGOProtos from 'node-pogo-protos';
 import * as logger from 'winston';
 import * as _ from 'lodash';
@@ -483,7 +483,6 @@ export default class APIHelper {
                     logger.debug(r);
                     break;
             }
-
         });
 
         return info;
