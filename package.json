@@ -7,11 +7,12 @@
   "license": "MIT",
   "engines" : { "node" : ">=6.0.0" },
   "dependencies": {
+    "bluebird": "^3.5.0",
     "bluebird-retry": "^0.10.1",
     "cheerio": "^0.22.0",
     "dotenv": "^4.0.0",
     "events": "^1.1.1",
-    "express": "^4.15.0",
+    "express": "^4.15.2",
     "fs-promise": "^2.0.0",
     "geolib": "^2.0.22",
     "googlemaps": "^1.12.0",

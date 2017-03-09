@@ -222,6 +222,22 @@ class APIHelper {
         });
     }
     /**
+     * Verify client version
+     */
+    verifyMinimumVersion(minimum) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let clientversion = this.versionToClientVersion(this.config.api.version);
+            if (vercmp(minimum, clientversion) > 0) {
+                if (this.config.api.checkversion) {
+                    throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
+                }
+                else {
+                    logger.warn(`Minimum client version=${minimum}, ${clientversion} is too low.`);
+                }
+            }
+        });
+    }
+    /**
      * Parse reponse and update state accordingly
      * @param {object} responses - response from pogobuf.batchCall()
      * @return {object} information about api call (like status, depends of the call)
@@ -261,15 +277,7 @@ class APIHelper {
                 case RequestType.DOWNLOAD_SETTINGS:
                     this.state.api.settings_hash = r.hash;
                     if (r.settings) {
-                        let clientversion = this.versionToClientVersion(this.config.api.version);
-                        if (vercmp(clientversion, r.settings.minimum_client_version) < 0) {
-                            if (this.config.api.checkversion) {
-                                throw new Error('Minimum client version=' + r.settings.minimum_client_version);
-                            }
-                            else {
-                                logger.warn('Minimum client version=' + r.settings.minimum_client_version);
-                            }
-                        }
+                        this.verifyMinimumVersion(r.settings.minimum_client_version);
                         this.state.download_settings = r.settings;
                         this.state.client.mapObjectsMinDelay = r.settings.map_settings.get_map_objects_min_refresh_seconds * 1000;
                     }
@@ -460,7 +468,7 @@ class APIHelper {
                 gzip: true,
             };
             let version = yield request.get(options);
-            return version.replace('\n', '');
+            return version.replace(/[^(\d|\.)+]/g, '');
         });
     }
     /**
