@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require('winston');
 const nightmare = require('nightmare');
 const request = require('request');
@@ -111,6 +112,5 @@ class CaptchaHelper {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = CaptchaHelper;
 //# sourceMappingURL=captcha.helper.js.map

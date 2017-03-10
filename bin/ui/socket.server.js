@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Bluebird = require("bluebird");
 const logger = require("winston");
 const _ = require("lodash");
@@ -198,6 +199,5 @@ class SocketServer {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SocketServer;
 //# sourceMappingURL=socket.server.js.map

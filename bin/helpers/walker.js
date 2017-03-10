@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const Bluebird = require("bluebird");
 const logger = require("winston");
@@ -180,6 +181,5 @@ class Walker {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Walker;
 //# sourceMappingURL=walker.js.map

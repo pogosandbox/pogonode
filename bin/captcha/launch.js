@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const captcha_helper_1 = require("./captcha.helper");
 let config = require('../helpers/config').load();
