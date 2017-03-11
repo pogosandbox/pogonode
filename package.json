@@ -5,10 +5,13 @@
   "main": "bin/app.js",
   "author": "niico",
   "license": "MIT",
-  "engines" : { "node" : ">=6.0.0" },
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "bluebird-retry": "^0.10.1",
+    "bytebuffer": "^5.0.1",
     "cheerio": "^0.22.0",
     "dotenv": "^4.0.0",
     "events": "^1.1.1",

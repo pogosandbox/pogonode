@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const pogobuf = require("pogobuf");
+const pogobuf = require("../../pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
 const _ = require("lodash");
