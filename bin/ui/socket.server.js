@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Bluebird = require("bluebird");
 const logger = require("winston");
 const _ = require("lodash");
@@ -55,6 +56,8 @@ class SocketServer {
      */
     ready(client) {
         if (!this.config.ui.enabled)
+            return;
+        if (!this.state.inventory)
             return;
         logger.debug('Send ready message to the ui.');
         let data = {
@@ -198,6 +201,5 @@ class SocketServer {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = SocketServer;
 //# sourceMappingURL=socket.server.js.map

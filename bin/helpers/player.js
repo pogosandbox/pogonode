@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const POGOProtos = require("node-pogo-protos");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
@@ -288,6 +289,5 @@ class Player {
         return geolib.getDistance(this.state.pos, target, 1, 1);
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Player;
 //# sourceMappingURL=player.js.map
