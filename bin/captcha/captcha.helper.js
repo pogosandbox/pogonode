@@ -56,7 +56,10 @@ class CaptchaHelper {
         })
             .evaluate(function () {
             try {
-                window.___grecaptcha_cfg.clients[0].T.Mk.callback = function () { };
+                let client = window.___grecaptcha_cfg.clients[0];
+                let first = client.T;
+                let child = Object.keys(window.___grecaptcha_cfg.clients[0].T)[0];
+                first[child].callback = function () { };
             }
             catch (e) {
                 console.log(e);
@@ -64,6 +67,7 @@ class CaptchaHelper {
         })
             .wait(6000)
             .wait(function () {
+            console.log('wait for captcha response');
             let input = document.querySelector('.g-recaptcha-response');
             return input && input.value.length > 0;
         })

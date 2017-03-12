@@ -65,6 +65,7 @@ export default class SocketServer {
      */
     ready(client?) {
         if (!this.config.ui.enabled) return;
+        if (!this.state.inventory) return;
 
         logger.debug('Send ready message to the ui.');
         let data = {
