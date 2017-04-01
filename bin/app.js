@@ -72,6 +72,9 @@ function loginFlow() {
             yield socket.start();
             if (config.hashserver.active) {
                 logger.info('Using hashserver...');
+                if (!config.hashserver.key) {
+                    throw new Error('Please enter a valid hashserver key in config.');
+                }
             }
             // let token = null;
             // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
