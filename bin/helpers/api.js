@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const pogobuf = require("pogobuf");
+const pogobuf = require("../../pogobuf");
 const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
 const _ = require("lodash");
@@ -116,6 +116,30 @@ class APIHelper {
         }
     }
     /**
+     * Generate a new avatar
+     * @return {object} avatar to pass to setAvatar()
+     */
+    generateAvatar() {
+        let hair = _.random(0, 5);
+        let eyes = _.random(0, 4);
+        return {
+            avatar: 0,
+            skin: _.random(0, 3),
+            avatar_hair: `AVATAR_m_hair_default_${hair}`,
+            avatar_shirt: 'AVATAR_m_shirt_default_2B',
+            avatar_pants: 'AVATAR_m_pants_default_0',
+            avatar_hat: 'AVATAR_m_hat_default_5',
+            avatar_shoes: 'AVATAR_m_shoes_default_2',
+            avatar_eyes: `AVATAR_m_eyes_${eyes}`,
+            avatar_backpack: 'AVATAR_m_backpack_default_2',
+            avatar_gloves: 'AVATAR_m_gloves_default_2',
+            avatar_socks: 'AVATAR_m_socks_default_3',
+            avatar_belt: '',
+            avatar_glasses: 'AVATAR_m_glasses_empty',
+            avatar_necklace: ''
+        };
+    }
+    /**
      * Complete tutorial if needed, setting a random avatar
      * If not needed, do the minmum getPlayerProfile and registerBackgroundDevice
      * @return {Promise<void>} Promise
@@ -146,23 +170,22 @@ class APIHelper {
                     batch.markTutorialComplete(0, false, false);
                     let responses = yield this.alwaysinit(batch).batchCall();
                     this.parse(responses);
+                    batch = client.batchStart();
+                    batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+                    responses = yield this.always(batch).batchCall();
+                    this.parse(responses);
                 }
                 if (!_.includes(tuto, 1)) {
                     logger.debug('Tutorial 1');
                     // set avatar
                     yield Bluebird.delay(_.random(8000.0, 14500));
                     let batch = client.batchStart();
-                    batch.setAvatar(_.random(0, 3), // skin
-                    _.random(0, 5), // hair
-                    _.random(0, 3), // shirt
-                    _.random(0, 2), // pants
-                    _.random(0, 4), // hat
-                    _.random(0, 6), // shoes,
-                    0, // gender,
-                    _.random(0, 4), // eyes,
-                    _.random(0, 5) // backpack
-                    );
+                    batch.setAvatar(this.generateAvatar());
                     let responses = yield this.alwaysinit(batch).batchCall();
+                    this.parse(responses);
+                    batch = client.batchStart();
+                    batch.listAvatarCustomizations(0, [], [2], 0, 0);
+                    responses = yield this.alwaysinit(batch).batchCall();
                     this.parse(responses);
                     yield Bluebird.delay(_.random(1000, 1700));
                     batch = client.batchStart();

@@ -1,6 +1,6 @@
 require('dotenv').config({silent: true});
 
-import * as pogobuf from 'pogobuf';
+import * as pogobuf from '../pogobuf';
 import * as POGOProtos from 'node-pogo-protos';
 import {EventEmitter} from 'events';
 import * as logger from 'winston';
@@ -81,8 +81,8 @@ async function loginFlow() {
 
         client = new pogobuf.Client({
             deviceId: config.device.id,
-            authType: config.credentials.type,
             // authToken: token,
+            authType: config.credentials.type,
             username: config.credentials.user,
             password: config.credentials.password,
             version: config.api.version,
