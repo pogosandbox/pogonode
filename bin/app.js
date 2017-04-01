@@ -79,8 +79,8 @@ function loginFlow() {
             // token = await login.login(config.credentials.user, config.credentials.password);
             client = new pogobuf.Client({
                 deviceId: config.device.id,
-                authType: config.credentials.type,
                 // authToken: token,
+                authType: config.credentials.type,
                 username: config.credentials.user,
                 password: config.credentials.password,
                 version: config.api.version,
