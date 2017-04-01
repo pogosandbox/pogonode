@@ -23,7 +23,7 @@
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "nightmare": "^2.10.0",
-    "pogobuf": "pogosandbox/pogobuf#dev",
+    "pogobuf": "pogosandbox/pogobuf",
     "request": "^2.81.0",
     "request-promise": "^4.2.0",
     "semver-compare": "^1.0.0",
