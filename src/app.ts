@@ -220,7 +220,6 @@ async function loginFlow() {
             logger.error('Exiting.');
             process.exit();
         }
-
     }
 }
 
