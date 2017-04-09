@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as POGOProtos from 'node-pogo-protos';
 import * as pcrypt from 'pcrypt';
+import * as long from 'long';
 
 import APIHelper from './helpers/api';
 import Walker from './helpers/walker';
@@ -61,4 +62,9 @@ async function testDecrypt() {
     });
 }
 
-testDecrypt();
+function testUK25() {
+    let uk25 = long.fromString('11fdf018c941ef22', false, 16);
+    console.log(uk25.toString());
+}
+
+testUK25();

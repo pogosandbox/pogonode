@@ -14,6 +14,7 @@ const _ = require("lodash");
 const moment = require("moment");
 const POGOProtos = require("node-pogo-protos");
 const pcrypt = require("pcrypt");
+const long = require("long");
 const api_1 = require("./helpers/api");
 const walker_1 = require("./helpers/walker");
 const pogobuf = require("../pogobuf");
@@ -64,5 +65,9 @@ function testDecrypt() {
         });
     });
 }
-testDecrypt();
+function testUK25() {
+    let uk25 = long.fromString('11fdf018c941ef22', false, 16);
+    console.log(uk25.toString());
+}
+testUK25();
 //# sourceMappingURL=debug.js.map
