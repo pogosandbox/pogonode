@@ -137,7 +137,7 @@ export default class APIHelper {
             avatar_belt: '',
             avatar_glasses: 'AVATAR_m_glasses_empty',
             avatar_necklace: ''
-        }
+        };
     }
 
     /**
