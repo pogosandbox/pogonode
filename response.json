@@ -1,0 +1,46 @@
+{
+    "statusCode": 302,
+    "body": "",
+    "headers": {
+        "date": "Tue, 11 Apr 2017 18:28:59 GMT",
+        "server": "PWS/8.2.0.7",
+        "x-px": "nc h0-s1012.p4-dfw ( h0-s1045.p6-ord), nc h0-s1045.p6-ord ( origin>CONN)",
+        "cache-control": "no-store",
+        "pragma": "no-cache",
+        "expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+        "content-length": "0",
+        "location": "http://sso.pokemon.com/sso/oauth2.0/callbackAuthorize?ticket=ST-33654703-nBpsf2M35rduZfuxHp3n-sso.pokemon.com",
+        "origin-verification": "2tl,i0vU1kCGCh/pBAzG",
+        "access-control-allow-origin": "https://www.pokemon.com",
+        "access-control-allow-credentials": "true",
+        "connection": "close",
+        "set-cookie": [
+            "com.pokemon.cas.web.servlet.i18n.CustomLocaleResolver.LOCALE=en_US; Path=/",
+            "CASPRIVACY=\"\"; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/sso/",
+            "CASTGC=TGT-33311710-FYkNpYfLgemhflQATgSK0MVJGZxgSFxgq2rvceeTtmIafzkrxL-sso.pokemon.com; Domain=sso.pokemon.com; Path=/sso/; Secure"
+        ]
+    },
+    "request": {
+        "uri": {
+            "protocol": "https:",
+            "slashes": true,
+            "auth": null,
+            "host": "sso.pokemon.com",
+            "port": null,
+            "hostname": "sso.pokemon.com",
+            "hash": null,
+            "search": "?service=https%3A%2F%2Fsso.pokemon.com%2Fsso%2Foauth2.0%2FcallbackAuthorize",
+            "query": "service=https%3A%2F%2Fsso.pokemon.com%2Fsso%2Foauth2.0%2FcallbackAuthorize",
+            "pathname": "/sso/login",
+            "path": "/sso/login?service=https%3A%2F%2Fsso.pokemon.com%2Fsso%2Foauth2.0%2FcallbackAuthorize",
+            "href": "https://sso.pokemon.com/sso/login?service=https%3A%2F%2Fsso.pokemon.com%2Fsso%2Foauth2.0%2FcallbackAuthorize"
+        },
+        "method": "POST",
+        "headers": {
+            "User-Agent": "niantic",
+            "cookie": "JSESSIONID=0A2DC459EFC2B2E13F4C41AD186C56E9-n2",
+            "content-type": "application/x-www-form-urlencoded",
+            "content-length": 143
+        }
+    }
+}

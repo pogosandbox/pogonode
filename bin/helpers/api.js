@@ -45,24 +45,22 @@ class APIHelper {
         this.state = state;
     }
     /**
-     * During init flow, each call come with some other calls
-     * @param {Client} batch - pogobuf client
-     * @return {Client} current client in order to chain call
-     */
-    alwaysinit(batch) {
-        return batch.checkChallenge()
-            .getHatchedEggs()
-            .getInventory(this.state.api.inventory_timestamp)
-            .checkAwardedBadges()
-            .downloadSettings(this.state.api.settings_hash);
-    }
-    /**
      * Once init flow is done, each call come with some other calls
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch) {
-        return this.alwaysinit(batch).getBuddyWalked();
+    always(batch, options) {
+        if (!options)
+            options = {};
+        batch = batch.checkChallenge()
+            .getHatchedEggs()
+            .getInventory(this.state.api.inventory_timestamp)
+            .checkAwardedBadges();
+        if (options.settings)
+            batch = batch.downloadSettings(this.state.api.settings_hash);
+        if (!options.nobuddy)
+            batch.getBuddyWalked();
+        return batch;
     }
     /**
      * Internal function to parse delta inventory responses
@@ -157,7 +155,7 @@ class APIHelper {
                 this.parse(responses);
                 batch = client.batchStart();
                 batch.registerBackgroundDevice('apple_watch', '');
-                responses = yield this.alwaysinit(batch).batchCall();
+                responses = yield this.always(batch, { nonobuddy: true }).batchCall();
                 this.parse(responses);
             }
             else {
@@ -168,7 +166,7 @@ class APIHelper {
                     // complete tutorial
                     let batch = client.batchStart();
                     batch.markTutorialComplete(0, false, false);
-                    let responses = yield this.alwaysinit(batch).batchCall();
+                    let responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                     batch = client.batchStart();
                     batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
@@ -181,16 +179,16 @@ class APIHelper {
                     yield Bluebird.delay(_.random(8000.0, 14500));
                     let batch = client.batchStart();
                     batch.setAvatar(this.generateAvatar());
-                    let responses = yield this.alwaysinit(batch).batchCall();
+                    let responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                     batch = client.batchStart();
                     batch.listAvatarCustomizations(0, [], [2], 0, 0);
-                    responses = yield this.alwaysinit(batch).batchCall();
+                    responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                     yield Bluebird.delay(_.random(1000, 1700));
                     batch = client.batchStart();
                     batch.markTutorialComplete(1, false, false);
-                    responses = yield this.alwaysinit(batch).batchCall();
+                    responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                     batch = client.batchStart();
                     batch.getPlayerProfile();
@@ -198,7 +196,7 @@ class APIHelper {
                     this.parse(responses);
                     batch = client.batchStart();
                     batch.registerBackgroundDevice('apple_watch', '');
-                    responses = yield this.alwaysinit(batch).batchCall();
+                    responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                 }
                 if (!_.includes(tuto, 3)) {
@@ -231,7 +229,7 @@ class APIHelper {
                     this.parse(responses);
                     batch = client.batchStart();
                     batch.markTutorialComplete(4, false, false);
-                    responses = yield this.alwaysinit(batch).batchCall();
+                    responses = yield this.always(batch, { nobuddy: true }).batchCall();
                     this.parse(responses);
                 }
                 if (!_.includes(tuto, 7)) {
