@@ -23,7 +23,7 @@ module.exports.load = function () {
             enabled: false,
         },
         api: {
-            version: '4500',
+            version: '5901',
             checkversion: true,
             country: 'US',
             language: 'en',
@@ -44,7 +44,7 @@ module.exports.load = function () {
             evolve: 3,
         },
         hashserver: {
-            active: false,
+            active: true,
         },
         proxy: {
             check: true,

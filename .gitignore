@@ -10,3 +10,4 @@ pogobuf
 node-pogo-signature
 
 *.log
+*.req.raw.bin

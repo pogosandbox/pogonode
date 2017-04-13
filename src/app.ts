@@ -72,6 +72,9 @@ async function loginFlow() {
 
         if (config.hashserver.active) {
             logger.info('Using hashserver...');
+            if (!config.hashserver.key) {
+                throw new Error('Please enter a valid hashserver key in config.');
+            }
         }
 
         // let token = null;
@@ -139,13 +142,13 @@ async function loginFlow() {
         logger.debug('Download remote config...');
         batch = client.batchStart();
         batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-        responses = await apihelper.alwaysinit(batch).batchCall();
+        responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
         apihelper.parse(responses);
 
         logger.debug('Get asset digest...');
         batch = client.batchStart();
         batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-        responses = await apihelper.alwaysinit(batch).batchCall();
+        responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
         apihelper.parse(responses);
 
         logger.debug('Checking if item_templates need a refresh...');
@@ -162,14 +165,14 @@ async function loginFlow() {
             logger.info('Game master updating...');
             batch = client.batchStart();
             batch.downloadItemTemplates(false);
-            responses = await apihelper.alwaysinit(batch).batchCall();
+            responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
             let info = apihelper.parse(responses);
             let item_templates = info.item_templates;
 
             while (info.page_offset !== 0) {
                 batch = client.batchStart();
                 batch.downloadItemTemplates(false, info.page_offset, info.timestamp_ms);
-                responses = await apihelper.alwaysinit(batch).batchCall();
+                responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
                 item_templates = item_templates.concat(info.item_templates);
             }
 
@@ -189,7 +192,7 @@ async function loginFlow() {
         apihelper.parse(responses);
         batch = client.batchStart();
         batch.levelUpRewards(state.inventory.player.level);
-        responses = await apihelper.always(batch).batchCall();
+        responses = await apihelper.always(batch, {settings: true}).batchCall();
         apihelper.parse(responses);
 
     } catch (e) {
@@ -217,7 +220,6 @@ async function loginFlow() {
             logger.error('Exiting.');
             process.exit();
         }
-
     }
 }
 

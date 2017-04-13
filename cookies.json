@@ -1,0 +1,47 @@
+{
+    "_jar": {
+        "version": "tough-cookie@2.3.2",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "cookies": [
+            {
+                "key": "JSESSIONID",
+                "value": "DE148D438DE8AFF3A39D391E3DF41010-n2",
+                "domain": "sso.pokemon.com",
+                "path": "/sso",
+                "hostOnly": true,
+                "creation": "2017-04-11T19:18:25.941Z",
+                "lastAccessed": "2017-04-11T19:18:27.572Z"
+            },
+            {
+                "key": "com.pokemon.cas.web.servlet.i18n.CustomLocaleResolver.LOCALE",
+                "value": "en_US",
+                "domain": "sso.pokemon.com",
+                "path": "/",
+                "hostOnly": true,
+                "creation": "2017-04-11T19:18:29.335Z",
+                "lastAccessed": "2017-04-11T19:18:29.335Z"
+            },
+            {
+                "key": "CASPRIVACY",
+                "value": "\"\"",
+                "expires": "1970-01-01T00:00:10.000Z",
+                "domain": "sso.pokemon.com",
+                "path": "/sso/",
+                "hostOnly": true,
+                "creation": "2017-04-11T19:18:29.338Z",
+                "lastAccessed": "2017-04-11T19:18:29.338Z"
+            },
+            {
+                "key": "CASTGC",
+                "value": "TGT-27906455-nVibdWRZ9MrM5roUx5jfwK2HeDG7iv4tPs1qxA9dwtacJjV7D0-sso.pokemon.com",
+                "domain": "sso.pokemon.com",
+                "path": "/sso/",
+                "secure": true,
+                "hostOnly": false,
+                "creation": "2017-04-11T19:18:29.339Z",
+                "lastAccessed": "2017-04-11T19:18:29.339Z"
+            }
+        ]
+    }
+}
