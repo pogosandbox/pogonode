@@ -129,11 +129,12 @@ function loginFlow() {
             batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
             responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
             apihelper.parse(responses);
-            logger.debug('Get asset digest...');
-            batch = client.batchStart();
-            batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-            responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
-            apihelper.parse(responses);
+            // TODO get onlt if needed, with paging
+            // logger.debug('Get asset digest...');
+            // batch = client.batchStart();
+            // batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+            // responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
+            // apihelper.parse(responses);
             logger.debug('Checking if item_templates need a refresh...');
             let last = 0;
             if (fs.existsSync('data/item_templates.json')) {
@@ -165,12 +166,12 @@ function loginFlow() {
             // at minimum, getPlayerProfile() is called
             logger.debug('Checking tutorial state...');
             yield apihelper.completeTutorial();
-            logger.debug('Level up rewards...');
-            apihelper.parse(responses);
-            batch = client.batchStart();
-            batch.levelUpRewards(state.inventory.player.level);
-            responses = yield apihelper.always(batch, { settings: true }).batchCall();
-            apihelper.parse(responses);
+            // logger.debug('Level up rewards...');
+            // apihelper.parse(responses);
+            // batch = client.batchStart();
+            // batch.levelUpRewards(state.inventory.player.level);
+            // responses = await apihelper.always(batch, {settings: true}).batchCall();
+            // apihelper.parse(responses);
         }
         catch (e) {
             if (e.name === 'ChallengeError') {
