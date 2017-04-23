@@ -57,9 +57,12 @@ class CaptchaHelper {
             .evaluate(function () {
             try {
                 let client = window.___grecaptcha_cfg.clients[0];
-                let first = client.T;
-                let child = Object.keys(window.___grecaptcha_cfg.clients[0].W)[0];
-                first[child].callback = function () { };
+                let childs = Object.keys(client);
+                childs.forEach(field => {
+                    let first = client[field];
+                    let child = Object.keys(first)[0];
+                    first[child].callback = function () { };
+                });
             }
             catch (e) {
                 console.log(e);

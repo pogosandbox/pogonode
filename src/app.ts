@@ -16,7 +16,10 @@ import Player from './helpers/player';
 import SocketServer from './ui/socket.server';
 import CaptchaHelper from './captcha/captcha.helper';
 
-const signaturehelper = require('./helpers/signature');
+// let memwatch = require('memwatch-next');
+// memwatch.on('leak', function(info) {
+//     logger.error('Leak detected', info);
+// });
 
 let config = require('./helpers/config').load();
 
@@ -84,14 +87,12 @@ async function loginFlow() {
 
         client = new pogobuf.Client({
             deviceId: config.device.id,
-            // authToken: token,
             authType: config.credentials.type,
             username: config.credentials.user,
             password: config.credentials.password,
             version: config.api.version,
             useHashingServer: config.hashserver.active,
             hashingKey: config.hashserver.key,
-            mapObjectsThrottling: false,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
         });
