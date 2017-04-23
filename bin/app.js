@@ -23,7 +23,10 @@ const walker_1 = require("./helpers/walker");
 const player_1 = require("./helpers/player");
 const socket_server_1 = require("./ui/socket.server");
 const captcha_helper_1 = require("./captcha/captcha.helper");
-const signaturehelper = require('./helpers/signature');
+// let memwatch = require('memwatch-next');
+// memwatch.on('leak', function(info) {
+//     logger.error('Leak detected', info);
+// });
 let config = require('./helpers/config').load();
 if (!config.credentials.user) {
     logger.error('Invalid credentials. Please fill data/config.yaml.');
@@ -82,14 +85,12 @@ function loginFlow() {
             // token = await login.login(config.credentials.user, config.credentials.password);
             client = new pogobuf.Client({
                 deviceId: config.device.id,
-                // authToken: token,
                 authType: config.credentials.type,
                 username: config.credentials.user,
                 password: config.credentials.password,
                 version: config.api.version,
                 useHashingServer: config.hashserver.active,
                 hashingKey: config.hashserver.key,
-                mapObjectsThrottling: false,
                 includeRequestTypeInResponse: true,
                 proxy: proxyhelper.proxy,
             });
@@ -129,11 +130,12 @@ function loginFlow() {
             batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
             responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
             apihelper.parse(responses);
-            logger.debug('Get asset digest...');
-            batch = client.batchStart();
-            batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-            responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
-            apihelper.parse(responses);
+            // TODO get onlt if needed, with paging
+            // logger.debug('Get asset digest...');
+            // batch = client.batchStart();
+            // batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+            // responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
+            // apihelper.parse(responses);
             logger.debug('Checking if item_templates need a refresh...');
             let last = 0;
             if (fs.existsSync('data/item_templates.json')) {
@@ -165,12 +167,12 @@ function loginFlow() {
             // at minimum, getPlayerProfile() is called
             logger.debug('Checking tutorial state...');
             yield apihelper.completeTutorial();
-            logger.debug('Level up rewards...');
-            apihelper.parse(responses);
-            batch = client.batchStart();
-            batch.levelUpRewards(state.inventory.player.level);
-            responses = yield apihelper.always(batch, { settings: true }).batchCall();
-            apihelper.parse(responses);
+            // logger.debug('Level up rewards...');
+            // apihelper.parse(responses);
+            // batch = client.batchStart();
+            // batch.levelUpRewards(state.inventory.player.level);
+            // responses = await apihelper.always(batch, {settings: true}).batchCall();
+            // apihelper.parse(responses);
         }
         catch (e) {
             if (e.name === 'ChallengeError') {

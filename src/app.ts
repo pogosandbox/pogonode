@@ -16,7 +16,10 @@ import Player from './helpers/player';
 import SocketServer from './ui/socket.server';
 import CaptchaHelper from './captcha/captcha.helper';
 
-const signaturehelper = require('./helpers/signature');
+// let memwatch = require('memwatch-next');
+// memwatch.on('leak', function(info) {
+//     logger.error('Leak detected', info);
+// });
 
 let config = require('./helpers/config').load();
 
@@ -84,14 +87,12 @@ async function loginFlow() {
 
         client = new pogobuf.Client({
             deviceId: config.device.id,
-            // authToken: token,
             authType: config.credentials.type,
             username: config.credentials.user,
             password: config.credentials.password,
             version: config.api.version,
             useHashingServer: config.hashserver.active,
             hashingKey: config.hashserver.key,
-            mapObjectsThrottling: false,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
         });
@@ -145,11 +146,12 @@ async function loginFlow() {
         responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
         apihelper.parse(responses);
 
-        logger.debug('Get asset digest...');
-        batch = client.batchStart();
-        batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-        responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
-        apihelper.parse(responses);
+        // TODO get onlt if needed, with paging
+        // logger.debug('Get asset digest...');
+        // batch = client.batchStart();
+        // batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        // responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
+        // apihelper.parse(responses);
 
         logger.debug('Checking if item_templates need a refresh...');
 
@@ -188,12 +190,12 @@ async function loginFlow() {
         logger.debug('Checking tutorial state...');
         await apihelper.completeTutorial();
 
-        logger.debug('Level up rewards...');
-        apihelper.parse(responses);
-        batch = client.batchStart();
-        batch.levelUpRewards(state.inventory.player.level);
-        responses = await apihelper.always(batch, {settings: true}).batchCall();
-        apihelper.parse(responses);
+        // logger.debug('Level up rewards...');
+        // apihelper.parse(responses);
+        // batch = client.batchStart();
+        // batch.levelUpRewards(state.inventory.player.level);
+        // responses = await apihelper.always(batch, {settings: true}).batchCall();
+        // apihelper.parse(responses);
 
     } catch (e) {
         if (e.name === 'ChallengeError') {

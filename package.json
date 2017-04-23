@@ -40,7 +40,7 @@
     "@types/node": "^7.0.12",
     "@types/request-promise": "^4.1.33",
     "@types/winston": "^2.3.0",
-    "tslint": "^5.0.0",
+    "tslint": "^5.1.0",
     "typescript": "^2.2.2"
   }
 }
