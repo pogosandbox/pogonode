@@ -148,7 +148,7 @@ export default class Player {
             ball: ball,
             reticleSize: 1.25 + 0.70 * Math.random(),
             hit: true,
-            spinModifier: 0.3 * Math.random(),
+            spinModifier: (Math.random() < 0.3) ? 1 : 0,
             normalizedHitPosition: 0,
         };
 

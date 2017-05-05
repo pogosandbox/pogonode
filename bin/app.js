@@ -130,7 +130,7 @@ function loginFlow() {
             batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
             responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
             apihelper.parse(responses);
-            // TODO get onlt if needed, with paging
+            // TODO get only if needed, with paging
             // logger.debug('Get asset digest...');
             // batch = client.batchStart();
             // batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
@@ -147,13 +147,13 @@ function loginFlow() {
             if (!last || last < state.api.item_templates_timestamp) {
                 logger.info('Game master updating...');
                 batch = client.batchStart();
-                batch.downloadItemTemplates(false);
+                batch.downloadItemTemplates(true);
                 responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
                 let info = apihelper.parse(responses);
                 let item_templates = info.item_templates;
                 while (info.page_offset !== 0) {
                     batch = client.batchStart();
-                    batch.downloadItemTemplates(false, info.page_offset, info.timestamp_ms);
+                    batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
                     responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
                     item_templates = item_templates.concat(info.item_templates);
                 }
@@ -166,13 +166,18 @@ function loginFlow() {
             // complete tutorial if needed,
             // at minimum, getPlayerProfile() is called
             logger.debug('Checking tutorial state...');
-            yield apihelper.completeTutorial();
-            // logger.debug('Level up rewards...');
-            // apihelper.parse(responses);
-            // batch = client.batchStart();
-            // batch.levelUpRewards(state.inventory.player.level);
-            // responses = await apihelper.always(batch, {settings: true}).batchCall();
-            // apihelper.parse(responses);
+            if (!(yield apihelper.completeTutorial())) {
+                // tutorial already done, let's do a getPlayerProfile
+                let batch = client.batchStart();
+                batch.getPlayerProfile('');
+                let responses = yield apihelper.always(batch, { settings: true }).batchCall();
+                apihelper.parse(responses);
+            }
+            logger.debug('Level up rewards...');
+            batch = client.batchStart();
+            batch.levelUpRewards(state.inventory.player.level);
+            responses = yield apihelper.always(batch, { settings: true }).batchCall();
+            apihelper.parse(responses);
         }
         catch (e) {
             if (e.name === 'ChallengeError') {
