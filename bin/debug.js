@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
-const fs = require("fs-promise");
+const fs = require("mz/fs");
 const _ = require("lodash");
 const moment = require("moment");
 const POGOProtos = require("node-pogo-protos");

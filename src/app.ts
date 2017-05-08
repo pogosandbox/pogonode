@@ -7,7 +7,7 @@ import * as logger from 'winston';
 import * as Bluebird from 'bluebird';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import * as fs from 'fs';
+import * as fs from 'mz/fs';
 
 import APIHelper from './helpers/api';
 import ProxyHelper from './helpers/proxy';
@@ -175,6 +175,7 @@ async function loginFlow() {
                 batch = client.batchStart();
                 batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
                 responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
+                info = apihelper.parse(responses);
                 item_templates = item_templates.concat(info.item_templates);
             }
 

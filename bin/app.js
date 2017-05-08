@@ -16,7 +16,7 @@ const logger = require("winston");
 const Bluebird = require("bluebird");
 const _ = require("lodash");
 const moment = require("moment");
-const fs = require("fs");
+const fs = require("mz/fs");
 const api_1 = require("./helpers/api");
 const proxy_1 = require("./helpers/proxy");
 const walker_1 = require("./helpers/walker");
@@ -155,6 +155,7 @@ function loginFlow() {
                     batch = client.batchStart();
                     batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
                     responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
+                    info = apihelper.parse(responses);
                     item_templates = item_templates.concat(info.item_templates);
                 }
                 let json = JSON.stringify({
