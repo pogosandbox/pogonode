@@ -130,40 +130,8 @@ function loginFlow() {
             batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
             responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
             apihelper.parse(responses);
-            // TODO get only if needed, with paging
-            // logger.debug('Get asset digest...');
-            // batch = client.batchStart();
-            // batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-            // responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
-            // apihelper.parse(responses);
-            logger.debug('Checking if item_templates need a refresh...');
-            let last = 0;
-            if (fs.existsSync('data/item_templates.json')) {
-                let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
-                let data = JSON.parse(json);
-                state.api.item_templates = data.templates;
-                last = data.timestamp_ms || 0;
-            }
-            if (!last || last < state.api.item_templates_timestamp) {
-                logger.info('Game master updating...');
-                batch = client.batchStart();
-                batch.downloadItemTemplates(true);
-                responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
-                let info = apihelper.parse(responses);
-                let item_templates = info.item_templates;
-                while (info.page_offset !== 0) {
-                    batch = client.batchStart();
-                    batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
-                    responses = yield apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
-                    info = apihelper.parse(responses);
-                    item_templates = item_templates.concat(info.item_templates);
-                }
-                let json = JSON.stringify({
-                    templates: item_templates,
-                    timestamp_ms: info.timestamp_ms,
-                }, null, 4);
-                fs.writeFile('data/item_templates.json', json, (err) => { });
-            }
+            yield apihelper.getAssetDigest();
+            yield apihelper.getItemTemplates();
             // complete tutorial if needed,
             // at minimum, getPlayerProfile() is called
             logger.debug('Checking tutorial state...');

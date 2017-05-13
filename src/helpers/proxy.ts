@@ -54,7 +54,7 @@ export default class ProxyHelper {
 
         let url = 'https://www.sslp' + 'roxies.org/';
         let response = await request.get(url);
-        let $ = cheerio.load(response.body);
+        let $ = cheerio.load(response);
         let proxylist = $('#proxylisttable tr');
         let proxy = _.find(proxylist, tr => {
             return $(tr).find('td').eq(6).text() === 'yes' && badUrls.indexOf(trToProxy($, tr)) < 0;
