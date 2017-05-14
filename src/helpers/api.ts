@@ -364,6 +364,9 @@ export default class APIHelper {
 
         let info: any = {};
 
+        // save ptr8 value for information
+        this.state.api.ptr8 = this.state.client.ptr8;
+
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
