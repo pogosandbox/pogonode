@@ -14,6 +14,7 @@ const logger = require("winston");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
 const request = require("request-promise");
+const fs = require("mz/fs");
 const vercmp = require('semver-compare');
 const util = require('util');
 /**
@@ -249,6 +250,85 @@ class APIHelper {
         });
     }
     /**
+     * Check if item templates need to be downloaded, and do it if needed.
+     * @return {Promise} when done
+     */
+    getItemTemplates() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('Checking if item_templates need a refresh...');
+            let last = 0;
+            if (fs.existsSync('data/item_templates.json')) {
+                let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
+                let data = JSON.parse(json);
+                this.state.api.item_templates = data.templates;
+                last = data.timestamp_ms || 0;
+            }
+            if (!last || last < this.state.api.item_templates_timestamp) {
+                logger.info('Game master updating...');
+                let client = this.state.client;
+                let batch = client.batchStart();
+                batch.downloadItemTemplates(true);
+                let responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                let info = this.parse(responses);
+                let item_templates = info.item_templates;
+                while (info.page_offset !== 0) {
+                    batch = client.batchStart();
+                    batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
+                    responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                    info = this.parse(responses);
+                    item_templates = item_templates.concat(info.item_templates);
+                }
+                this.state.api.item_templates = item_templates;
+                let json = JSON.stringify({
+                    templates: item_templates,
+                    timestamp_ms: info.timestamp_ms,
+                }, null, 4);
+                yield fs.writeFile('data/item_templates.json', json);
+            }
+        });
+    }
+    /**
+     * Check if asset digest need to be downloaded, and do it if needed.
+     * @return {Promise} when done
+     */
+    getAssetDigest() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('Checking if asset_digest need a refresh...');
+            let last = 0;
+            if (fs.existsSync('data/asset_digest.json')) {
+                let json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
+                let data = JSON.parse(json);
+                // this.state.api.asset_digest = data.digest;
+                last = data.timestamp_ms || 0;
+            }
+            if (!last || last < this.state.api.asset_digest_timestamp) {
+                logger.info('Asset digest updating...');
+                let client = this.state.client;
+                let batch = client.batchStart();
+                batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
+                let responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                let info = this.parse(responses);
+                let digest = info.digest;
+                while (info.page_offset !== 0) {
+                    batch = client.batchStart();
+                    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true, info.page_offset, info.timestamp_ms);
+                    responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                    info = this.parse(responses);
+                    digest = digest.concat(info.digest);
+                }
+                _.each(digest, d => {
+                    d.key = d.key.toString('base64');
+                });
+                // this.state.api.digest = digest;
+                let json = JSON.stringify({
+                    digest: digest,
+                    timestamp_ms: info.timestamp_ms,
+                }, null, 4);
+                yield fs.writeFile('data/asset_digest.json', json);
+            }
+        });
+    }
+    /**
      * Parse reponse and update state accordingly
      * @param {object} responses - response from pogobuf.batchCall()
      * @return {object} information about api call (like status, depends of the call)
@@ -259,6 +339,8 @@ class APIHelper {
         if (!(responses instanceof Array))
             responses = [responses];
         let info = {};
+        // save ptr8 value for information
+        this.state.api.ptr8 = this.state.client.ptr8;
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
@@ -303,6 +385,7 @@ class APIHelper {
                     break;
                 case RequestType.DOWNLOAD_REMOTE_CONFIG_VERSION:
                     this.state.api.item_templates_timestamp = r.item_templates_timestamp_ms;
+                    this.state.api.asset_digest_timestamp = r.asset_digest_timestamp_ms;
                     break;
                 case RequestType.FORT_SEARCH:
                     if (r.result === 1) {
@@ -419,7 +502,12 @@ class APIHelper {
                     }
                     break;
                 case RequestType.GET_ASSET_DIGEST:
-                    // nothing
+                    if (r.digest.length > 0) {
+                        info.success = r.success;
+                        info.digest = r.digest;
+                        info.timestamp_ms = r.timestamp_ms;
+                        info.page_offset = r.page_offset;
+                    }
                     break;
                 case RequestType.CHECK_CHALLENGE:
                     if (r.show_challenge) {
