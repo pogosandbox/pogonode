@@ -95,6 +95,7 @@ async function loginFlow() {
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
+            maxTries: 1,
         });
 
         state.client = client;

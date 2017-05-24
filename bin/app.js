@@ -93,6 +93,7 @@ function loginFlow() {
                 hashingKey: config.hashserver.key,
                 includeRequestTypeInResponse: true,
                 proxy: proxyhelper.proxy,
+                maxTries: 1,
             });
             state.client = client;
             let altitude = yield walker.getAltitude(state.pos);
