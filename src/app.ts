@@ -95,6 +95,7 @@ async function loginFlow() {
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
+            maxTries: 1,
         });
 
         state.client = client;
@@ -167,6 +168,12 @@ async function loginFlow() {
         responses = await apihelper.always(batch, {settings: true}).batchCall();
         apihelper.parse(responses);
 
+        logger.debug('Get store...');
+        batch = client.batchStart();
+        batch.batchAddPlatformRequest(POGOProtos.Networking.Platform.PlatformRequestType.GET_STORE_ITEMS,
+                                      new POGOProtos.Networking.Platform.Requests.GetStoreItemsRequest({}));
+        responses = await batch.batchCall();
+
     } catch (e) {
         if (e.name === 'ChallengeError') {
             resolveChallenge(e.url)
@@ -175,7 +182,7 @@ async function loginFlow() {
                 process.exit();
             });
         } else {
-            logger.error(e);
+            logger.error(e, e.message);
 
             if (e.code === 'ECONNRESET') proxyhelper.badProxy();
             else if (e.message === 'Invalid proxy.') proxyhelper.badProxy();

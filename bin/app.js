@@ -93,6 +93,7 @@ function loginFlow() {
                 hashingKey: config.hashserver.key,
                 includeRequestTypeInResponse: true,
                 proxy: proxyhelper.proxy,
+                maxTries: 1,
             });
             state.client = client;
             let altitude = yield walker.getAltitude(state.pos);
@@ -147,6 +148,10 @@ function loginFlow() {
             batch.levelUpRewards(state.inventory.player.level);
             responses = yield apihelper.always(batch, { settings: true }).batchCall();
             apihelper.parse(responses);
+            logger.debug('Get store...');
+            batch = client.batchStart();
+            batch.batchAddPlatformRequest(POGOProtos.Networking.Platform.PlatformRequestType.GET_STORE_ITEMS, new POGOProtos.Networking.Platform.Requests.GetStoreItemsRequest({}));
+            responses = yield batch.batchCall();
         }
         catch (e) {
             if (e.name === 'ChallengeError') {
@@ -157,7 +162,7 @@ function loginFlow() {
                 });
             }
             else {
-                logger.error(e);
+                logger.error(e, e.message);
                 if (e.code === 'ECONNRESET')
                     proxyhelper.badProxy();
                 else if (e.message === 'Invalid proxy.')
