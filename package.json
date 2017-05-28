@@ -25,22 +25,22 @@
     "nightmare": "^2.10.0",
     "pogobuf-vnext": "pogosandbox/pogobuf#dev",
     "request": "^2.81.0",
-    "request-promise": "^4.2.0",
+    "request-promise": "^4.2.1",
     "semver-compare": "^1.0.0",
     "simjs-random": "^0.2.6",
-    "socket.io": "^1.7.4",
+    "socket.io": "^2.0.1",
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.3",
+    "@types/bluebird": "^3.5.4",
     "@types/bytebuffer": "^5.0.33",
     "@types/mz": "^0.0.31",
     "@types/lodash": "^4.14.64",
     "@types/long": "^3.0.31",
-    "@types/node": "^7.0.18",
+    "@types/node": "^7.0.22",
     "@types/request-promise": "^4.1.33",
     "@types/winston": "^2.3.2",
     "tslint": "^5.2.0",
-    "typescript": "^2.3.2"
+    "typescript": "^2.3.3"
   }
 }
