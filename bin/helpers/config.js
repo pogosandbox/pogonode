@@ -5,6 +5,7 @@ const logger = require("winston");
 const _ = require("lodash");
 const moment = require("moment");
 const yaml = require('js-yaml');
+const winstonCommon = require('winston/lib/winston/common');
 module.exports.load = function () {
     let config = {
         credentials: {
@@ -60,6 +61,15 @@ module.exports.load = function () {
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         config = _.defaultsDeep(loaded, config);
     }
+    logger.transports.Console.prototype.log = function (level, message, meta, callback) {
+        const output = winstonCommon.log(Object.assign({}, this, {
+            level,
+            message,
+            meta,
+        }));
+        console[level in console ? level : 'log'](output);
+        setImmediate(callback, null, true);
+    };
     logger.remove(logger.transports.Console);
     logger.add(logger.transports.Console, {
         'timestamp': function () {

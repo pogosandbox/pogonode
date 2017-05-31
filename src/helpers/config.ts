@@ -4,9 +4,9 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 const yaml = require('js-yaml');
+const winstonCommon = require('winston/lib/winston/common');
 
 module.exports.load = function() {
-
     let config: any = {
         credentials: {
             type: 'ptc',
@@ -62,6 +62,16 @@ module.exports.load = function() {
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         config = _.defaultsDeep(loaded, config);
     }
+
+    logger.transports.Console.prototype.log = function (level, message, meta, callback) {
+        const output = winstonCommon.log(Object.assign({}, this, {
+            level,
+            message,
+            meta,
+        }));
+        console[level in console ? level : 'log'](output);
+        setImmediate(callback, null, true);
+    };
 
     logger.remove(logger.transports.Console);
     logger.add(logger.transports.Console, {
