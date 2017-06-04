@@ -282,7 +282,7 @@ export default class Player {
             let infiniteOnes = _.filter(freeIncubators, i => i.item_id === 901);
             let others = _.filter(freeIncubators, i => i.item_id !== 901);
 
-            let association = [];
+            let association: Array<{ egg: string, incubator: string }> = [];
 
             _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
                 // eggs to associate with infinite incubators

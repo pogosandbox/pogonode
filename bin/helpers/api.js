@@ -155,7 +155,7 @@ class APIHelper {
                 yield Bluebird.delay(_.random(2000.0, 5000.0));
                 // complete tutorial
                 let batch = client.batchStart();
-                batch.markTutorialComplete(0, false, false);
+                batch.markTutorialComplete([0], false, false);
                 let responses = yield this.always(batch, { nobuddy: true }).batchCall();
                 this.parse(responses);
                 batch = client.batchStart();
@@ -177,7 +177,7 @@ class APIHelper {
                 this.parse(responses);
                 yield Bluebird.delay(_.random(1000, 1700));
                 batch = client.batchStart();
-                batch.markTutorialComplete(1, false, false);
+                batch.markTutorialComplete([1], false, false);
                 responses = yield this.always(batch, { nobuddy: true }).batchCall();
                 this.parse(responses);
                 batch = client.batchStart();
@@ -218,7 +218,7 @@ class APIHelper {
                 let responses = yield this.always(batch).batchCall();
                 this.parse(responses);
                 batch = client.batchStart();
-                batch.markTutorialComplete(4, false, false);
+                batch.markTutorialComplete([4], false, false);
                 responses = yield this.always(batch, { nobuddy: true }).batchCall();
                 this.parse(responses);
             }
@@ -226,7 +226,7 @@ class APIHelper {
                 logger.debug('Tutorial 7');
                 yield Bluebird.delay(_.random(3500, 6000));
                 let batch = client.batchStart();
-                batch.markTutorialComplete(7, false, false);
+                batch.markTutorialComplete([7], false, false);
                 let responses = yield this.always(batch).batchCall();
                 this.parse(responses);
             }
