@@ -13,6 +13,7 @@ import APIHelper from './helpers/api';
 import ProxyHelper from './helpers/proxy';
 import Walker from './helpers/walker';
 import Player from './helpers/player';
+import Assets from './helpers/assets';
 import SocketServer from './ui/socket.server';
 import CaptchaHelper from './captcha/captcha.helper';
 
@@ -54,6 +55,7 @@ let walker = new Walker(config, state);
 let player = new Player(config, state);
 let proxyhelper = new ProxyHelper(config, state);
 let socket = new SocketServer(config, state);
+let assets = new Assets(config, state);
 
 let client: pogobuf.Client;
 
@@ -63,6 +65,8 @@ async function loginFlow() {
         logger.info('go to http://openui.nicontoso.eu/ for ui');
     }
     try {
+        await assets.loadFromDisk();
+
         let valid = await proxyhelper.checkProxy();
 
         // find a proxy if 'auto' is set in config
@@ -79,11 +83,6 @@ async function loginFlow() {
                 throw new Error('Please enter a valid hashserver key in config.');
             }
         }
-
-        // let token = null;
-        // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
-        // if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
-        // token = await login.login(config.credentials.user, config.credentials.password);
 
         client = new pogobuf.Client({
             deviceId: config.device.id,
@@ -151,6 +150,8 @@ async function loginFlow() {
 
         await apihelper.getItemTemplates();
 
+        await assets.getTranslationUrls();
+
         // complete tutorial if needed,
         // at minimum, getPlayerProfile() is called
         logger.debug('Checking tutorial state...');
@@ -192,9 +193,6 @@ async function loginFlow() {
             else if (e.message.indexOf('socket hang up') >= 0) proxyhelper.badProxy(); // no connection
             else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
             else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
-            else {
-                debugger;
-            }
 
             logger.error('Exiting.');
             process.exit();
@@ -380,6 +378,7 @@ App.on('saveState', () => {
     let lightstate = _.cloneDeep(state);
     lightstate.client = {};
     lightstate.api.item_templates = [];
+    lightstate.api.asset_digest = [];
     lightstate.events = {};
     fs.writeFile('data/state.json', JSON.stringify(lightstate, null, 4), (err) => {});
 });

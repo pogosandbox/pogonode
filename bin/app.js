@@ -21,6 +21,7 @@ const api_1 = require("./helpers/api");
 const proxy_1 = require("./helpers/proxy");
 const walker_1 = require("./helpers/walker");
 const player_1 = require("./helpers/player");
+const assets_1 = require("./helpers/assets");
 const socket_server_1 = require("./ui/socket.server");
 const captcha_helper_1 = require("./captcha/captcha.helper");
 // let memwatch = require('memwatch-next');
@@ -57,6 +58,7 @@ let walker = new walker_1.default(config, state);
 let player = new player_1.default(config, state);
 let proxyhelper = new proxy_1.default(config, state);
 let socket = new socket_server_1.default(config, state);
+let assets = new assets_1.default(config, state);
 let client;
 function loginFlow() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -65,6 +67,7 @@ function loginFlow() {
             logger.info('go to http://openui.nicontoso.eu/ for ui');
         }
         try {
+            yield assets.loadFromDisk();
             let valid = yield proxyhelper.checkProxy();
             // find a proxy if 'auto' is set in config
             // then test if to be sure it works
@@ -79,10 +82,6 @@ function loginFlow() {
                     throw new Error('Please enter a valid hashserver key in config.');
                 }
             }
-            // let token = null;
-            // let login = (config.credentials.type === 'ptc') ? new pogobuf.PTCLogin() : new pogobuf.GoogleLogin();
-            // if (proxyhelper.proxy && config.credentials.type === 'ptc') (<pogobuf.PTCLogin>login).setProxy(proxyhelper.proxy);
-            // token = await login.login(config.credentials.user, config.credentials.password);
             client = new pogobuf.Client({
                 deviceId: config.device.id,
                 authType: config.credentials.type,
@@ -133,6 +132,7 @@ function loginFlow() {
             apihelper.parse(responses);
             yield apihelper.getAssetDigest();
             yield apihelper.getItemTemplates();
+            yield assets.getTranslationUrls();
             // complete tutorial if needed,
             // at minimum, getPlayerProfile() is called
             logger.debug('Checking tutorial state...');
@@ -179,9 +179,6 @@ function loginFlow() {
                     proxyhelper.badProxy(); // connection reset
                 else if (e.message.indexOf('ECONNREFUSED ') >= 0)
                     proxyhelper.badProxy(); // connection refused
-                else {
-                    debugger;
-                }
                 logger.error('Exiting.');
                 process.exit();
             }
@@ -349,6 +346,7 @@ App.on('saveState', () => {
     let lightstate = _.cloneDeep(state);
     lightstate.client = {};
     lightstate.api.item_templates = [];
+    lightstate.api.asset_digest = [];
     lightstate.events = {};
     fs.writeFile('data/state.json', JSON.stringify(lightstate, null, 4), (err) => { });
 });

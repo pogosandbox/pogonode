@@ -48,7 +48,7 @@ export default class APIHelper {
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch, options?: any) {
+    always(batch: pogobuf.Client, options?: any) {
         if (!options) options = {};
 
         batch = batch.checkChallenge()
@@ -317,7 +317,7 @@ export default class APIHelper {
         if (fs.existsSync('data/asset_digest.json')) {
             let json = fs.readFileSync('data/asset_digest.json', {encoding: 'utf8'});
             let data = JSON.parse(json);
-            // this.state.api.asset_digest = data.digest;
+            this.state.api.asset_digest = data.digest;
             last = data.timestamp_ms || 0;
         }
 
@@ -343,7 +343,7 @@ export default class APIHelper {
                 d.key = d.key.toString('base64');
             });
 
-            // this.state.api.digest = digest;
+            this.state.api.asset_digest = digest;
 
             let json = JSON.stringify({
                 digest: digest,
@@ -506,7 +506,7 @@ export default class APIHelper {
                     break;
 
                 case RequestType.GET_DOWNLOAD_URLS:
-                    // nothing
+                    info.download_urls = r.download_urls;
                     break;
 
                 case RequestType.CLAIM_CODENAME:

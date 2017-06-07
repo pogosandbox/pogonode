@@ -298,7 +298,7 @@ class APIHelper {
             if (fs.existsSync('data/asset_digest.json')) {
                 let json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
                 let data = JSON.parse(json);
-                // this.state.api.asset_digest = data.digest;
+                this.state.api.asset_digest = data.digest;
                 last = data.timestamp_ms || 0;
             }
             if (!last || last < this.state.api.asset_digest_timestamp) {
@@ -319,7 +319,7 @@ class APIHelper {
                 _.each(digest, d => {
                     d.key = d.key.toString('base64');
                 });
-                // this.state.api.digest = digest;
+                this.state.api.asset_digest = digest;
                 let json = JSON.stringify({
                     digest: digest,
                     timestamp_ms: info.timestamp_ms,
@@ -464,7 +464,7 @@ class APIHelper {
                     // nothing
                     break;
                 case RequestType.GET_DOWNLOAD_URLS:
-                    // nothing
+                    info.download_urls = r.download_urls;
                     break;
                 case RequestType.CLAIM_CODENAME:
                     info = {
