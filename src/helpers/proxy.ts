@@ -43,7 +43,7 @@ export default class ProxyHelper {
      * find a proxy from www. ssl proxies .org/.
      * @return {Promise} with a proxy url as param.
      */
-    async findProxy(): Promise<string> {
+    async findProxy(): Promise<string|null> {
         if (this.config.proxy.url !== 'auto') return Promise.resolve(this.config.proxy.url);
 
         let trToProxy = function($, tr) {

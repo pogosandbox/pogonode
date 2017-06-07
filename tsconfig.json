@@ -6,7 +6,8 @@
         "rootDir": "src",
         "outDir": "bin",
         "watch": true,
-        "allowJs": true
+        "allowJs": true,
+        "strictNullChecks": true
     },
     "exclude": [
         "node_modules",

@@ -48,7 +48,7 @@ export default class APIHelper {
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch, options?: any) {
+    always(batch: pogobuf.Client, options?: any) {
         if (!options) options = {};
 
         batch = batch.checkChallenge()
@@ -156,7 +156,7 @@ export default class APIHelper {
             await Bluebird.delay(_.random(2000.0, 5000.0));
             // complete tutorial
             let batch = client.batchStart();
-            batch.markTutorialComplete(0, false, false);
+            batch.markTutorialComplete([0], false, false);
             let responses = await this.always(batch, {nobuddy: true}).batchCall();
             this.parse(responses);
 
@@ -183,7 +183,7 @@ export default class APIHelper {
             await Bluebird.delay(_.random(1000, 1700));
 
             batch = client.batchStart();
-            batch.markTutorialComplete(1, false, false);
+            batch.markTutorialComplete([1], false, false);
             responses = await this.always(batch, {nobuddy: true}).batchCall();
             this.parse(responses);
 
@@ -233,7 +233,7 @@ export default class APIHelper {
             this.parse(responses);
 
             batch = client.batchStart();
-            batch.markTutorialComplete(4, false, false);
+            batch.markTutorialComplete([4], false, false);
             responses = await this.always(batch, {nobuddy: true}).batchCall();
             this.parse(responses);
         }
@@ -242,7 +242,7 @@ export default class APIHelper {
             logger.debug('Tutorial 7');
             await Bluebird.delay(_.random(3500, 6000));
             let batch = client.batchStart();
-            batch.markTutorialComplete(7, false, false);
+            batch.markTutorialComplete([7], false, false);
             let responses = await this.always(batch).batchCall();
             this.parse(responses);
         }
@@ -317,7 +317,7 @@ export default class APIHelper {
         if (fs.existsSync('data/asset_digest.json')) {
             let json = fs.readFileSync('data/asset_digest.json', {encoding: 'utf8'});
             let data = JSON.parse(json);
-            // this.state.api.asset_digest = data.digest;
+            this.state.api.asset_digest = data.digest;
             last = data.timestamp_ms || 0;
         }
 
@@ -343,7 +343,7 @@ export default class APIHelper {
                 d.key = d.key.toString('base64');
             });
 
-            // this.state.api.digest = digest;
+            this.state.api.asset_digest = digest;
 
             let json = JSON.stringify({
                 digest: digest,
@@ -506,7 +506,7 @@ export default class APIHelper {
                     break;
 
                 case RequestType.GET_DOWNLOAD_URLS:
-                    // nothing
+                    info.download_urls = r.download_urls;
                     break;
 
                 case RequestType.CLAIM_CODENAME:
