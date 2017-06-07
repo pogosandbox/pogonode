@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const pogobuf = require("../../pogobuf");
+const pogobuf = require("pogobuf-vnext");
 const POGOProtos = require("node-pogo-protos");
 const logger = require("winston");
 const _ = require("lodash");
@@ -58,7 +58,7 @@ class APIHelper {
             .getInventory(this.state.api.inventory_timestamp)
             .checkAwardedBadges();
         if (options.settings)
-            batch = batch.downloadSettings(this.state.api.settings_hash);
+            batch.downloadSettings(this.state.api.settings_hash);
         if (!options.nobuddy)
             batch.getBuddyWalked();
         return batch;

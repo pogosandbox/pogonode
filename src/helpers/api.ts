@@ -1,4 +1,4 @@
-import * as pogobuf from '../../pogobuf';
+import * as pogobuf from 'pogobuf-vnext';
 import * as POGOProtos from 'node-pogo-protos';
 import * as logger from 'winston';
 import * as _ from 'lodash';
@@ -48,7 +48,7 @@ export default class APIHelper {
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch: pogobuf.Client, options?: any) {
+    always(batch: pogobuf.Client, options?: any): pogobuf.Client {
         if (!options) options = {};
 
         batch = batch.checkChallenge()
@@ -56,7 +56,7 @@ export default class APIHelper {
                      .getInventory(this.state.api.inventory_timestamp)
                      .checkAwardedBadges();
 
-        if (options.settings) batch = batch.downloadSettings(this.state.api.settings_hash);
+        if (options.settings) batch.downloadSettings(this.state.api.settings_hash);
 
         if (!options.nobuddy) batch.getBuddyWalked();
 
