@@ -68,6 +68,31 @@ class Assets {
                 assets.push(items.asset_id);
             if (assets.length > 0) {
                 logger.debug('Get translation urls...');
+                yield this.downloadAssets(assets);
+            }
+        });
+    }
+    getAssetsForPokemons() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let digest = this.state.api.asset_digest;
+            let pokemons = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+            pokemons = _.uniq(pokemons);
+            let assets = [];
+            for (let pokemon of pokemons) {
+                let asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon, 4, '0')));
+                let cached = this.cache[this.withoutVersion(asset.asset_id)];
+                if (!cached || cached !== asset.version)
+                    assets.push(asset.asset_id);
+            }
+            if (assets.length > 0) {
+                logger.debug('Download assets...');
+                yield this.downloadAssets(assets);
+            }
+        });
+    }
+    downloadAssets(assets) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (assets.length > 0) {
                 let client = this.state.client;
                 let batch = client.batchStart();
                 batch.getDownloadURLs(assets);

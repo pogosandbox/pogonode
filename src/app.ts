@@ -331,7 +331,11 @@ async function mapRefresh(): Promise<void> {
         batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
         let responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
+
         App.emit('saveState');
+
+        // download assets for pokemon if needed
+        await assets.getAssetsForPokemons();
 
         // send pokestop info to the ui
         socket.sendPokestops();

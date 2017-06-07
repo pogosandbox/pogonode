@@ -308,6 +308,8 @@ function mapRefresh() {
             let responses = yield apihelper.always(batch).batchCall();
             apihelper.parse(responses);
             App.emit('saveState');
+            // download assets for pokemon if needed
+            yield assets.getAssetsForPokemons();
             // send pokestop info to the ui
             socket.sendPokestops();
             // spin pokestop that are close enough

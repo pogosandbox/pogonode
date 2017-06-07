@@ -66,7 +66,30 @@ export default class Assets {
 
         if (assets.length > 0) {
             logger.debug('Get translation urls...');
+            await this.downloadAssets(assets);
+        }
+    }
 
+    async getAssetsForPokemons() {
+        let digest: any[] = this.state.api.asset_digest;
+        let pokemons: string[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+        pokemons = _.uniq(pokemons);
+
+        let assets: string[] = [];
+        for (let pokemon of pokemons) {
+            let asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon, 4, '0')));
+            let cached = this.cache[this.withoutVersion(asset.asset_id)];
+            if (!cached || cached !== asset.version) assets.push(asset.asset_id);
+        }
+
+        if (assets.length > 0) {
+            logger.debug('Download assets...');
+            await this.downloadAssets(assets);
+        }
+    }
+
+    async downloadAssets(assets: string[]) {
+        if (assets.length > 0) {
             let client: pogobuf.Client = this.state.client;
             let batch = client.batchStart();
             batch.getDownloadURLs(assets);
@@ -81,5 +104,4 @@ export default class Assets {
             await this.saveToDisk();
         }
     }
-
 }
