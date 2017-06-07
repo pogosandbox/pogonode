@@ -1,8 +1,8 @@
+import * as pogobuf from '../../pogobuf';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 import * as fs from 'mz/fs';
-import * as pogobuf from 'pogobuf-vnext';
 
 import APIHelper from './api';
 

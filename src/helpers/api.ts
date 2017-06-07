@@ -56,7 +56,7 @@ export default class APIHelper {
                      .getInventory(this.state.api.inventory_timestamp)
                      .checkAwardedBadges();
 
-        if (options.settings) batch = batch.downloadSettings(this.state.api.settings_hash);
+        if (options.settings) batch.downloadSettings(this.state.api.settings_hash);
 
         if (!options.nobuddy) batch.getBuddyWalked();
 
