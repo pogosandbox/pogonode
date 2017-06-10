@@ -95,7 +95,8 @@ export default class Player {
         let result = await Bluebird.map(pokemons, async pk => {
             await Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
 
-            logger.debug('Encounter %s', pk.pokemon_id);
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pk.pokemon_id);
+            logger.debug('Encounter %s', name);
             let batch = client.batchStart();
             batch.encounter(pk.encounter_id, pk.spawn_point_id);
             let responses = await this.apihelper.always(batch).batchCall();

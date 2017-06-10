@@ -88,7 +88,8 @@ class Player {
             let client = this.state.client;
             let result = yield Bluebird.map(pokemons, (pk) => __awaiter(this, void 0, void 0, function* () {
                 yield Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
-                logger.debug('Encounter %s', pk.pokemon_id);
+                const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pk.pokemon_id);
+                logger.debug('Encounter %s', name);
                 let batch = client.batchStart();
                 batch.encounter(pk.encounter_id, pk.spawn_point_id);
                 let responses = yield this.apihelper.always(batch).batchCall();
