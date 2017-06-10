@@ -307,6 +307,9 @@ function mapRefresh() {
             batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
             let responses = yield apihelper.always(batch).batchCall();
             apihelper.parse(responses);
+            if (!apihelper.maybeShadowBanned()) {
+                logger.warn('Not shadowbanned :)');
+            }
             App.emit('saveState');
             // download assets for pokemon if needed
             yield assets.getAssetsForPokemons();

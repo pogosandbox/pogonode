@@ -175,7 +175,8 @@ class Player {
             if (info.caught) {
                 let pokemons = this.state.inventory.pokemon;
                 let pokemon = _.find(pokemons, pk => pk.id === info.id);
-                logger.info('Pokemon caught.', { pokemon_id: pokemon.pokemon_id });
+                const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+                logger.info('Pokemon caught: %s.', name);
                 this.state.events.emit('pokemon_caught', pokemon);
                 return pokemon;
             }
@@ -205,7 +206,8 @@ class Player {
             if (better) {
                 yield Bluebird.delay(this.config.delay.release * _.random(900, 1100));
                 // release pokemon
-                logger.info('Release pokemon', pokemon.pokemon_id);
+                const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+                logger.info('Release pokemon %s', name);
                 let batch = this.state.client.batchStart();
                 batch.releasePokemon(pokemon.id);
                 let responses = yield this.apihelper.always(batch).batchCall();

@@ -599,6 +599,18 @@ export default class APIHelper {
         return info;
     }
 
+    maybeShadowBanned(): boolean {
+        let poorPokemon = [
+            16, 19, 23, 27, 29, 41, 43, 46, 52, 54, 60, 69,
+            72, 74, 81, 98, 118, 120, 129, 161, 165, 167,
+            177, 183, 187, 191, 194, 198, 209, 218
+        ];
+
+        let pokemons: number[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+
+        return _.difference(pokemons, poorPokemon).length === 0;
+    }
+
     /**
      * Add an `iv` field to a pokemon
      * @param {object} pokemon - pokemon to add iv field to

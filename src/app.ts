@@ -332,6 +332,10 @@ async function mapRefresh(): Promise<void> {
         let responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
 
+        if (!apihelper.maybeShadowBanned()) {
+            logger.warn('Not shadowbanned :)');
+        }
+
         App.emit('saveState');
 
         // download assets for pokemon if needed

@@ -93,7 +93,6 @@ export default class Player {
         logger.debug('Start encounters...');
         let client = this.state.client;
         let result = await Bluebird.map(pokemons, async pk => {
-
             await Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
 
             logger.debug('Encounter %s', pk.pokemon_id);
@@ -199,7 +198,8 @@ export default class Player {
         if (info.caught) {
             let pokemons: any[] = this.state.inventory.pokemon;
             let pokemon = _.find(pokemons, pk => pk.id === info.id);
-            logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+            logger.info('Pokemon caught: %s.', name);
             this.state.events.emit('pokemon_caught', pokemon);
             return pokemon;
         } else {
@@ -228,7 +228,8 @@ export default class Player {
             await Bluebird.delay(this.config.delay.release * _.random(900, 1100));
 
             // release pokemon
-            logger.info('Release pokemon', pokemon.pokemon_id);
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+            logger.info('Release pokemon %s', name);
             let batch = this.state.client.batchStart();
             batch.releasePokemon(pokemon.id);
             let responses = await this.apihelper.always(batch).batchCall();
