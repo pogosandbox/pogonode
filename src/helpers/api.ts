@@ -149,10 +149,10 @@ export default class APIHelper {
         let client = this.state.client;
         if (_.difference([0, 1, 3, 4, 7], tuto).length === 0) return false;
 
-        logger.info('Completing tutorial...');
+        logger.info('Completing tutorials...');
 
         if (!_.includes(tuto, 0)) {
-            logger.debug('Tutorial 0');
+            logger.debug('Legal screen tutorial (0)...');
             await Bluebird.delay(_.random(2000.0, 5000.0));
             // complete tutorial
             let batch = client.batchStart();
@@ -167,7 +167,7 @@ export default class APIHelper {
         }
 
         if (!_.includes(tuto, 1)) {
-            logger.debug('Tutorial 1');
+            logger.debug('Avatar tutorial (1)...');
             // set avatar
             await Bluebird.delay(_.random(8000.0, 14500));
             let batch = client.batchStart();
@@ -199,7 +199,7 @@ export default class APIHelper {
         }
 
         if (!_.includes(tuto, 3)) {
-            logger.debug('Tutorial 3');
+            logger.debug('Encounter tutorial (3)...');
             // encounter starter pokemon
 
             let batch = client.batchStart();
@@ -225,7 +225,7 @@ export default class APIHelper {
         }
 
         if (!_.includes(tuto, 4)) {
-            logger.debug('Tutorial 4');
+            logger.debug('Name tutorial (4)...');
             await Bluebird.delay(_.random(5000, 11500));
             let batch = client.batchStart();
             batch.claimCodename(this.config.credentials.user);
@@ -239,7 +239,7 @@ export default class APIHelper {
         }
 
         if (!_.includes(tuto, 7)) {
-            logger.debug('Tutorial 7');
+            logger.debug('First time experience tutorial (7)...');
             await Bluebird.delay(_.random(3500, 6000));
             let batch = client.batchStart();
             batch.markTutorialComplete([7], false, false);
@@ -632,7 +632,7 @@ export default class APIHelper {
      * @param {string} version - version string (in the form of 5100)
      * @return {string} iOS version
      */
-    versionToiOSVersion(version) {
+    versionToiOSVersion(version: string) {
         let ver = '1.' + ((+version - 3000)   / 100).toFixed(0);
         ver += '.' + (+version % 100);
         return ver;
@@ -643,7 +643,7 @@ export default class APIHelper {
      * @param {string} version - version string (in the form of 5100)
      * @return {string} client version (like 0.51.0)
      */
-    versionToClientVersion(version) {
+    versionToClientVersion(version: string) {
         let ver = '0.' + ((+version)   / 100).toFixed(0);
         ver += '.' + (+version % 100);
         return ver;

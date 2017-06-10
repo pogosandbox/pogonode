@@ -149,9 +149,9 @@ class APIHelper {
             let client = this.state.client;
             if (_.difference([0, 1, 3, 4, 7], tuto).length === 0)
                 return false;
-            logger.info('Completing tutorial...');
+            logger.info('Completing tutorials...');
             if (!_.includes(tuto, 0)) {
-                logger.debug('Tutorial 0');
+                logger.debug('Legal screen tutorial (0)...');
                 yield Bluebird.delay(_.random(2000.0, 5000.0));
                 // complete tutorial
                 let batch = client.batchStart();
@@ -164,7 +164,7 @@ class APIHelper {
                 this.parse(responses);
             }
             if (!_.includes(tuto, 1)) {
-                logger.debug('Tutorial 1');
+                logger.debug('Avatar tutorial (1)...');
                 // set avatar
                 yield Bluebird.delay(_.random(8000.0, 14500));
                 let batch = client.batchStart();
@@ -190,7 +190,7 @@ class APIHelper {
                 this.parse(responses);
             }
             if (!_.includes(tuto, 3)) {
-                logger.debug('Tutorial 3');
+                logger.debug('Encounter tutorial (3)...');
                 // encounter starter pokemon
                 let batch = client.batchStart();
                 batch.getDownloadURLs([
@@ -211,7 +211,7 @@ class APIHelper {
                 this.parse(responses);
             }
             if (!_.includes(tuto, 4)) {
-                logger.debug('Tutorial 4');
+                logger.debug('Name tutorial (4)...');
                 yield Bluebird.delay(_.random(5000, 11500));
                 let batch = client.batchStart();
                 batch.claimCodename(this.config.credentials.user);
@@ -223,7 +223,7 @@ class APIHelper {
                 this.parse(responses);
             }
             if (!_.includes(tuto, 7)) {
-                logger.debug('Tutorial 7');
+                logger.debug('First time experience tutorial (7)...');
                 yield Bluebird.delay(_.random(3500, 6000));
                 let batch = client.batchStart();
                 batch.markTutorialComplete([7], false, false);
