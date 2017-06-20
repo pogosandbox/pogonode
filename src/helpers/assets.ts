@@ -79,7 +79,9 @@ export default class Assets {
         for (let pokemon of pokemons) {
             let asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon.toString(), 4, '0')));
             let cached = this.cache[this.withoutVersion(asset.asset_id)];
-            if (!cached || cached !== asset.version) assets.push(asset.asset_id);
+            if (!cached || +cached !== asset.version) {
+                assets.push(asset.asset_id);
+            }
         }
 
         if (assets.length > 0) {
