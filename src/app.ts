@@ -289,6 +289,18 @@ App.on('updatePos', async () => {
             }
             await Bluebird.delay(config.delay.evolve * _.random(900, 1100));
 
+        } else if (todo.call === 'drop_items') {
+            let batch = client.batchStart();
+            batch.recycleInventoryItem(todo.id, todo.count);
+            let responses = await apihelper.always(batch).batchCall();
+            let info = apihelper.parse(responses);
+            if (info.result === 1) {
+                logger.info('Items droped', todo.id, info);
+            } else {
+                logger.warn('Error dropping items', info);
+            }
+            await Bluebird.delay(config.delay.recycle * _.random(900, 1100));
+
         } else {
             logger.warn('Unhandled todo: ' + todo.call);
         }
@@ -354,6 +366,8 @@ async function mapRefresh(): Promise<void> {
         if (Math.random() < 0.3) {
             logger.debug('Dispatch incubators...');
             await player.dispatchIncubators();
+        } else if (Math.random() < 0.2) {
+            await player.cleanInventory();
         }
 
         App.emit('saveState');

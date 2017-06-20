@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
-    "bluebird-retry": "^0.10.1",
+    "bluebird-retry": "^0.11.0",
     "bytebuffer": "^5.0.1",
     "cheerio": "^0.22.0",
     "dotenv": "^4.0.0",
@@ -28,17 +28,17 @@
     "request-promise": "^4.2.1",
     "semver-compare": "^1.0.0",
     "simjs-random": "^0.2.6",
-    "socket.io": "^2.0.2",
+    "socket.io": "^2.0.3",
     "winston": "^2.3.1"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.5",
     "@types/bytebuffer": "^5.0.33",
     "@types/mz": "^0.0.31",
-    "@types/lodash": "^4.14.65",
+    "@types/lodash": "^4.14.66",
     "@types/long": "^3.0.31",
-    "@types/node": "^7.0.29",
-    "@types/request-promise": "^4.1.33",
+    "@types/node": "^8.0.0",
+    "@types/request-promise": "^4.1.34",
     "@types/winston": "^2.3.3",
     "tslint": "^5.4.3",
     "typescript": "^2.3.4"

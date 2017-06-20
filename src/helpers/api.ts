@@ -573,6 +573,13 @@ export default class APIHelper {
                     };
                     break;
 
+                case RequestType.RECYCLE_INVENTORY_ITEM:
+                    info = {
+                        result: r.result,
+                        new_count: r.new_count,
+                    };
+                    break;
+
                 case RequestType.REGISTER_BACKGROUND_DEVICE:
                     // nothing
                     break;
@@ -600,15 +607,16 @@ export default class APIHelper {
     }
 
     maybeShadowBanned(): boolean {
-        let poorPokemon = [
-            16, 19, 23, 27, 29, 41, 43, 46, 52, 54, 60, 69,
-            72, 74, 81, 98, 118, 120, 129, 161, 165, 167,
-            177, 183, 187, 191, 194, 198, 209, 218
+        let commonPokemons = [
+            16, 19, 23, 27, 29, 32, 37, 41, 43, 46, 52, 54, 58, 60, 69,
+            72, 74, 77, 81, 90, 98, 118, 120, 129, 155, 161, 165, 167,
+            177, 183, 187, 191, 194, 198, 209, 218, 220, 228
         ];
 
         let pokemons: number[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+        pokemons = _.concat(pokemons, this.state.map.nearby_pokemons.map(p => p.pokemon_id));
 
-        return _.difference(pokemons, poorPokemon).length === 0;
+        return _.difference(pokemons, commonPokemons).length === 0;
     }
 
     /**

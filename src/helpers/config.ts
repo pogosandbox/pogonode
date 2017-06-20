@@ -34,6 +34,9 @@ module.exports.load = function() {
             catch: false,
             autorelease: true,
         },
+        inventory: {
+
+        },
         delay: {
             walk: 1,
             spin: 2,
@@ -43,6 +46,7 @@ module.exports.load = function() {
             levelUp: 2,
             release: 0.1,
             evolve: 3,
+            recycle: 0.5,
         },
         hashserver: {
             active: true,

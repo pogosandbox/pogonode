@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const pogobuf = require("../../pogobuf");
 const POGOProtos = require("node-pogo-protos");
@@ -143,190 +135,182 @@ class APIHelper {
      * If not needed, do the minmum getPlayerProfile and registerBackgroundDevice
      * @return {Promise<void>} Promise
      */
-    completeTutorial() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let tuto = this.state.player.tutorial_state || [];
-            let client = this.state.client;
-            if (_.difference([0, 1, 3, 4, 7], tuto).length === 0)
-                return false;
-            logger.info('Completing tutorials...');
-            if (!_.includes(tuto, 0)) {
-                logger.debug('Legal screen tutorial (0)...');
-                yield Bluebird.delay(_.random(2000.0, 5000.0));
-                // complete tutorial
-                let batch = client.batchStart();
-                batch.markTutorialComplete([0], false, false);
-                let responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-                responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-            }
-            if (!_.includes(tuto, 1)) {
-                logger.debug('Avatar tutorial (1)...');
-                // set avatar
-                yield Bluebird.delay(_.random(8000.0, 14500));
-                let batch = client.batchStart();
-                batch.setAvatar(this.generateAvatar());
-                let responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.listAvatarCustomizations(0, [], [2], 0, 0);
-                responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-                yield Bluebird.delay(_.random(1000, 1700));
-                batch = client.batchStart();
-                batch.markTutorialComplete([1], false, false);
-                responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.getPlayerProfile();
-                responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.registerBackgroundDevice('apple_watch', '');
-                responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-            }
-            if (!_.includes(tuto, 3)) {
-                logger.debug('Encounter tutorial (3)...');
-                // encounter starter pokemon
-                let batch = client.batchStart();
-                batch.getDownloadURLs([
-                    '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
-                    'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
-                ]);
-                let responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-                yield Bluebird.delay(_.random(7000, 10000));
-                batch = client.batchStart();
-                let pkmId = [1, 4, 7][_.random(3)];
-                batch.encounterTutorialComplete(pkmId);
-                responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-                responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-            }
-            if (!_.includes(tuto, 4)) {
-                logger.debug('Name tutorial (4)...');
-                yield Bluebird.delay(_.random(5000, 11500));
-                let batch = client.batchStart();
-                batch.claimCodename(this.config.credentials.user);
-                let responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-                batch = client.batchStart();
-                batch.markTutorialComplete([4], false, false);
-                responses = yield this.always(batch, { nobuddy: true }).batchCall();
-                this.parse(responses);
-            }
-            if (!_.includes(tuto, 7)) {
-                logger.debug('First time experience tutorial (7)...');
-                yield Bluebird.delay(_.random(3500, 6000));
-                let batch = client.batchStart();
-                batch.markTutorialComplete([7], false, false);
-                let responses = yield this.always(batch).batchCall();
-                this.parse(responses);
-            }
-            return true;
-        });
+    async completeTutorial() {
+        let tuto = this.state.player.tutorial_state || [];
+        let client = this.state.client;
+        if (_.difference([0, 1, 3, 4, 7], tuto).length === 0)
+            return false;
+        logger.info('Completing tutorials...');
+        if (!_.includes(tuto, 0)) {
+            logger.debug('Legal screen tutorial (0)...');
+            await Bluebird.delay(_.random(2000.0, 5000.0));
+            // complete tutorial
+            let batch = client.batchStart();
+            batch.markTutorialComplete([0], false, false);
+            let responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+            responses = await this.always(batch).batchCall();
+            this.parse(responses);
+        }
+        if (!_.includes(tuto, 1)) {
+            logger.debug('Avatar tutorial (1)...');
+            // set avatar
+            await Bluebird.delay(_.random(8000.0, 14500));
+            let batch = client.batchStart();
+            batch.setAvatar(this.generateAvatar());
+            let responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.listAvatarCustomizations(0, [], [2], 0, 0);
+            responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+            await Bluebird.delay(_.random(1000, 1700));
+            batch = client.batchStart();
+            batch.markTutorialComplete([1], false, false);
+            responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.getPlayerProfile();
+            responses = await this.always(batch).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.registerBackgroundDevice('apple_watch', '');
+            responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+        }
+        if (!_.includes(tuto, 3)) {
+            logger.debug('Encounter tutorial (3)...');
+            // encounter starter pokemon
+            let batch = client.batchStart();
+            batch.getDownloadURLs([
+                '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
+                'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
+            ]);
+            let responses = await this.always(batch).batchCall();
+            this.parse(responses);
+            await Bluebird.delay(_.random(7000, 10000));
+            batch = client.batchStart();
+            let pkmId = [1, 4, 7][_.random(3)];
+            batch.encounterTutorialComplete(pkmId);
+            responses = await this.always(batch).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+            responses = await this.always(batch).batchCall();
+            this.parse(responses);
+        }
+        if (!_.includes(tuto, 4)) {
+            logger.debug('Name tutorial (4)...');
+            await Bluebird.delay(_.random(5000, 11500));
+            let batch = client.batchStart();
+            batch.claimCodename(this.config.credentials.user);
+            let responses = await this.always(batch).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.markTutorialComplete([4], false, false);
+            responses = await this.always(batch, { nobuddy: true }).batchCall();
+            this.parse(responses);
+        }
+        if (!_.includes(tuto, 7)) {
+            logger.debug('First time experience tutorial (7)...');
+            await Bluebird.delay(_.random(3500, 6000));
+            let batch = client.batchStart();
+            batch.markTutorialComplete([7], false, false);
+            let responses = await this.always(batch).batchCall();
+            this.parse(responses);
+        }
+        return true;
     }
     /**
      * Verify client version
      */
-    verifyMinimumVersion(minimum) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let clientversion = this.versionToClientVersion(this.config.api.version);
-            if (vercmp(minimum, clientversion) > 0) {
-                if (this.config.api.checkversion) {
-                    throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
-                }
-                else {
-                    logger.warn(`Minimum client version=${minimum}, ${clientversion} is too low.`);
-                }
+    async verifyMinimumVersion(minimum) {
+        let clientversion = this.versionToClientVersion(this.config.api.version);
+        if (vercmp(minimum, clientversion) > 0) {
+            if (this.config.api.checkversion) {
+                throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
             }
-        });
+            else {
+                logger.warn(`Minimum client version=${minimum}, ${clientversion} is too low.`);
+            }
+        }
     }
     /**
      * Check if item templates need to be downloaded, and do it if needed.
      * @return {Promise} when done
      */
-    getItemTemplates() {
-        return __awaiter(this, void 0, void 0, function* () {
-            logger.debug('Checking if item_templates need a refresh...');
-            let last = 0;
-            if (fs.existsSync('data/item_templates.json')) {
-                let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
-                let data = JSON.parse(json);
-                this.state.api.item_templates = data.templates;
-                last = data.timestamp_ms || 0;
+    async getItemTemplates() {
+        logger.debug('Checking if item_templates need a refresh...');
+        let last = 0;
+        if (fs.existsSync('data/item_templates.json')) {
+            let json = fs.readFileSync('data/item_templates.json', { encoding: 'utf8' });
+            let data = JSON.parse(json);
+            this.state.api.item_templates = data.templates;
+            last = data.timestamp_ms || 0;
+        }
+        if (!last || last < this.state.api.item_templates_timestamp) {
+            logger.info('Game master updating...');
+            let client = this.state.client;
+            let batch = client.batchStart();
+            batch.downloadItemTemplates(true);
+            let responses = await this.always(batch, { settings: true, nobuddy: true }).batchCall();
+            let info = this.parse(responses);
+            let item_templates = info.item_templates;
+            while (info.page_offset !== 0) {
+                batch = client.batchStart();
+                batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
+                responses = await this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                info = this.parse(responses);
+                item_templates = item_templates.concat(info.item_templates);
             }
-            if (!last || last < this.state.api.item_templates_timestamp) {
-                logger.info('Game master updating...');
-                let client = this.state.client;
-                let batch = client.batchStart();
-                batch.downloadItemTemplates(true);
-                let responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
-                let info = this.parse(responses);
-                let item_templates = info.item_templates;
-                while (info.page_offset !== 0) {
-                    batch = client.batchStart();
-                    batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
-                    responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
-                    info = this.parse(responses);
-                    item_templates = item_templates.concat(info.item_templates);
-                }
-                this.state.api.item_templates = item_templates;
-                let json = JSON.stringify({
-                    templates: item_templates,
-                    timestamp_ms: info.timestamp_ms,
-                }, null, 4);
-                yield fs.writeFile('data/item_templates.json', json);
-            }
-        });
+            this.state.api.item_templates = item_templates;
+            let json = JSON.stringify({
+                templates: item_templates,
+                timestamp_ms: info.timestamp_ms,
+            }, null, 4);
+            await fs.writeFile('data/item_templates.json', json);
+        }
     }
     /**
      * Check if asset digest need to be downloaded, and do it if needed.
      * @return {Promise} when done
      */
-    getAssetDigest() {
-        return __awaiter(this, void 0, void 0, function* () {
-            logger.debug('Checking if asset_digest need a refresh...');
-            let last = 0;
-            if (fs.existsSync('data/asset_digest.json')) {
-                let json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
-                let data = JSON.parse(json);
-                this.state.api.asset_digest = data.digest;
-                last = data.timestamp_ms || 0;
+    async getAssetDigest() {
+        logger.debug('Checking if asset_digest need a refresh...');
+        let last = 0;
+        if (fs.existsSync('data/asset_digest.json')) {
+            let json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
+            let data = JSON.parse(json);
+            this.state.api.asset_digest = data.digest;
+            last = data.timestamp_ms || 0;
+        }
+        if (!last || last < this.state.api.asset_digest_timestamp) {
+            logger.info('Asset digest updating...');
+            let client = this.state.client;
+            let batch = client.batchStart();
+            batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
+            let responses = await this.always(batch, { settings: true, nobuddy: true }).batchCall();
+            let info = this.parse(responses);
+            let digest = info.digest;
+            while (info.page_offset !== 0) {
+                batch = client.batchStart();
+                batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true, info.page_offset, info.timestamp_ms);
+                responses = await this.always(batch, { settings: true, nobuddy: true }).batchCall();
+                info = this.parse(responses);
+                digest = digest.concat(info.digest);
             }
-            if (!last || last < this.state.api.asset_digest_timestamp) {
-                logger.info('Asset digest updating...');
-                let client = this.state.client;
-                let batch = client.batchStart();
-                batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
-                let responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
-                let info = this.parse(responses);
-                let digest = info.digest;
-                while (info.page_offset !== 0) {
-                    batch = client.batchStart();
-                    batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true, info.page_offset, info.timestamp_ms);
-                    responses = yield this.always(batch, { settings: true, nobuddy: true }).batchCall();
-                    info = this.parse(responses);
-                    digest = digest.concat(info.digest);
-                }
-                _.each(digest, d => {
-                    d.key = d.key.toString('base64');
-                });
-                this.state.api.asset_digest = digest;
-                let json = JSON.stringify({
-                    digest: digest,
-                    timestamp_ms: info.timestamp_ms,
-                }, null, 4);
-                yield fs.writeFile('data/asset_digest.json', json);
-            }
-        });
+            _.each(digest, d => {
+                d.key = d.key.toString('base64');
+            });
+            this.state.api.asset_digest = digest;
+            let json = JSON.stringify({
+                digest: digest,
+                timestamp_ms: info.timestamp_ms,
+            }, null, 4);
+            await fs.writeFile('data/asset_digest.json', json);
+        }
     }
     /**
      * Parse reponse and update state accordingly
@@ -521,6 +505,12 @@ class APIHelper {
                         candy_awarded: r.candy_awarded,
                     };
                     break;
+                case RequestType.RECYCLE_INVENTORY_ITEM:
+                    info = {
+                        result: r.result,
+                        new_count: r.new_count,
+                    };
+                    break;
                 case RequestType.REGISTER_BACKGROUND_DEVICE:
                     // nothing
                     break;
@@ -543,13 +533,14 @@ class APIHelper {
         return info;
     }
     maybeShadowBanned() {
-        let poorPokemon = [
-            16, 19, 23, 27, 29, 41, 43, 46, 52, 54, 60, 69,
-            72, 74, 81, 98, 118, 120, 129, 161, 165, 167,
-            177, 183, 187, 191, 194, 198, 209, 218
+        let commonPokemons = [
+            16, 19, 23, 27, 29, 32, 37, 41, 43, 46, 52, 54, 58, 60, 69,
+            72, 74, 77, 81, 90, 98, 118, 120, 129, 155, 161, 165, 167,
+            177, 183, 187, 191, 194, 198, 209, 218, 220, 228
         ];
         let pokemons = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
-        return _.difference(pokemons, poorPokemon).length === 0;
+        pokemons = _.concat(pokemons, this.state.map.nearby_pokemons.map(p => p.pokemon_id));
+        return _.difference(pokemons, commonPokemons).length === 0;
     }
     /**
      * Add an `iv` field to a pokemon
@@ -563,21 +554,19 @@ class APIHelper {
      * Make a request to niantic /pfe/version to get minimum version
      * @return {Promise<string>} Minimum app version
      */
-    getRpcVersion() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let options = {
-                uri: 'https://pgorelease.nianticlabs.com/plfe/version',
-                headers: {
-                    'accept': '*/*',
-                    'user-agent': 'pokemongo/1 CFNetwork/808.3 Darwin/16.3.0',
-                    'accept-language': 'en-us',
-                    'x-unity-version': '5.5.1f1'
-                },
-                gzip: true,
-            };
-            let version = yield request.get(options);
-            return version.replace(/[^(\d|\.)+]/g, '');
-        });
+    async getRpcVersion() {
+        let options = {
+            uri: 'https://pgorelease.nianticlabs.com/plfe/version',
+            headers: {
+                'accept': '*/*',
+                'user-agent': 'pokemongo/1 CFNetwork/808.3 Darwin/16.3.0',
+                'accept-language': 'en-us',
+                'x-unity-version': '5.5.1f1'
+            },
+            gzip: true,
+        };
+        let version = await request.get(options);
+        return version.replace(/[^(\d|\.)+]/g, '');
     }
     /**
      * Convert version string (like 5100) to iOS (like 1.21)

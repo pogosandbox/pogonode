@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const Bluebird = require("bluebird");
@@ -54,52 +46,48 @@ class Walker {
      * Update state with path.
      * @return {Promise<void>}
      */
-    generatePath() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // logger.debug("Get new path.");
-            let state = this.state;
-            let target = state.path.target = this.findNextPokestop();
-            if (target) {
-                let gmAPI = new GoogleMapsAPI({
-                    key: this.config.gmapKey,
-                });
-                return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking' })
-                    .then(result => {
-                    if (result.error_message)
-                        throw new Error(result.error_message);
-                    state.path.waypoints = [];
-                    if (result.routes.length > 0 && result.routes[0].legs) {
-                        _.each(result.routes[0].legs, l => {
-                            _.each(l.steps, s => state.path.waypoints.push(s.end_location));
-                        });
-                    }
-                    state.path.waypoints.push({ lat: target.latitude, lng: target.longitude });
-                    return state.path;
-                });
-            }
-            else {
-                logger.warn('No stop to go to, stand still.');
-                return null;
-            }
-        });
+    async generatePath() {
+        // logger.debug("Get new path.");
+        let state = this.state;
+        let target = state.path.target = this.findNextPokestop();
+        if (target) {
+            let gmAPI = new GoogleMapsAPI({
+                key: this.config.gmapKey,
+            });
+            return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking' })
+                .then(result => {
+                if (result.error_message)
+                    throw new Error(result.error_message);
+                state.path.waypoints = [];
+                if (result.routes.length > 0 && result.routes[0].legs) {
+                    _.each(result.routes[0].legs, l => {
+                        _.each(l.steps, s => state.path.waypoints.push(s.end_location));
+                    });
+                }
+                state.path.waypoints.push({ lat: target.latitude, lng: target.longitude });
+                return state.path;
+            });
+        }
+        else {
+            logger.warn('No stop to go to, stand still.');
+            return null;
+        }
     }
     /**
      * Check is current path is still valid, generate a new path if not.
      * Update state if needed.
      * @return {Promise<any>}
      */
-    checkPath() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.state.path.waypoints.length === 0) {
-                if (this.state.path.target) {
-                    // we arrive at target
-                    this.state.path.target.done = true;
-                }
-                // get a new target and path to go there
-                return yield this.generatePath();
+    async checkPath() {
+        if (this.state.path.waypoints.length === 0) {
+            if (this.state.path.target) {
+                // we arrive at target
+                this.state.path.target.done = true;
             }
-            return null;
-        });
+            // get a new target and path to go there
+            return await this.generatePath();
+        }
+        return null;
     }
     /**
      * Move toward target, get call each second or so.
@@ -158,27 +146,25 @@ class Walker {
      * @param {object} latlng location
      * @return {Promise<altitude>} Promise returning altitude
      */
-    getAltitude(latlng) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                let gmAPI = new GoogleMapsAPI({
-                    key: this.config.gmapKey,
-                });
-                let data = yield gmAPI.elevationFromLocationsAsync({
-                    locations: `${latlng.lat},${latlng.lng}`,
-                });
-                if (data && data.results.length > 0) {
-                    return data.results[0].elevation;
-                }
-                else {
-                    return 0;
-                }
+    async getAltitude(latlng) {
+        try {
+            let gmAPI = new GoogleMapsAPI({
+                key: this.config.gmapKey,
+            });
+            let data = await gmAPI.elevationFromLocationsAsync({
+                locations: `${latlng.lat},${latlng.lng}`,
+            });
+            if (data && data.results.length > 0) {
+                return data.results[0].elevation;
             }
-            catch (e) {
-                logger.warn('Unable to get altitude.', e);
+            else {
                 return 0;
             }
-        });
+        }
+        catch (e) {
+            logger.warn('Unable to get altitude.', e);
+            return 0;
+        }
     }
 }
 exports.default = Walker;
