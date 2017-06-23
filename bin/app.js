@@ -119,7 +119,7 @@ async function loginFlow() {
         logger.debug('Download remote config...');
         batch = client.batchStart();
         batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-        responses = await apihelper.always(batch, { settings: true, nobuddy: true }).batchCall();
+        responses = await apihelper.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
         apihelper.parse(responses);
         await apihelper.getAssetDigest();
         await apihelper.getItemTemplates();
@@ -131,7 +131,7 @@ async function loginFlow() {
             // tutorial already done, let's do a getPlayerProfile
             let batch = client.batchStart();
             batch.getPlayerProfile('');
-            let responses = await apihelper.always(batch, { settings: true }).batchCall();
+            let responses = await apihelper.always(batch, { settings: true, noinbox: true }).batchCall();
             apihelper.parse(responses);
         }
         logger.debug('Level up rewards...');
@@ -323,9 +323,6 @@ async function mapRefresh() {
         if (Math.random() < 0.3) {
             logger.debug('Dispatch incubators...');
             await player.dispatchIncubators();
-        }
-        else if (Math.random() < 0.2) {
-            await player.cleanInventory();
         }
         App.emit('saveState');
     }

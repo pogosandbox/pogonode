@@ -23,7 +23,7 @@
     "moment": "^2.18.1",
     "mz": "^2.6.0",
     "nightmare": "^2.10.0",
-    "pogobuf-vnext": "pogosandbox/pogobuf#dev",
+    "pogobuf-vnext": "pogosandbox/pogobuf#protobuf6",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "semver-compare": "^1.0.0",
