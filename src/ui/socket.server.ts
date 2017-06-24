@@ -55,7 +55,7 @@ export default class SocketServer {
 
         return httpserver.listenAsync(process.env.PORT || 8000, '0.0.0.0').then(() => {
             let addr = httpserver.address();
-            logger.info('Socket server listening at ' + addr.address + ':' + addr.port);
+            logger.debug('Socket server listening at ' + addr.address + ':' + addr.port);
             return true;
         });
     }
