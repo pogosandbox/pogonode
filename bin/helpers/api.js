@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const pogobuf = require("../../pogobuf");
-const POGOProtos = require("node-pogo-protos");
+const POGOProtos = require("node-pogo-protos-vnext");
 const logger = require("winston");
 const _ = require("lodash");
 const Bluebird = require("bluebird");

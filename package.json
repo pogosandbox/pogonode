@@ -23,7 +23,7 @@
     "moment": "^2.18.1",
     "mz": "^2.6.0",
     "nightmare": "^2.10.0",
-    "pogobuf-vnext": "pogosandbox/pogobuf#protobuf6",
+    "pogobuf-vnext": "pogosandbox/pogobuf#dev",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "semver-compare": "^1.0.0",
@@ -32,13 +32,13 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.5",
+    "@types/bluebird": "^3.5.7",
     "@types/bytebuffer": "^5.0.33",
     "@types/mz": "^0.0.31",
     "@types/lodash": "^4.14.66",
     "@types/long": "^3.0.31",
-    "@types/node": "^8.0.0",
-    "@types/request-promise": "^4.1.34",
+    "@types/node": "^8.0.2",
+    "@types/request-promise": "^4.1.35",
     "@types/winston": "^2.3.3",
     "tslint": "^5.4.3",
     "typescript": "^2.3.4"

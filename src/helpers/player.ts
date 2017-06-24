@@ -1,4 +1,4 @@
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import * as logger from 'winston';

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config({ silent: true });
 const pogobuf = require("../pogobuf");
-const POGOProtos = require("node-pogo-protos");
+const POGOProtos = require("node-pogo-protos-vnext");
 const events_1 = require("events");
 const logger = require("winston");
 const Bluebird = require("bluebird");

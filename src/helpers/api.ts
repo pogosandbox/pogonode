@@ -1,5 +1,5 @@
 import * as pogobuf from '../../pogobuf';
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as logger from 'winston';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
@@ -372,7 +372,6 @@ export default class APIHelper {
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
-
                 case RequestType.GET_PLAYER:
                     this.state.player = r.player_data;
                     this.state.player.banned = r.banned;
