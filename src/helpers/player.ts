@@ -1,4 +1,4 @@
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
@@ -93,10 +93,10 @@ export default class Player {
         logger.debug('Start encounters...');
         let client = this.state.client;
         let result = await Bluebird.map(pokemons, async pk => {
-
             await Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
 
-            logger.debug('Encounter %s', pk.pokemon_id);
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pk.pokemon_id);
+            logger.debug('Encounter %s', name);
             let batch = client.batchStart();
             batch.encounter(pk.encounter_id, pk.spawn_point_id);
             let responses = await this.apihelper.always(batch).batchCall();
@@ -199,7 +199,8 @@ export default class Player {
         if (info.caught) {
             let pokemons: any[] = this.state.inventory.pokemon;
             let pokemon = _.find(pokemons, pk => pk.id === info.id);
-            logger.info('Pokemon caught.', {pokemon_id: pokemon.pokemon_id});
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+            logger.info('Pokemon caught: %s.', name);
             this.state.events.emit('pokemon_caught', pokemon);
             return pokemon;
         } else {
@@ -228,7 +229,8 @@ export default class Player {
             await Bluebird.delay(this.config.delay.release * _.random(900, 1100));
 
             // release pokemon
-            logger.info('Release pokemon', pokemon.pokemon_id);
+            const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
+            logger.info('Release pokemon %s', name);
             let batch = this.state.client.batchStart();
             batch.releasePokemon(pokemon.id);
             let responses = await this.apihelper.always(batch).batchCall();
@@ -258,8 +260,28 @@ export default class Player {
      * Clean inventory based on config
      * @return {Promise} Promise
      */
-    cleanInventory() {
-        return Promise.resolve();
+    async cleanInventory() {
+        if (!this.config.inventory) return;
+        let limits = this.config.inventory;
+
+        logger.debug('Recycle inventory...');
+        let items: any[] = this.state.inventory.items;
+        for (let item of items) {
+            if (_.has(limits, item.item_id)) {
+                let drop = item.count - Math.min(item.count, limits[item.item_id]);
+                if (drop > 0) {
+                    logger.debug('Drop %d of %d', drop, item.item_id);
+                    let batch = this.state.client.batchStart();
+                    batch.recycleInventoryItem(item.item_id, drop);
+                    let responses = await this.apihelper.always(batch).batchCall();
+                    let info = this.apihelper.parse(responses);
+                    if (info.result !== 1) {
+                        logger.warn('Error dropping items', info);
+                    }
+                    await Bluebird.delay(this.config.delay.recycle * _.random(900, 1100));
+                }
+            }
+        }
     }
 
     /**

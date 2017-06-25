@@ -1,8 +1,8 @@
+import * as pogobuf from '../../pogobuf';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 import * as fs from 'mz/fs';
-import * as pogobuf from 'pogobuf-vnext';
 
 import APIHelper from './api';
 
@@ -72,14 +72,16 @@ export default class Assets {
 
     async getAssetsForPokemons() {
         let digest: any[] = this.state.api.asset_digest;
-        let pokemons: string[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+        let pokemons: number[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
         pokemons = _.uniq(pokemons);
 
         let assets: string[] = [];
         for (let pokemon of pokemons) {
-            let asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon, 4, '0')));
+            let asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon.toString(), 4, '0')));
             let cached = this.cache[this.withoutVersion(asset.asset_id)];
-            if (!cached || cached !== asset.version) assets.push(asset.asset_id);
+            if (!cached || +cached !== asset.version) {
+                assets.push(asset.asset_id);
+            }
         }
 
         if (assets.length > 0) {

@@ -1,5 +1,5 @@
 import * as pogobuf from 'pogobuf-vnext';
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as logger from 'winston';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
@@ -59,6 +59,8 @@ export default class APIHelper {
         if (options.settings) batch.downloadSettings(this.state.api.settings_hash);
 
         if (!options.nobuddy) batch.getBuddyWalked();
+
+        if (!options.noinbox) batch.getInbox(true, false, 0);
 
         return batch;
     }
@@ -149,57 +151,57 @@ export default class APIHelper {
         let client = this.state.client;
         if (_.difference([0, 1, 3, 4, 7], tuto).length === 0) return false;
 
-        logger.info('Completing tutorial...');
+        logger.info('Completing tutorials...');
 
         if (!_.includes(tuto, 0)) {
-            logger.debug('Tutorial 0');
+            logger.debug('Legal screen tutorial (0)...');
             await Bluebird.delay(_.random(2000.0, 5000.0));
             // complete tutorial
             let batch = client.batchStart();
             batch.markTutorialComplete([0], false, false);
-            let responses = await this.always(batch, {nobuddy: true}).batchCall();
+            let responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-            responses = await this.always(batch).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
         }
 
         if (!_.includes(tuto, 1)) {
-            logger.debug('Tutorial 1');
+            logger.debug('Avatar tutorial (1)...');
             // set avatar
             await Bluebird.delay(_.random(8000.0, 14500));
             let batch = client.batchStart();
             batch.setAvatar(this.generateAvatar());
-            let responses = await this.always(batch, {nobuddy: true}).batchCall();
+            let responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.listAvatarCustomizations(0, [], [2], 0, 0);
-            responses = await this.always(batch, {nobuddy: true}).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             await Bluebird.delay(_.random(1000, 1700));
 
             batch = client.batchStart();
             batch.markTutorialComplete([1], false, false);
-            responses = await this.always(batch, {nobuddy: true}).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.getPlayerProfile();
-            responses = await this.always(batch).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.registerBackgroundDevice('apple_watch', '');
-            responses = await this.always(batch, {nobuddy: true}).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
         }
 
         if (!_.includes(tuto, 3)) {
-            logger.debug('Tutorial 3');
+            logger.debug('Encounter tutorial (3)...');
             // encounter starter pokemon
 
             let batch = client.batchStart();
@@ -207,7 +209,7 @@ export default class APIHelper {
                 '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
                 'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
             ]);
-            let responses = await this.always(batch).batchCall();
+            let responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             await Bluebird.delay(_.random(7000, 10000));
@@ -215,35 +217,35 @@ export default class APIHelper {
             batch = client.batchStart();
             let pkmId = [1, 4, 7][_.random(3)];
             batch.encounterTutorialComplete(pkmId);
-            responses = await this.always(batch).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-            responses = await this.always(batch).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
         }
 
         if (!_.includes(tuto, 4)) {
-            logger.debug('Tutorial 4');
+            logger.debug('Name tutorial (4)...');
             await Bluebird.delay(_.random(5000, 11500));
             let batch = client.batchStart();
             batch.claimCodename(this.config.credentials.user);
-            let responses = await this.always(batch).batchCall();
+            let responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
 
             batch = client.batchStart();
             batch.markTutorialComplete([4], false, false);
-            responses = await this.always(batch, {nobuddy: true}).batchCall();
+            responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
         }
 
         if (!_.includes(tuto, 7)) {
-            logger.debug('Tutorial 7');
+            logger.debug('First time experience tutorial (7)...');
             await Bluebird.delay(_.random(3500, 6000));
             let batch = client.batchStart();
             batch.markTutorialComplete([7], false, false);
-            let responses = await this.always(batch).batchCall();
+            let responses = await this.always(batch, {nobuddy: true, noinbox: true}).batchCall();
             this.parse(responses);
         }
 
@@ -284,14 +286,14 @@ export default class APIHelper {
             let client = this.state.client;
             let batch = client.batchStart();
             batch.downloadItemTemplates(true);
-            let responses = await this.always(batch, {settings: true, nobuddy: true}).batchCall();
+            let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
             let info = this.parse(responses);
             let item_templates = info.item_templates;
 
             while (info.page_offset !== 0) {
                 batch = client.batchStart();
                 batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
-                responses = await this.always(batch, {settings: true, nobuddy: true}).batchCall();
+                responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
                 info = this.parse(responses);
                 item_templates = item_templates.concat(info.item_templates);
             }
@@ -326,7 +328,7 @@ export default class APIHelper {
             let client = this.state.client;
             let batch = client.batchStart();
             batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
-            let responses = await this.always(batch, {settings: true, nobuddy: true}).batchCall();
+            let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
             let info = this.parse(responses);
             let digest = info.digest;
 
@@ -334,7 +336,7 @@ export default class APIHelper {
                 batch = client.batchStart();
                 batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version,
                                      true, info.page_offset, info.timestamp_ms);
-                responses = await this.always(batch, {settings: true, nobuddy: true}).batchCall();
+                responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
                 info = this.parse(responses);
                 digest = digest.concat(info.digest);
             }
@@ -370,7 +372,6 @@ export default class APIHelper {
         responses.forEach(r => {
             // eslint-disable-next-line no-underscore-dangle
             switch (r._requestType) {
-
                 case RequestType.GET_PLAYER:
                     this.state.player = r.player_data;
                     this.state.player.banned = r.banned;
@@ -573,6 +574,13 @@ export default class APIHelper {
                     };
                     break;
 
+                case RequestType.RECYCLE_INVENTORY_ITEM:
+                    info = {
+                        result: r.result,
+                        new_count: r.new_count,
+                    };
+                    break;
+
                 case RequestType.REGISTER_BACKGROUND_DEVICE:
                     // nothing
                     break;
@@ -589,6 +597,12 @@ export default class APIHelper {
                     };
                     break;
 
+                case RequestType.GET_INBOX:
+                    if (r.inbox.notifications.length > 0) {
+                        logger.debug(r.inbox.notifications);
+                    }
+                    break;
+
                 default:
                     logger.warn('Unhandled request: %s', r._requestType);
                     logger.debug(r);
@@ -597,6 +611,19 @@ export default class APIHelper {
         });
 
         return info;
+    }
+
+    maybeShadowBanned(): boolean {
+        let commonPokemons = [
+            16, 19, 23, 27, 29, 32, 37, 41, 43, 46, 52, 54, 58, 60, 69,
+            72, 74, 77, 81, 90, 98, 118, 120, 129, 155, 161, 165, 167,
+            177, 183, 187, 191, 194, 198, 209, 218, 220, 228
+        ];
+
+        let pokemons: number[] = this.state.map.catchable_pokemons.map(p => p.pokemon_id);
+        pokemons = _.concat(pokemons, this.state.map.nearby_pokemons.map(p => p.pokemon_id));
+
+        return _.difference(pokemons, commonPokemons).length === 0;
     }
 
     /**
@@ -632,7 +659,7 @@ export default class APIHelper {
      * @param {string} version - version string (in the form of 5100)
      * @return {string} iOS version
      */
-    versionToiOSVersion(version) {
+    versionToiOSVersion(version: string) {
         let ver = '1.' + ((+version - 3000)   / 100).toFixed(0);
         ver += '.' + (+version % 100);
         return ver;
@@ -643,7 +670,7 @@ export default class APIHelper {
      * @param {string} version - version string (in the form of 5100)
      * @return {string} client version (like 0.51.0)
      */
-    versionToClientVersion(version) {
+    versionToClientVersion(version: string) {
         let ver = '0.' + ((+version)   / 100).toFixed(0);
         ver += '.' + (+version % 100);
         return ver;

@@ -1,7 +1,7 @@
 require('dotenv').config({silent: true});
 
 import * as pogobuf from 'pogobuf-vnext';
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import {EventEmitter} from 'events';
 import * as logger from 'winston';
 import * as Bluebird from 'bluebird';
@@ -143,7 +143,7 @@ async function loginFlow() {
         logger.debug('Download remote config...');
         batch = client.batchStart();
         batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
-        responses = await apihelper.always(batch, {settings: true, nobuddy: true}).batchCall();
+        responses = await apihelper.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
         apihelper.parse(responses);
 
         await apihelper.getAssetDigest();
@@ -159,7 +159,7 @@ async function loginFlow() {
             // tutorial already done, let's do a getPlayerProfile
             let batch = client.batchStart();
             batch.getPlayerProfile('');
-            let responses = await apihelper.always(batch, {settings: true}).batchCall();
+            let responses = await apihelper.always(batch, {settings: true, noinbox: true}).batchCall();
             apihelper.parse(responses);
         }
 
@@ -289,6 +289,18 @@ App.on('updatePos', async () => {
             }
             await Bluebird.delay(config.delay.evolve * _.random(900, 1100));
 
+        } else if (todo.call === 'drop_items') {
+            let batch = client.batchStart();
+            batch.recycleInventoryItem(todo.id, todo.count);
+            let responses = await apihelper.always(batch).batchCall();
+            let info = apihelper.parse(responses);
+            if (info.result === 1) {
+                logger.info('Items droped', todo.id, info);
+            } else {
+                logger.warn('Error dropping items', info);
+            }
+            await Bluebird.delay(config.delay.recycle * _.random(900, 1100));
+
         } else {
             logger.warn('Unhandled todo: ' + todo.call);
         }
@@ -331,6 +343,10 @@ async function mapRefresh(): Promise<void> {
         batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
         let responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
+
+        if (!apihelper.maybeShadowBanned()) {
+            logger.warn('Not shadowbanned :)');
+        }
 
         App.emit('saveState');
 

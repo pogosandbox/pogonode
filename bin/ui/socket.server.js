@@ -43,10 +43,11 @@ class SocketServer {
             socket.on('player_stats', msg => this.sendPlayerStats(socket));
             socket.on('transfer_pokemon', msg => this.transferPokemon(socket, msg));
             socket.on('evolve_pokemon', msg => this.evolvePokemon(socket, msg));
+            socket.on('drop_items', msg => this.dropItems(socket, msg));
         });
         return httpserver.listenAsync(process.env.PORT || 8000, '0.0.0.0').then(() => {
             let addr = httpserver.address();
-            logger.info('Socket server listening at ' + addr.address + ':' + addr.port);
+            logger.debug('Socket server listening at ' + addr.address + ':' + addr.port);
             return true;
         });
     }
@@ -139,7 +140,9 @@ class SocketServer {
      * @param {object} client - the socket client to send info to
      */
     sendInventory(client) {
-        client.emit('inventory_list', this.state.inventory.items);
+        if (this.state.inventory) {
+            client.emit('inventory_list', this.state.inventory.items);
+        }
     }
     /**
      * Send our pokemon list to the client after it request it
@@ -191,6 +194,18 @@ class SocketServer {
     }
     /**
      * Evolve a pokemon after the client request it
+     * @param {object} client - the socket client to send info to if needed
+     * @param {object} msg - message send from the ui
+     */
+    dropItems(client, msg) {
+        this.state.todo.push({
+            call: 'drop_items',
+            id: msg.id,
+            count: msg.count,
+        });
+    }
+    /**
+     * Drop items after the client request it
      * @param {object} client - the socket client to send info to if needed
      * @param {object} msg - message send from the ui
      */

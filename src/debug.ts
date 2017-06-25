@@ -2,7 +2,7 @@ import * as logger from 'winston';
 import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as long from 'long';
 
 import APIHelper from './helpers/api';
