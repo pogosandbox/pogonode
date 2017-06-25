@@ -34,6 +34,11 @@ class Assets {
             id = id.substring(0, idx);
         return id;
     }
+    getFullIdFromId(id) {
+        let digest = this.state.api.asset_digest;
+        let asset = _.find(digest, d => d.asset_id.startsWith(id));
+        return asset.asset_id;
+    }
     /**
      * If necessary, get download urls of tranlation assets
      */

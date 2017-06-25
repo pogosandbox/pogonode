@@ -44,6 +44,12 @@ export default class Assets {
         return id;
     }
 
+    getFullIdFromId(id: string): string {
+        let digest: any[] = this.state.api.asset_digest;
+        let asset = _.find(digest, d => d.asset_id.startsWith(id));
+        return asset.asset_id;
+    }
+
     /**
      * If necessary, get download urls of tranlation assets
      */

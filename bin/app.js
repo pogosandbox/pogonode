@@ -59,6 +59,7 @@ async function loginFlow() {
     }
     try {
         await assets.loadFromDisk();
+        state.assets = assets;
         let valid = await proxyhelper.checkProxy();
         // find a proxy if 'auto' is set in config
         // then test if to be sure it works
@@ -348,7 +349,8 @@ App.on('saveState', () => {
     // save current state to file (useful for debugging)
     // clean up a little and remove non useful data
     let lightstate = _.cloneDeep(state);
-    lightstate.client = {};
+    lightstate.assets = undefined;
+    lightstate.client = undefined;
     lightstate.api.item_templates = [];
     lightstate.api.asset_digest = [];
     lightstate.events = {};
