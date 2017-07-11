@@ -60,7 +60,7 @@ class Assets {
             assets.push(items.asset_id);
         if (assets.length > 0) {
             logger.debug('Get translation urls...');
-            await this.downloadAssets(assets);
+            await this.downloadAssets(assets, { nobuddy: true, noinbox: true });
         }
     }
     async getAssetsForPokemons() {
@@ -80,12 +80,12 @@ class Assets {
             await this.downloadAssets(assets);
         }
     }
-    async downloadAssets(assets) {
+    async downloadAssets(assets, commons = {}) {
         if (assets.length > 0) {
             let client = this.state.client;
             let batch = client.batchStart();
             batch.getDownloadURLs(assets);
-            this.apihelper.always(batch, { settings: true, nobuddy: true });
+            this.apihelper.always(batch, commons);
             let response = await batch.batchCall();
             let info = this.apihelper.parse(response);
             let urls = info.download_urls;

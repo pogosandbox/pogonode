@@ -72,7 +72,7 @@ export default class Assets {
 
         if (assets.length > 0) {
             logger.debug('Get translation urls...');
-            await this.downloadAssets(assets);
+            await this.downloadAssets(assets, { nobuddy: true, noinbox: true });
         }
     }
 
@@ -96,12 +96,12 @@ export default class Assets {
         }
     }
 
-    async downloadAssets(assets: string[]) {
+    async downloadAssets(assets: string[], commons = {}) {
         if (assets.length > 0) {
             let client: pogobuf.Client = this.state.client;
             let batch = client.batchStart();
             batch.getDownloadURLs(assets);
-            this.apihelper.always(batch, { settings: true, nobuddy: true });
+            this.apihelper.always(batch, commons);
             let response = await batch.batchCall();
             let info = this.apihelper.parse(response);
 
