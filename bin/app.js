@@ -171,6 +171,8 @@ async function loginFlow() {
                 proxyhelper.badProxy(); // connection reset
             else if (e.message.indexOf('ECONNREFUSED ') >= 0)
                 proxyhelper.badProxy(); // connection refused
+            else if (e.message.indexOf('Status 409 received from PTC login') >= 0)
+                proxyhelper.badProxy(); // ptc ban
             logger.error('Exiting.');
             process.exit();
         }
