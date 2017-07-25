@@ -18,12 +18,12 @@
     "express": "^4.15.3",
     "geolib": "^2.0.22",
     "googlemaps": "^1.12.0",
-    "js-yaml": "^3.8.4",
+    "js-yaml": "^3.9.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "mz": "^2.6.0",
     "nightmare": "^2.10.0",
-    "pogobuf-vnext": "pogosandbox/pogobuf#dev",
+    "pogobuf-vnext": "github:pogosandbox/pogobuf#dev",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "semver-compare": "^1.0.0",
@@ -34,13 +34,13 @@
   "devDependencies": {
     "@types/bluebird": "^3.5.8",
     "@types/bytebuffer": "^5.0.33",
-    "@types/mz": "^0.0.31",
-    "@types/lodash": "^4.14.68",
+    "@types/lodash": "^4.14.71",
     "@types/long": "^3.0.31",
-    "@types/node": "^8.0.7",
-    "@types/request-promise": "^4.1.35",
-    "@types/winston": "^2.3.3",
-    "tslint": "^5.4.3",
-    "typescript": "^2.4.1"
+    "@types/mz": "^0.0.31",
+    "@types/node": "^8.0.16",
+    "@types/request-promise": "^4.1.36",
+    "@types/winston": "^2.3.4",
+    "tslint": "^5.5.0",
+    "typescript": "^2.4.2"
   }
 }

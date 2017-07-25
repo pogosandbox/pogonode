@@ -101,7 +101,7 @@ class Player {
                     pokemon_id: pk.pokemon_id,
                 };
                 if (this.config.behavior.catch) {
-                    await Bluebird.delay(this.config.delay.catch * 1000);
+                    await Bluebird.delay(this.config.delay.catch * _.random(900, 1100));
                     let pokemon = await this.catchPokemon(encounter);
                     await this.releaseIfNotGoodEnough(pokemon);
                 }
