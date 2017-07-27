@@ -95,7 +95,7 @@ async function loginFlow() {
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
-            maxTries: 1,
+            maxTries: 5,
         });
 
         state.client = client;
@@ -306,6 +306,8 @@ App.on('updatePos', async () => {
         } else {
             logger.warn('Unhandled todo: ' + todo.call);
         }
+    } else {
+        await player.cleanInventory();
     }
 
     let min: number = +state.download_settings.map_settings.get_map_objects_min_refresh_seconds;

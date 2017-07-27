@@ -225,21 +225,24 @@ class Player {
         if (!this.config.inventory)
             return;
         let limits = this.config.inventory;
-        logger.debug('Recycle inventory...');
         let items = this.state.inventory.items;
-        for (let item of items) {
-            if (_.has(limits, item.item_id)) {
-                let drop = item.count - Math.min(item.count, limits[item.item_id]);
-                if (drop > 0) {
-                    logger.debug('Drop %d of %d', drop, item.item_id);
-                    let batch = this.state.client.batchStart();
-                    batch.recycleInventoryItem(item.item_id, drop);
-                    let responses = await this.apihelper.always(batch).batchCall();
-                    let info = this.apihelper.parse(responses);
-                    if (info.result !== 1) {
-                        logger.warn('Error dropping items', info);
+        let total = _.reduce(items, (sum, i) => sum + i.count, 0);
+        if (total > 300) {
+            logger.debug('Recycle inventory...');
+            for (let item of items) {
+                if (_.has(limits, item.item_id)) {
+                    let drop = item.count - Math.min(item.count, limits[item.item_id]);
+                    if (drop > 0) {
+                        logger.debug('Drop %d of %d', drop, item.item_id);
+                        let batch = this.state.client.batchStart();
+                        batch.recycleInventoryItem(item.item_id, drop);
+                        let responses = await this.apihelper.always(batch).batchCall();
+                        let info = this.apihelper.parse(responses);
+                        if (info.result !== 1) {
+                            logger.warn('Error dropping items', info);
+                        }
+                        await Bluebird.delay(this.config.delay.recycle * _.random(900, 1100));
                     }
-                    await Bluebird.delay(this.config.delay.recycle * _.random(900, 1100));
                 }
             }
         }
