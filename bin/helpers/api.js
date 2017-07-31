@@ -145,10 +145,10 @@ class APIHelper {
         logger.info('Completing tutorials...');
         if (!_.includes(tuto, 0)) {
             logger.debug('Legal screen tutorial (0)...');
-            await Bluebird.delay(_.random(2000.0, 5000.0));
+            await Bluebird.delay(_.random(4, 7, true) * 1000);
             // complete tutorial
             let batch = client.batchStart();
-            batch.markTutorialComplete([0], false, false);
+            batch.markTutorialComplete(0, false, false);
             let responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
             this.parse(responses);
             batch = client.batchStart();
@@ -170,16 +170,12 @@ class APIHelper {
             this.parse(responses);
             await Bluebird.delay(_.random(1000, 1700));
             batch = client.batchStart();
-            batch.markTutorialComplete([1], false, false);
+            batch.markTutorialComplete(1, false, false);
             responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
             this.parse(responses);
             batch = client.batchStart();
             batch.getPlayerProfile();
-            responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
-            this.parse(responses);
-            batch = client.batchStart();
-            batch.registerBackgroundDevice('apple_watch', '');
-            responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
         }
         if (!_.includes(tuto, 3)) {
@@ -187,40 +183,44 @@ class APIHelper {
             // encounter starter pokemon
             let batch = client.batchStart();
             batch.getDownloadURLs([
-                '1a3c2816-65fa-4b97-90eb-0b301c064b7a/1477084786906000',
-                'e89109b0-9a54-40fe-8431-12f7826c8194/1477084802881000',
+                this.state.assets.getFullIdFromId('1a3c2816-65fa-4b97-90eb-0b301c064b7a'),
+                this.state.assets.getFullIdFromId('e89109b0-9a54-40fe-8431-12f7826c8194'),
             ]);
-            let responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            let responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
-            await Bluebird.delay(_.random(7000, 10000));
+            await Bluebird.delay(_.random(10000, 13000));
             batch = client.batchStart();
             let pkmId = [1, 4, 7][_.random(3)];
             batch.encounterTutorialComplete(pkmId);
-            responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
             batch = client.batchStart();
             batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
-            responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
         }
         if (!_.includes(tuto, 4)) {
             logger.debug('Name tutorial (4)...');
-            await Bluebird.delay(_.random(5000, 11500));
+            await Bluebird.delay(_.random(7000, 13500));
             let batch = client.batchStart();
             batch.claimCodename(this.config.credentials.user);
-            let responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            let responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
             batch = client.batchStart();
-            batch.markTutorialComplete([4], false, false);
-            responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            batch.getPlayer(this.config.api.country, this.config.api.language, this.config.api.timezone);
+            responses = await this.always(batch, { noinbox: true }).batchCall();
+            this.parse(responses);
+            batch = client.batchStart();
+            batch.markTutorialComplete(4, false, false);
+            responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
         }
         if (!_.includes(tuto, 7)) {
             logger.debug('First time experience tutorial (7)...');
             await Bluebird.delay(_.random(3500, 6000));
             let batch = client.batchStart();
-            batch.markTutorialComplete([7], false, false);
-            let responses = await this.always(batch, { nobuddy: true, noinbox: true }).batchCall();
+            batch.markTutorialComplete(7, false, false);
+            let responses = await this.always(batch, { noinbox: true }).batchCall();
             this.parse(responses);
         }
         return true;

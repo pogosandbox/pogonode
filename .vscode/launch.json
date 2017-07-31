@@ -15,7 +15,8 @@
                 "NODE_TLS_REJECT_UNAUTHORIZED": "0"
             },
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
-            "sourceMaps": true
+            "sourceMaps": true,
+            "stopOnEntry": false
         },
         {
             "type": "node",
