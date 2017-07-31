@@ -11,7 +11,6 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "bluebird-retry": "^0.11.0",
-    "bytebuffer": "^5.0.1",
     "cheerio": "^0.22.0",
     "dotenv": "^4.0.0",
     "events": "^1.1.1",
@@ -33,7 +32,6 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.8",
-    "@types/bytebuffer": "^5.0.33",
     "@types/lodash": "^4.14.71",
     "@types/long": "^3.0.31",
     "@types/mz": "^0.0.31",
