@@ -48,10 +48,10 @@ class Walker {
      */
     async generatePath() {
         // logger.debug("Get new path.");
-        let state = this.state;
-        let target = state.path.target = this.findNextPokestop();
+        const state = this.state;
+        const target = state.path.target = this.findNextPokestop();
         if (target) {
-            let gmAPI = new GoogleMapsAPI({
+            const gmAPI = new GoogleMapsAPI({
                 key: this.config.gmapKey,
             });
             return gmAPI.directionsAsync({ origin: `${state.pos.lat},${state.pos.lng}`, destination: `${target.latitude},${target.longitude}`, mode: 'walking' })
@@ -97,13 +97,13 @@ class Walker {
         if (!this.state.path || this.state.path.waypoints.length === 0)
             return;
         // move towards next target
-        let dest = this.state.path.waypoints[0];
+        const dest = this.state.path.waypoints[0];
         let speed = this.config.speed;
         speed += (Math.random() - 0.5) * speed * 0.1;
-        let speedms = speed / 3.6;
+        const speedms = speed / 3.6;
         let dist = this.distance(dest);
-        let step = dist / speedms;
-        let newpos = {
+        const step = dist / speedms;
+        const newpos = {
             lat: this.state.pos.lat + (dest.lat - this.state.pos.lat) / step,
             lng: this.state.pos.lng + (dest.lng - this.state.pos.lng) / step,
         };
@@ -148,10 +148,10 @@ class Walker {
      */
     async getAltitude(latlng) {
         try {
-            let gmAPI = new GoogleMapsAPI({
+            const gmAPI = new GoogleMapsAPI({
                 key: this.config.gmapKey,
             });
-            let data = await gmAPI.elevationFromLocationsAsync({
+            const data = await gmAPI.elevationFromLocationsAsync({
                 locations: `${latlng.lat},${latlng.lng}`,
             });
             if (data && data.results.length > 0) {

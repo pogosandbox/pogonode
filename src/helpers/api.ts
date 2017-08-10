@@ -8,6 +8,7 @@ import * as fs from 'mz/fs';
 
 const vercmp = require('semver-compare');
 const util = require('util');
+const jsondiffpatch = require('jsondiffpatch');
 
 /**
  * Throw that there is a challenge needed
@@ -70,31 +71,31 @@ export default class APIHelper {
      * @param {object} r - inventory responses
      */
     parseInventoryDelta(r) {
-        let split = pogobuf.Utils.splitInventory(r);
+        const split = pogobuf.Utils.splitInventory(r);
 
         if (split.pokemon.length > 0) {
             _.each(split.pokemon, pkm => {
                 // add new pokemon to inventory, removing it if already there (to be sure)
                 if (pkm.is_egg) {
-                    let eggs: any[] = this.state.inventory.eggs;
+                    const eggs: any[] = this.state.inventory.eggs;
                     this.state.inventory.eggs = _.filter(eggs, e => e.id !== pkm.id);
                     this.state.inventory.eggs.push(pkm);
                 } else {
-                    let pokemons: any[] = this.state.inventory.pokemon;
+                    const pokemons: any[] = this.state.inventory.pokemon;
                     this.state.inventory.pokemon = _.filter(pokemons, e => e.id !== pkm.id);
                     this.state.inventory.pokemon.push(pkm);
                 }
             });
         }
         if (split.removed_pokemon.length > 0) {
-            let pokemons: any[] = this.state.inventory.pokemon;
+            const pokemons: any[] = this.state.inventory.pokemon;
             this.state.inventory.pokemon = _.filter(pokemons, e => split.removed_pokemon.indexOf(e.id) < 0);
         }
         if (split.items.length > 0) {
             // replace any modified item in inventory
             _.each(split.items, i => {
-                let items: any[] = this.state.inventory.items;
-                let item = _.find(items, it => it.item_id === i.item_id);
+                const items: any[] = this.state.inventory.items;
+                const item = _.find(items, it => it.item_id === i.item_id);
                 if (item) {
                     item.count = i.count;
                     item.unseen = i.unseen;
@@ -104,7 +105,7 @@ export default class APIHelper {
             });
         }
         if (split.player) {
-            let lvl = this.state.inventory.player.level;
+            const lvl = this.state.inventory.player.level;
             this.state.inventory.player = split.player;
             if (this.state.inventory.player.level !== lvl) {
                 // level up
@@ -121,8 +122,8 @@ export default class APIHelper {
      * @return {object} avatar to pass to setAvatar()
      */
     generateAvatar() {
-        let hair = _.random(0, 5);
-        let eyes = _.random(0, 4);
+        const hair = _.random(0, 5);
+        const eyes = _.random(0, 4);
         return {
             avatar: 0,
             skin: _.random(0, 3),
@@ -147,8 +148,8 @@ export default class APIHelper {
      * @return {Promise<void>} Promise
      */
     async completeTutorial(): Promise<boolean> {
-        let tuto = this.state.player.tutorial_state || [];
-        let client = this.state.client;
+        const tuto = this.state.player.tutorial_state || [];
+        const client = this.state.client;
         if (_.difference([0, 1, 3, 4, 7], tuto).length === 0) return false;
 
         logger.info('Completing tutorials...');
@@ -210,7 +211,7 @@ export default class APIHelper {
             await Bluebird.delay(_.random(10000, 13000));
 
             batch = client.batchStart();
-            let pkmId = [1, 4, 7][_.random(3)];
+            const pkmId = [1, 4, 7][_.random(3)];
             batch.encounterTutorialComplete(pkmId);
             responses = await this.always(batch, {noinbox: true}).batchCall();
             this.parse(responses);
@@ -243,9 +244,9 @@ export default class APIHelper {
         if (!_.includes(tuto, 7)) {
             logger.debug('First time experience tutorial (7)...');
             await Bluebird.delay(_.random(3500, 6000));
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.markTutorialComplete(7, false, false);
-            let responses = await this.always(batch, {noinbox: true}).batchCall();
+            const responses = await this.always(batch, {noinbox: true}).batchCall();
             this.parse(responses);
         }
 
@@ -256,7 +257,7 @@ export default class APIHelper {
      * Verify client version
      */
     async verifyMinimumVersion(minimum: string) {
-        let clientversion = this.versionToClientVersion(this.config.api.version);
+        const clientversion = this.versionToClientVersion(this.config.api.version);
         if (vercmp(minimum, clientversion) > 0) {
             if (this.config.api.checkversion) {
                 throw new Error(`Minimum client version=${minimum}, ${clientversion} is too low.`);
@@ -275,15 +276,15 @@ export default class APIHelper {
 
         let last = 0;
         if (fs.existsSync('data/item_templates.json')) {
-            let json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
-            let data = JSON.parse(json);
+            const json = fs.readFileSync('data/item_templates.json', {encoding: 'utf8'});
+            const data = JSON.parse(json);
             this.state.api.item_templates = data.templates;
             last = data.timestamp_ms || 0;
         }
 
         if (!last || last < this.state.api.item_templates_timestamp) {
             logger.info('Game master updating...');
-            let client = this.state.client;
+            const client = this.state.client;
             let batch = client.batchStart();
             batch.downloadItemTemplates(true);
             let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
@@ -298,12 +299,35 @@ export default class APIHelper {
                 item_templates = item_templates.concat(info.item_templates);
             }
 
-            this.state.api.item_templates = item_templates;
+            if (last) {
+                const oldone = `data/item_templates.${last}.json`;
+                await fs.rename('data/item_templates.json', oldone);
+                const delta = jsondiffpatch.create({ }).diff(item_templates, this.state.api.item_templates);
+                let html = 'no diff';
+                if (delta) {
+                    html = jsondiffpatch.formatters.html.format(delta, item_templates);
+                }
+                const visualize = `
+                    <!DOCTYPE html>
+                    <html>
+                        <head>
+                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch.min.js"></script> 
+                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch-formatters.min.js"></script> 
+                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/html.css" type="text/css" />
+                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/annotated.css" type="text/css" />
+                        </head>
+                        <body>
+                            <div id="visual">${html}</div>
+                        </body>
+                    </html>`;
+                await fs.writeFile('data/gamemaster_diff.html', visualize, 'utf8');
+            }
 
-            let json = JSON.stringify({
+            this.state.api.item_templates = item_templates;
+            const json = JSON.stringify({
                 templates: item_templates,
                 timestamp_ms: info.timestamp_ms,
-            }, null, 4);
+            }, null, 2);
             await fs.writeFile('data/item_templates.json', json);
         }
     }
@@ -317,15 +341,15 @@ export default class APIHelper {
 
         let last = 0;
         if (fs.existsSync('data/asset_digest.json')) {
-            let json = fs.readFileSync('data/asset_digest.json', {encoding: 'utf8'});
-            let data = JSON.parse(json);
+            const json = fs.readFileSync('data/asset_digest.json', {encoding: 'utf8'});
+            const data = JSON.parse(json);
             this.state.api.asset_digest = data.digest;
             last = data.timestamp_ms || 0;
         }
 
         if (!last || last < this.state.api.asset_digest_timestamp) {
             logger.info('Asset digest updating...');
-            let client = this.state.client;
+            const client = this.state.client;
             let batch = client.batchStart();
             batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
             let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
@@ -347,10 +371,10 @@ export default class APIHelper {
 
             this.state.api.asset_digest = digest;
 
-            let json = JSON.stringify({
-                digest: digest,
+            const json = JSON.stringify({
+                digest,
                 timestamp_ms: info.timestamp_ms,
-            }, null, 4);
+            }, null, 2);
             await fs.writeFile('data/asset_digest.json', json);
         }
     }
@@ -385,7 +409,7 @@ export default class APIHelper {
                     if (!this.state.hasOwnProperty('inventory')) {
                         // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
                         this.state.inventory = pogobuf.Utils.splitInventory(r);
-                        let pokemons: any[] = this.state.inventory.pokemon;
+                        const pokemons: any[] = this.state.inventory.pokemon;
                         this.state.inventory.eggs = _.filter(pokemons, p => p.is_egg);
                         this.state.inventory.pokemon = _.filter(pokemons, p => !p.is_egg);
 
@@ -422,8 +446,8 @@ export default class APIHelper {
                 case RequestType.FORT_SEARCH:
                     if (r.result === 1) {
                         _.each(r.items_awarded, i => {
-                            let items:  any[] = this.state.inventory.items;
-                            let item = _.find(items, it => it.item_id === i.item_id);
+                            const items: any[] = this.state.inventory.items;
+                            const item = _.find(items, it => it.item_id === i.item_id);
                             if (item) item.count += i.item_count;
                         });
 
@@ -467,17 +491,17 @@ export default class APIHelper {
                     break;
 
                 case RequestType.GET_MAP_OBJECTS:
-                    let forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
-                    let pokestops = forts.filter(f => f.type === 1);
-                    let gyms = forts.filter(f => f.type === 0);
-                    let wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
-                    let catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
-                    let nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
+                    const forts = r.map_cells.reduce((all, c) => all.concat(c.forts), []);
+                    const pokestops = forts.filter(f => f.type === 1);
+                    const gyms = forts.filter(f => f.type === 0);
+                    const wildPokemons = r.map_cells.reduce((all, c) => all.concat(c.wild_pokemons), []);
+                    const catchablePokemons = r.map_cells.reduce((all, c) => all.concat(c.catchable_pokemons), []);
+                    const nearbyPokemons = r.map_cells.reduce((all, c) => all.concat(c.nearby_pokemons), []);
                     // let spawnPoints = r.map_cells.reduce((all, c) => all.concat(c.spawn_points), []);
 
                     this.state.map = {
-                        pokestops: pokestops,
-                        gyms: gyms,
+                        pokestops,
+                        gyms,
                         wild_pokemons: wildPokemons,
                         catchable_pokemons: catchablePokemons,
                         nearby_pokemons: nearbyPokemons,
@@ -491,7 +515,7 @@ export default class APIHelper {
 
                 case RequestType.GET_HATCHED_EGGS:
                     if (r.hatched_pokemon && r.hatched_pokemon.length > 0) {
-                        let pkm = r.hatched_pokemon[0];
+                        const pkm = r.hatched_pokemon[0];
                         logger.info('An egg has hatched, pokemon_id: %d.', pkm.pokemon_id);
                     }
                     break;
@@ -614,7 +638,7 @@ export default class APIHelper {
     }
 
     maybeShadowBanned(): boolean {
-        let commonPokemons = [
+        const commonPokemons = [
             16, 19, 23, 27, 29, 32, 37, 41, 43, 46, 52, 54, 58, 60, 69,
             72, 74, 77, 81, 90, 98, 118, 120, 129, 155, 161, 165, 167,
             177, 183, 187, 191, 194, 198, 209, 218, 220, 228
@@ -640,7 +664,7 @@ export default class APIHelper {
      * @return {Promise<string>} Minimum app version
      */
     async getRpcVersion(): Promise<string> {
-        let options = {
+        const options = {
             uri: 'https://pgorelease.nianticlabs.com/plfe/version',
             headers: {
                 'accept': '*/*',
@@ -650,7 +674,7 @@ export default class APIHelper {
             },
             gzip: true,
         };
-        let version = await request.get(options);
+        const version = await request.get(options);
         return version.replace(/[^(\d|\.)+]/g, '');
     }
 

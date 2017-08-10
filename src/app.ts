@@ -22,7 +22,7 @@ import CaptchaHelper from './captcha/captcha.helper';
 //     logger.error('Leak detected', info);
 // });
 
-let config = require('./helpers/config').load();
+const config = require('./helpers/config').load();
 
 if (!config.credentials.user) {
     logger.error('Invalid credentials. Please fill data/config.yaml.');
@@ -30,7 +30,7 @@ if (!config.credentials.user) {
     process.exit();
 }
 
-let state: any = {
+const state: any = {
     pos: {
         lat: config.pos.lat,
         lng: config.pos.lng,
@@ -50,12 +50,12 @@ class AppEvents extends EventEmitter {}
 const App = new AppEvents();
 state.events = App;
 
-let apihelper = new APIHelper(config, state);
-let walker = new Walker(config, state);
-let player = new Player(config, state);
-let proxyhelper = new ProxyHelper(config, state);
-let socket = new SocketServer(config, state);
-let assets = new Assets(config, state);
+const apihelper = new APIHelper(config, state);
+const walker = new Walker(config, state);
+const player = new Player(config, state);
+const proxyhelper = new ProxyHelper(config, state);
+const socket = new SocketServer(config, state);
+const assets = new Assets(config, state);
 
 let client: pogobuf.Client;
 
@@ -68,7 +68,7 @@ async function loginFlow() {
         await assets.loadFromDisk();
         state.assets = assets;
 
-        let valid = await proxyhelper.checkProxy();
+        const valid = await proxyhelper.checkProxy();
 
         // find a proxy if 'auto' is set in config
         // then test if to be sure it works
@@ -100,16 +100,16 @@ async function loginFlow() {
 
         state.client = client;
 
-        let altitude = await walker.getAltitude(state.pos);
+        const altitude = await walker.getAltitude(state.pos);
 
-        let pos = walker.fuzzedLocation(state.pos);
+        const pos = walker.fuzzedLocation(state.pos);
         client.setPosition({
             latitude: pos.lat,
             longitude: pos.lng,
-            altitude: altitude,
+            altitude,
         });
 
-        let version = await apihelper.getRpcVersion();
+        const version = await apihelper.getRpcVersion();
         logger.info('Minimum app version: %s', version);
         apihelper.verifyMinimumVersion(version);
 
@@ -127,8 +127,8 @@ async function loginFlow() {
         logger.info('Logged In.');
 
         if (config.hashserver.active) {
-            let rateInfos = client.getSignatureRateInfo();
-            let hashExpiration = moment.unix(+rateInfos['expiration']);
+            const rateInfos = client.getSignatureRateInfo();
+            const hashExpiration = moment.unix(+rateInfos['expiration']);
             logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
         }
 
@@ -158,9 +158,9 @@ async function loginFlow() {
         logger.debug('Checking tutorial state...');
         if (!await apihelper.completeTutorial()) {
             // tutorial already done, let's do a getPlayerProfile
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.getPlayerProfile('');
-            let responses = await apihelper.always(batch, {settings: true, noinbox: true}).batchCall();
+            const responses = await apihelper.always(batch, {settings: true, noinbox: true}).batchCall();
             apihelper.parse(responses);
         }
 
@@ -209,14 +209,14 @@ async function loginFlow() {
  */
 async function resolveChallenge(url) {
     // Manually solve challenge using embeded Browser.
-    let helper = new CaptchaHelper(config, state);
+    const helper = new CaptchaHelper(config, state);
 
-    let token = await helper.solveCaptchaManual(url);
+    const token = await helper.solveCaptchaManual(url);
     if (token) {
-        let batch = client.batchStart();
+        const batch = client.batchStart();
         batch.verifyChallenge(token);
-        let responses = await apihelper.always(batch).batchCall();
-        let info = apihelper.parse(responses);
+        const responses = await apihelper.always(batch).batchCall();
+        const info = apihelper.parse(responses);
         if (!info.success) {
             logger.error('Incorrect captcha token sent.');
         }
@@ -241,17 +241,17 @@ App.on('apiReady', async () => {
 });
 
 App.on('updatePos', async () => {
-    let path = await walker.checkPath();
+    const path = await walker.checkPath();
     if (path) socket.sendRoute(path.waypoints);
 
     await walker.walk();
-    let altitude = await walker.getAltitude(state.pos);
+    const altitude = await walker.getAltitude(state.pos);
 
-    let pos = walker.fuzzedLocation(state.pos);
+    const pos = walker.fuzzedLocation(state.pos);
     client.setPosition({
         latitude: pos.lat,
         longitude: pos.lng,
-        altitude: altitude,
+        altitude,
     });
 
     socket.sendPosition();
@@ -259,19 +259,19 @@ App.on('updatePos', async () => {
     // actions have been requested, but we only call them if
     // there is nothing going down at the same time
     if (state.todo.length > 0) {
-        let todo = state.todo.shift();
+        const todo = state.todo.shift();
         if (todo.call === 'level_up') {
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.levelUpRewards(state.inventory.player.level);
-            let responses = await apihelper.always(batch).batchCall();
+            const responses = await apihelper.always(batch).batchCall();
             apihelper.parse(responses);
             await Bluebird.delay(config.delay.levelUp * _.random(900, 1100));
 
         } else if (todo.call === 'release_pokemon') {
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.releasePokemon(todo.pokemons);
-            let responses = await apihelper.always(batch).batchCall();
-            let info = apihelper.parse(responses);
+            const responses = await apihelper.always(batch).batchCall();
+            const info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon released', todo.pokemons, info);
             } else {
@@ -280,10 +280,10 @@ App.on('updatePos', async () => {
             await Bluebird.delay(config.delay.release * _.random(900, 1100));
 
         } else if (todo.call === 'evolve_pokemon') {
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.evolvePokemon(todo.pokemon, 0);
-            let responses = await apihelper.always(batch).batchCall();
-            let info = apihelper.parse(responses);
+            const responses = await apihelper.always(batch).batchCall();
+            const info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Pokemon evolved', todo.pokemon, info);
             } else {
@@ -292,10 +292,10 @@ App.on('updatePos', async () => {
             await Bluebird.delay(config.delay.evolve * _.random(900, 1100));
 
         } else if (todo.call === 'drop_items') {
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.recycleInventoryItem(todo.id, todo.count);
-            let responses = await apihelper.always(batch).batchCall();
-            let info = apihelper.parse(responses);
+            const responses = await apihelper.always(batch).batchCall();
+            const info = apihelper.parse(responses);
             if (info.result === 1) {
                 logger.info('Items droped', todo.id, info);
             } else {
@@ -310,9 +310,9 @@ App.on('updatePos', async () => {
         await player.cleanInventory();
     }
 
-    let min: number = +state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
-    let max: number = +state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
-    let mindist: number = +state.download_settings.map_settings.get_map_objects_min_distance_meters;
+    const min: number = +state.download_settings.map_settings.get_map_objects_min_refresh_seconds;
+    const max: number = +state.download_settings.map_settings.get_map_objects_max_refresh_seconds;
+    const mindist: number = +state.download_settings.map_settings.get_map_objects_min_distance_meters;
 
     if (!state.api.last_gmo || moment().subtract(max, 's').isAfter(state.api.last_gmo)) {
         // no previous call, fire a getMapObjects
@@ -337,15 +337,15 @@ App.on('updatePos', async () => {
 async function mapRefresh(): Promise<void> {
     logger.info('Map Refresh', {pos: state.pos});
     try {
-        let cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
+        const cellIDs = pogobuf.Utils.getCellIDs(state.pos.lat, state.pos.lng);
 
         // save where and when, usefull to know when to call next getMapObjects
         state.api.last_gmo = moment();
         state.api.last_pos = {lat: state.pos.lat, lng: state.pos.lng};
 
-        let batch = client.batchStart();
+        const batch = client.batchStart();
         batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
-        let responses = await apihelper.always(batch).batchCall();
+        const responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
 
         if (!apihelper.maybeShadowBanned()) {
@@ -361,7 +361,7 @@ async function mapRefresh(): Promise<void> {
         socket.sendPokestops();
 
         // spin pokestop that are close enough
-        let stops = player.findSpinnablePokestops();
+        const stops = player.findSpinnablePokestops();
         await player.spinPokestops(stops);
 
         // encounter available pokemons
@@ -399,7 +399,7 @@ App.on('pokemon_caught', pokemon => {
 App.on('saveState', () => {
     // save current state to file (useful for debugging)
     // clean up a little and remove non useful data
-    let lightstate = _.cloneDeep(state);
+    const lightstate = _.cloneDeep(state);
     lightstate.assets = undefined;
     lightstate.client = undefined;
     lightstate.api.item_templates = [];
