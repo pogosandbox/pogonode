@@ -203,6 +203,7 @@ export default class APIHelper {
             let batch = client.batchStart();
             batch.getDownloadURLs([
                 this.state.assets.getFullIdFromId('1a3c2816-65fa-4b97-90eb-0b301c064b7a'),
+                this.state.assets.getFullIdFromId('aa8f7687-a022-4773-b900-3a8c170e9aea'),
                 this.state.assets.getFullIdFromId('e89109b0-9a54-40fe-8431-12f7826c8194'),
             ]);
             let responses = await this.always(batch, {noinbox: true}).batchCall();
@@ -226,7 +227,7 @@ export default class APIHelper {
             logger.debug('Name tutorial (4)...');
             await Bluebird.delay(_.random(7000, 13500));
             let batch = client.batchStart();
-            batch.claimCodename(this.config.credentials.user);
+            batch.claimCodename(this.config.credentials.user, false);
             let responses = await this.always(batch, {noinbox: true}).batchCall();
             this.parse(responses);
 
