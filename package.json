@@ -15,8 +15,8 @@
     "cheerio": "^0.22.0",
     "dotenv": "^4.0.0",
     "events": "^1.1.1",
-    "express": "^4.15.3",
-    "geolib": "^2.0.22",
+    "express": "^4.15.4",
+    "geolib": "^2.0.23",
     "googlemaps": "^1.12.0",
     "js-yaml": "^3.9.0",
     "jsondiffpatch": "^0.2.4",
@@ -34,13 +34,13 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.8",
-    "@types/lodash": "^4.14.71",
-    "@types/long": "^3.0.31",
+    "@types/lodash": "^4.14.74",
+    "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.0.17",
-    "@types/request-promise": "^4.1.36",
-    "@types/winston": "^2.3.4",
-    "tslint": "^5.5.0",
-    "typescript": "^2.4.2"
+    "@types/node": "^8.0.26",
+    "@types/request-promise": "^4.1.37",
+    "@types/winston": "^2.3.5",
+    "tslint": "^5.7.0",
+    "typescript": "^2.5.2"
   }
 }
