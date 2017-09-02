@@ -40,7 +40,7 @@ api:
   country: US
   language: en
   timezone: Europe/Paris
-  version: '5901'
+  version: '6901'
 
 # configuration for hashserver
 # if active=true, use hashserver, if not using native hashing (ver=0.45)
