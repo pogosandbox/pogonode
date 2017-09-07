@@ -1,4 +1,4 @@
-import * as pogobuf from 'pogobuf-vnext';
+import * as pogobuf from '../../pogobuf';
 import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as logger from 'winston';
 import * as _ from 'lodash';
@@ -355,7 +355,7 @@ export default class APIHelper {
             batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
             let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
             let info = this.parse(responses);
-            let digest = info.digest;
+            let digest: any[] = info.digest;
 
             while (info.page_offset !== 0) {
                 batch = client.batchStart();
@@ -405,7 +405,7 @@ export default class APIHelper {
                     if (r.warn) logger.error('Ban warning.');
                     break;
 
-                case RequestType.GET_INVENTORY:
+                case RequestType.GET_HOLO_INVENTORY:
                     this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
                     if (!this.state.hasOwnProperty('inventory')) {
                         // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
@@ -446,7 +446,7 @@ export default class APIHelper {
 
                 case RequestType.FORT_SEARCH:
                     if (r.result === 1) {
-                        _.each(r.items_awarded, i => {
+                        _.each(<any[]>r.items_awarded, i => {
                             const items: any[] = this.state.inventory.items;
                             const item = _.find(items, it => it.item_id === i.item_id);
                             if (item) item.count += i.item_count;
