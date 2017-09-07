@@ -1,4 +1,4 @@
-import * as pogobuf from '../../pogobuf';
+import * as pogobuf from 'pogobuf-vnext';
 import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as logger from 'winston';
 import * as _ from 'lodash';
@@ -49,7 +49,7 @@ export default class APIHelper {
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch: pogobuf.Client, options?: any) {
+    always(batch: pogobuf.Client, options?: any): pogobuf.Client {
         if (!options) options = {};
 
         batch = batch.checkChallenge()
