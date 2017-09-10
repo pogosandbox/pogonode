@@ -19,7 +19,6 @@
     "geolib": "^2.0.23",
     "googlemaps": "^1.12.0",
     "js-yaml": "^3.9.0",
-    "jsondiffpatch": "^0.2.4",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "mz": "^2.6.0",
