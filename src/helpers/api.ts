@@ -8,7 +8,6 @@ import * as fs from 'mz/fs';
 
 const vercmp = require('semver-compare');
 const util = require('util');
-const jsondiffpatch = require('jsondiffpatch');
 
 /**
  * Throw that there is a challenge needed
@@ -49,7 +48,7 @@ export default class APIHelper {
      * @param {Client} batch - pogobuf client
      * @return {Client} current client in order to chain call
      */
-    always(batch: pogobuf.Client, options?: any) {
+    always(batch: pogobuf.Client, options?: any): pogobuf.Client {
         if (!options) options = {};
 
         batch = batch.checkChallenge()
@@ -138,7 +137,7 @@ export default class APIHelper {
             avatar_socks: 'AVATAR_m_socks_default_3',
             avatar_belt: '',
             avatar_glasses: 'AVATAR_m_glasses_empty',
-            avatar_necklace: ''
+            avatar_necklace: '',
         };
     }
 
@@ -300,30 +299,6 @@ export default class APIHelper {
                 item_templates = item_templates.concat(info.item_templates);
             }
 
-            if (last) {
-                const oldone = `data/item_templates.${last}.json`;
-                await fs.rename('data/item_templates.json', oldone);
-                const delta = jsondiffpatch.create({ }).diff(item_templates, this.state.api.item_templates);
-                let html = 'no diff';
-                if (delta) {
-                    html = jsondiffpatch.formatters.html.format(delta, item_templates);
-                }
-                const visualize = `
-                    <!DOCTYPE html>
-                    <html>
-                        <head>
-                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch.min.js"></script> 
-                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch-formatters.min.js"></script> 
-                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/html.css" type="text/css" />
-                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/annotated.css" type="text/css" />
-                        </head>
-                        <body>
-                            <div id="visual">${html}</div>
-                        </body>
-                    </html>`;
-                await fs.writeFile('data/gamemaster_diff.html', visualize, 'utf8');
-            }
-
             this.state.api.item_templates = item_templates;
             const json = JSON.stringify({
                 templates: item_templates,
@@ -355,7 +330,7 @@ export default class APIHelper {
             batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
             let responses = await this.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
             let info = this.parse(responses);
-            let digest = info.digest;
+            let digest: any[] = info.digest;
 
             while (info.page_offset !== 0) {
                 batch = client.batchStart();
@@ -446,7 +421,7 @@ export default class APIHelper {
 
                 case RequestType.FORT_SEARCH:
                     if (r.result === 1) {
-                        _.each(r.items_awarded, i => {
+                        _.each(<any[]>r.items_awarded, i => {
                             const items: any[] = this.state.inventory.items;
                             const item = _.find(items, it => it.item_id === i.item_id);
                             if (item) item.count += i.item_count;
