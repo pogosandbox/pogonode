@@ -364,7 +364,7 @@ class APIHelper {
                     if (r.warn)
                         logger.error('Ban warning.');
                     break;
-                case RequestType.GET_INVENTORY:
+                case RequestType.GET_HOLO_INVENTORY:
                     this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
                     if (!this.state.hasOwnProperty('inventory')) {
                         // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
