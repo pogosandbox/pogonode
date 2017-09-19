@@ -129,7 +129,7 @@ class APIHelper {
             avatar_socks: 'AVATAR_m_socks_default_3',
             avatar_belt: '',
             avatar_glasses: 'AVATAR_m_glasses_empty',
-            avatar_necklace: ''
+            avatar_necklace: '',
         };
     }
     /**
