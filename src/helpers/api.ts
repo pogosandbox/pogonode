@@ -1,4 +1,4 @@
-import * as pogobuf from '../../pogobuf';
+import * as pogobuf from 'pogobuf-vnext';
 import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as logger from 'winston';
 import * as _ from 'lodash';
