@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const pogobuf = require("pogobuf-vnext");
+const pogobuf = require("../../pogobuf");
 const POGOProtos = require("node-pogo-protos-vnext");
 const logger = require("winston");
 const _ = require("lodash");
@@ -9,7 +9,6 @@ const request = require("request-promise");
 const fs = require("mz/fs");
 const vercmp = require('semver-compare');
 const util = require('util');
-const jsondiffpatch = require('jsondiffpatch');
 /**
  * Throw that there is a challenge needed
  * @constructor
@@ -130,7 +129,7 @@ class APIHelper {
             avatar_socks: 'AVATAR_m_socks_default_3',
             avatar_belt: '',
             avatar_glasses: 'AVATAR_m_glasses_empty',
-            avatar_necklace: ''
+            avatar_necklace: '',
         };
     }
     /**
@@ -269,29 +268,6 @@ class APIHelper {
                 info = this.parse(responses);
                 item_templates = item_templates.concat(info.item_templates);
             }
-            if (last) {
-                const oldone = `data/item_templates.${last}.json`;
-                await fs.rename('data/item_templates.json', oldone);
-                const delta = jsondiffpatch.create({}).diff(item_templates, this.state.api.item_templates);
-                let html = 'no diff';
-                if (delta) {
-                    html = jsondiffpatch.formatters.html.format(delta, item_templates);
-                }
-                const visualize = `
-                    <!DOCTYPE html>
-                    <html>
-                        <head>
-                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch.min.js"></script> 
-                            <script type="text/javascript" src="https://unpkg.com/jsondiffpatch/public/build/jsondiffpatch-formatters.min.js"></script> 
-                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/html.css" type="text/css" />
-                            <link rel="stylesheet" href="https://unpkg.com/jsondiffpatch/public/formatters-styles/annotated.css" type="text/css" />
-                        </head>
-                        <body>
-                            <div id="visual">${html}</div>
-                        </body>
-                    </html>`;
-                await fs.writeFile('data/gamemaster_diff.html', visualize, 'utf8');
-            }
             this.state.api.item_templates = item_templates;
             const json = JSON.stringify({
                 templates: item_templates,
@@ -364,7 +340,7 @@ class APIHelper {
                     if (r.warn)
                         logger.error('Ban warning.');
                     break;
-                case RequestType.GET_INVENTORY:
+                case RequestType.GET_HOLO_INVENTORY:
                     this.state.api.inventory_timestamp = r.inventory_delta.new_timestamp_ms;
                     if (!this.state.hasOwnProperty('inventory')) {
                         // console.dir(r.inventory_delta.inventory_items, { depth: 6 });
