@@ -13,12 +13,12 @@
     "bluebird": "^3.5.0",
     "bluebird-retry": "^0.11.0",
     "cheerio": "^0.22.0",
-    "debug": "^2.6.8",
+    "debug": "^2.6.9",
     "dotenv": "^4.0.0",
-    "electron": "^1.8.0",
-    "engine.io": "^3.1.1",
+    "electron": "^1.8.1",
+    "engine.io": "^3.1.2",
     "events": "^1.1.1",
-    "express": "^4.15.4",
+    "express": "^4.16.1",
     "geolib": "^2.0.23",
     "googlemaps": "^1.12.0",
     "js-yaml": "^3.10.0",
@@ -28,8 +28,8 @@
     "mz": "^2.7.0",
     "nightmare": "^2.10.0",
     "pogobuf-vnext": "github:pogosandbox/pogobuf#dev",
-    "request": "^2.81.0",
-    "request-promise": "^4.2.1",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
     "semver-compare": "^1.0.0",
     "simjs-random": "^0.2.6",
     "socket.io": "^2.0.3",
@@ -37,14 +37,14 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.11",
-    "@types/lodash": "^4.14.74",
+    "@types/bluebird": "^3.5.12",
+    "@types/lodash": "^4.14.76",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.0.28",
-    "@types/request-promise": "^4.1.37",
+    "@types/node": "^8.0.31",
+    "@types/request-promise": "^4.1.38",
     "@types/winston": "^2.3.5",
     "tslint": "^5.7.0",
-    "typescript": "^2.5.2"
+    "typescript": "^2.5.3"
   }
 }

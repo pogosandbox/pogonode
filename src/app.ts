@@ -92,6 +92,7 @@ async function loginFlow() {
             password: config.credentials.password,
             version: config.api.version,
             useHashingServer: config.hashserver.active,
+            hashingVersion: config.hashserver.forceVersion,
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
