@@ -50,7 +50,7 @@ module.exports.load = function () {
             active: true,
         },
         proxy: {
-            check: true,
+            checkip: true,
             url: null,
         },
         loglevel: 'info',
@@ -60,7 +60,7 @@ module.exports.load = function () {
     }
     catch (e) { }
     if (fs.existsSync('data/config.yaml')) {
-        let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
+        const loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         config = _.defaultsDeep(loaded, config);
     }
     logger.transports.Console.prototype.log = function (level, message, meta, callback) {
@@ -74,16 +74,12 @@ module.exports.load = function () {
     };
     logger.remove(logger.transports.Console);
     logger.add(logger.transports.Console, {
-        'timestamp': function () {
-            return moment().format('HH:mm:ss');
-        },
+        'timestamp': () => moment().format('HH:mm:ss'),
         'colorize': true,
         'level': config.loglevel,
     });
     logger.add(logger.transports.File, {
-        'timestamp': function () {
-            return moment().format('HH:mm:ss');
-        },
+        'timestamp': () => moment().format('HH:mm:ss'),
         'filename': 'data/pogonode.log',
         'json': false,
         'level': config.loglevel,

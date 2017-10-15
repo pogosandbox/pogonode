@@ -14,7 +14,7 @@ export default class SocketServer {
     config: any;
     state: any;
     io: any;
-    initialized: boolean = false;
+    initialized = false;
 
     /**
      * @constructor
@@ -34,8 +34,8 @@ export default class SocketServer {
     start() {
         if (!this.config.ui.enabled) return;
 
-        let app = express();
-        let httpserver = http.createServer(app);
+        const app = express();
+        const httpserver = http.createServer(app);
         Bluebird.promisifyAll(httpserver);
         this.io = require('socket.io')(httpserver);
 
@@ -54,7 +54,7 @@ export default class SocketServer {
         });
 
         return httpserver.listenAsync(process.env.PORT || 8000, '0.0.0.0').then(() => {
-            let addr = httpserver.address();
+            const addr = httpserver.address();
             logger.debug('Socket server listening at ' + addr.address + ':' + addr.port);
             return true;
         });
@@ -69,7 +69,7 @@ export default class SocketServer {
         if (!this.state.inventory) return;
 
         logger.debug('Send ready message to the ui.');
-        let data = {
+        const data = {
             username: this.state.player.username,
             player: this.state.inventory.player,
             storage: {
@@ -124,7 +124,7 @@ export default class SocketServer {
         if (!this.config.ui.enabled) return;
 
         this.io.emit('pokemon_caught', {
-            pokemon: pokemon,
+            pokemon,
             position: this.state.pos,
         });
     }
@@ -144,8 +144,8 @@ export default class SocketServer {
      * @param {object} client - the socket client to send info to
      */
     sendPokemonSettings(client) {
-        let item_templates: any[] = this.state.api.item_templates;
-        let pkmSettings = _.filter(item_templates, i => i.pokemon_settings != null);
+        const item_templates: any[] = this.state.api.item_templates;
+        const pkmSettings = _.filter(item_templates, i => i.pokemon_settings != null);
         client.emit('pokemon_settings', _.map(pkmSettings, s => s.pokemon_settings));
     }
 
@@ -198,8 +198,8 @@ export default class SocketServer {
      * @param {object} msg - message send from the ui
      */
     transferPokemon(client, msg) {
-        let todos: any[] = this.state.todo;
-        let release = _.find(todos, todo => todo.call === 'release_pokemon');
+        const todos: any[] = this.state.todo;
+        const release = _.find(todos, todo => todo.call === 'release_pokemon');
         if (release) {
             release.pokemons.push(msg.id);
         } else {

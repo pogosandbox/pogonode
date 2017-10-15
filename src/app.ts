@@ -92,6 +92,7 @@ async function loginFlow() {
             password: config.credentials.password,
             version: config.api.version,
             useHashingServer: config.hashserver.active,
+            hashingVersion: config.hashserver.forceVersion,
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
@@ -147,6 +148,8 @@ async function loginFlow() {
         responses = await apihelper.always(batch, {settings: true, nobuddy: true, noinbox: true}).batchCall();
         apihelper.parse(responses);
 
+        await fs.writeFile('data/download_settings.json', JSON.stringify(state.download_settings, null, 2), 'utf8');
+
         await apihelper.getAssetDigest();
 
         await apihelper.getItemTemplates();
@@ -195,6 +198,7 @@ async function loginFlow() {
             else if (e.message.indexOf('ECONNRESET') >= 0) proxyhelper.badProxy(); // connection reset
             else if (e.message.indexOf('ECONNREFUSED ') >= 0) proxyhelper.badProxy(); // connection refused
             else if (e.message.indexOf('Status 409 received from PTC login') >= 0) proxyhelper.badProxy(); // ptc ban
+            else if (e.message.indexOf('Status 403 received from PTC login') >= 0) proxyhelper.badProxy(); // ptc ban
 
             logger.error('Exiting.');
             process.exit();
