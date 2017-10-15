@@ -123,6 +123,7 @@ async function loginFlow() {
         batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
         responses = await apihelper.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
         apihelper.parse(responses);
+        await fs.writeFile('data/download_settings.json', JSON.stringify(state.download_settings, null, 2), 'utf8');
         await apihelper.getAssetDigest();
         await apihelper.getItemTemplates();
         await assets.getTranslationUrls();
@@ -173,6 +174,8 @@ async function loginFlow() {
             else if (e.message.indexOf('ECONNREFUSED ') >= 0)
                 proxyhelper.badProxy(); // connection refused
             else if (e.message.indexOf('Status 409 received from PTC login') >= 0)
+                proxyhelper.badProxy(); // ptc ban
+            else if (e.message.indexOf('Status 403 received from PTC login') >= 0)
                 proxyhelper.badProxy(); // ptc ban
             logger.error('Exiting.');
             process.exit();

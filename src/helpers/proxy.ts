@@ -3,9 +3,9 @@ import * as Bluebird from 'bluebird';
 import * as logger from 'winston';
 import * as moment from 'moment';
 import * as request from 'request-promise';
+import { fs } from 'mz';
 
 const cheerio = require('cheerio');
-const fs = require('fs');
 
 /**
  * Helper class to deal with proxies
@@ -26,16 +26,6 @@ export default class ProxyHelper {
         this.config = config;
         this.state = state;
         this.badProxies = [];
-
-        if (fs.existsSync('data/bad.proxies.json')) {
-            // we put all bad proxy in a file, and keep them for 5 days
-            const loaded = fs.readFileSync('data/bad.proxies.json', 'utf8');
-            this.badProxies = JSON.parse(loaded);
-            this.badProxies = _.filter(this.badProxies, p => {
-                return moment(p.date).isAfter(moment().subtract(5, 'day'));
-            });
-            fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));
-        }
     }
 
     /**
@@ -43,25 +33,63 @@ export default class ProxyHelper {
      * find a proxy from www. ssl proxies .org/.
      * @return {Promise} with a proxy url as param.
      */
-    async findProxy(): Promise<string|null> {
-        if (this.config.proxy.url !== 'auto') return Promise.resolve(this.config.proxy.url);
-
-        const trToProxy = function($, tr) {
-            return 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text();
-        };
+    async findProxy() {
+        if (this.config.proxy.url !== 'auto') return this.config.proxy.url;
 
         const badUrls = _.map(this.badProxies, p => p.proxy);
 
         const url = 'https://www.sslp' + 'roxies.org/';
         const response = await request.get(url);
         const $ = cheerio.load(response);
-        const proxylist = $('#proxylisttable tr');
-        const proxy = _.find(proxylist, tr => {
-            return $(tr).find('td').eq(6).text() === 'yes' && badUrls.indexOf(trToProxy($, tr)) < 0;
-        }, 1);
+        const proxies = _.filter($('#proxylisttable tr'), tr => {
+            return $(tr).find('td').eq(6).text() === 'yes';
+        }).map(tr => 'http://' + $(tr).find('td').eq(0).text() + ':' + $(tr).find('td').eq(1).text());
 
-        if (!proxy) return null;
-        else return trToProxy($, proxy);
+        for (const proxy of proxies) {
+            logger.debug('checking proxy ' + proxy);
+            if (await this.verify(proxy)) return proxy;
+        }
+
+        return null;
+    }
+
+    async verify(proxy) {
+        const badUrls = _.map(this.badProxies, p => p.proxy);
+        if (badUrls.indexOf(proxy) >= 0) return false;
+
+        if (this.config.proxy.checkip) {
+            let response = await request.get('https://api.ipify.org/?format=json');
+            if (!response) return false;
+
+            this.clearIp = JSON.parse(response).ip;
+            if (!this.clearIp) return false;
+
+            response = await request.get('https://api.ipify.org/?format=json', {proxy, timeout: 5000});
+            if (!response) return false;
+
+            const ip = JSON.parse(response).ip;
+            if (this.clearIp === ip) {
+                this.badProxy();
+                return false;
+            }
+        }
+        try {
+            const version = await request({
+                uri: 'https://pgorelease.nianticlabs.com/plfe/version',
+                headers: {
+                    'accept': '*/*',
+                    'user-agent': 'pokemongo/1 CFNetwork/808.3 Darwin/16.3.0',
+                    'accept-language': 'en-us',
+                    'x-unity-version': '5.5.1f1'
+                },
+                gzip: true,
+                proxy,
+            });
+            return true;
+        } catch (e) {
+            this.badProxy();
+            return false;
+        }
     }
 
     /**
@@ -69,7 +97,15 @@ export default class ProxyHelper {
      * with visible ip through proxy.
      * @return {Promise} with true or false
      */
-    async checkProxy(): Promise<boolean> {
+    async checkProxy() {
+        if (fs.existsSync('data/bad.proxies.json')) {
+            // we put all bad proxy in a file, and keep them for 5 days
+            const loaded = await fs.readFile('data/bad.proxies.json', 'utf8');
+            this.badProxies = JSON.parse(loaded);
+            this.badProxies = _.filter(this.badProxies, p => moment(p.date).isAfter(moment().subtract(5, 'day')));
+            await fs.writeFile('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 2));
+        }
+
         if (!this.config.proxy.url) {
             return true;
         }
@@ -81,22 +117,7 @@ export default class ProxyHelper {
             this.proxy = proxy;
             this.state.proxy = proxy;
             logger.info('Using proxy: %s', proxy);
-
-            let response = await request.get('https://api.ipify.org/?format=json');
-            if (!response) return false;
-
-            this.clearIp = JSON.parse(response).ip;
-            logger.debug('Clear ip: ' + this.clearIp);
-            if (!this.clearIp) return false;
-
-            response = await request.get('https://api.ipify.org/?format=json', {proxy: this.proxy, timeout: 5000});
-            if (!response) return false;
-
-            const ip = JSON.parse(response).ip;
-            logger.debug('Proxified ip: ' + ip);
-            const valid = !this.config.proxy.check || (this.clearIp !== ip);
-            if (!valid) this.badProxy();
-            return valid;
+            return true;
 
         } catch (e) {
             logger.error(e);
