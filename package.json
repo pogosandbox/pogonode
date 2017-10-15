@@ -27,6 +27,7 @@
     "moment": "^2.19.0",
     "mz": "^2.7.0",
     "nightmare": "^2.10.0",
+    "node-pogo-protos-vnext": "^2.16.0",
     "pogobuf-vnext": "github:pogosandbox/pogobuf#dev",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",

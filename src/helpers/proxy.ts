@@ -56,24 +56,23 @@ export default class ProxyHelper {
     async verify(proxy) {
         const badUrls = _.map(this.badProxies, p => p.proxy);
         if (badUrls.indexOf(proxy) >= 0) return false;
-
-        if (this.config.proxy.checkip) {
-            let response = await request.get('https://api.ipify.org/?format=json');
-            if (!response) return false;
-
-            this.clearIp = JSON.parse(response).ip;
-            if (!this.clearIp) return false;
-
-            response = await request.get('https://api.ipify.org/?format=json', {proxy, timeout: 5000});
-            if (!response) return false;
-
-            const ip = JSON.parse(response).ip;
-            if (this.clearIp === ip) {
-                this.badProxy();
-                return false;
-            }
-        }
         try {
+            if (this.config.proxy.checkip) {
+                let response = await request.get('https://api.ipify.org/?format=json');
+                if (!response) return false;
+
+                this.clearIp = JSON.parse(response).ip;
+                if (!this.clearIp) return false;
+
+                response = await request.get('https://api.ipify.org/?format=json', {proxy, timeout: 3000});
+                if (!response) return false;
+
+                const ip = JSON.parse(response).ip;
+                if (this.clearIp === ip) {
+                    this.badProxy();
+                    return false;
+                }
+            }
             const version = await request({
                 uri: 'https://pgorelease.nianticlabs.com/plfe/version',
                 headers: {
@@ -82,6 +81,7 @@ export default class ProxyHelper {
                     'accept-language': 'en-us',
                     'x-unity-version': '5.5.1f1'
                 },
+                timeout: 3000,
                 gzip: true,
                 proxy,
             });
