@@ -105,7 +105,7 @@ export default class Assets {
             const response = await batch.batchCall();
             const info = this.apihelper.parse(response);
 
-            const urls = info.download_urls;
+            const urls: any[] = info.download_urls;
             _.each(urls, url => {
                 this.cache[this.withoutVersion(url.asset_id)] = url.asset_id.substring(url.asset_id.indexOf('/') + 1);
             });
