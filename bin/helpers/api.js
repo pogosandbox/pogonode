@@ -269,6 +269,14 @@ class APIHelper {
                 item_templates = item_templates.concat(info.item_templates);
             }
             this.state.api.item_templates = item_templates;
+            for (const template of item_templates) {
+                for (const name in template) {
+                    if (!template.hasOwnProperty(name))
+                        continue;
+                    if (!template[name])
+                        delete template[name];
+                }
+            }
             const json = JSON.stringify({
                 templates: item_templates,
                 timestamp_ms: info.timestamp_ms,

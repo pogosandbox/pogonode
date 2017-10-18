@@ -70,8 +70,8 @@ export default class Walker {
                             if (result.error_message) throw new Error(result.error_message);
                             state.path.waypoints = [];
                             if (result.routes.length > 0 && result.routes[0].legs) {
-                                _.each(result.routes[0].legs, l => {
-                                    _.each(l.steps, s => state.path.waypoints.push(s.end_location));
+                                _.each(<any[]>result.routes[0].legs, l => {
+                                    _.each(<any[]>l.steps, s => state.path.waypoints.push(s.end_location));
                                 });
                             }
                             state.path.waypoints.push({lat: target.latitude, lng: target.longitude});
