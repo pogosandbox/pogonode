@@ -34,19 +34,19 @@
     "request-promise": "^4.2.2",
     "semver-compare": "^1.0.0",
     "simjs-random": "^0.2.6",
-    "socket.io": "^2.0.3",
+    "socket.io": "^2.0.4",
     "socket.io-adapter": "^1.1.1",
     "winston": "^2.4.0"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.15",
-    "@types/lodash": "^4.14.77",
+    "@types/lodash": "^4.14.78",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.0.44",
+    "@types/node": "^8.0.46",
     "@types/request-promise": "^4.1.38",
     "@types/winston": "^2.3.5",
-    "tslint": "^5.7.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.5.3"
   }
 }
