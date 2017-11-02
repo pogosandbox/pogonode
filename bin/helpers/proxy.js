@@ -78,7 +78,7 @@ class ProxyHelper {
             return true;
         }
         catch (e) {
-            this.badProxy();
+            this.badProxy(proxy);
             return false;
         }
     }
@@ -115,12 +115,13 @@ class ProxyHelper {
     /**
      * Add the current proxy in our bad proxy database so we won't use it anymore.
      */
-    badProxy() {
-        if (!_.find(this.badProxies, p => p.proxy === this.proxy)) {
+    badProxy(proxy) {
+        proxy = proxy || this.proxy;
+        if (!_.find(this.badProxies, p => p.proxy === proxy)) {
             if (this.config.proxy.url !== 'auto')
                 logger.warn('Configured proxy looks bad.');
             this.badProxies.push({
-                proxy: this.proxy,
+                proxy,
                 date: Date.now(),
             });
             mz_1.fs.writeFileSync('data/bad.proxies.json', JSON.stringify(this.badProxies, null, 4));

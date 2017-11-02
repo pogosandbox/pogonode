@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("mz/fs");
 const moment = require("moment");
+const POGOProtos = require("node-pogo-protos-vnext");
 const long = require("long");
 const api_1 = require("./helpers/api");
 const walker_1 = require("./helpers/walker");
@@ -34,6 +35,15 @@ function testRequestIds() {
 function testUK25() {
     let uk25 = long.fromString('11fdf018c941ef22', false, 16);
     console.log(uk25.toString());
+}
+async function testDecode() {
+    try {
+        let content = await fs.readFile('error_body.bin');
+        let response = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(content);
+    }
+    catch (e) {
+        console.error(e);
+    }
 }
 testUK25();
 //# sourceMappingURL=debug.js.map
