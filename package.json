@@ -16,7 +16,7 @@
     "debug": "^2.6.9",
     "dotenv": "^4.0.0",
     "electron": "^1.8.1",
-    "engine.io": "^3.1.2",
+    "engine.io": "^3.1.4",
     "events": "^1.1.1",
     "express": "^4.16.2",
     "geolib": "^2.0.24",
@@ -24,11 +24,11 @@
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.4",
     "mime-types": "^2.1.17",
-    "moment": "^2.19.0",
+    "moment": "^2.19.3",
     "mz": "^2.7.0",
     "nightmare": "^2.10.0",
-    "node-pogo-protos-vnext": "^2.17.0",
-    "pogobuf-signature": "^2.3.8",
+    "node-pogo-protos-vnext": "^2.17.1",
+    "pogobuf-signature": "^2.3.9",
     "pogobuf-vnext": "github:pogosandbox/pogobuf#dev",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
@@ -40,13 +40,13 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.18",
-    "@types/lodash": "^4.14.80",
+    "@types/lodash": "^4.14.86",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.0.47",
+    "@types/node": "^8.0.53",
     "@types/request-promise": "^4.1.39",
     "@types/winston": "^2.3.7",
     "tslint": "^5.8.0",
-    "typescript": "^2.6.1"
+    "typescript": "^2.6.2"
   }
 }
