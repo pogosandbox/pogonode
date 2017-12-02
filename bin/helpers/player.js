@@ -7,9 +7,9 @@ const logger = require("winston");
 const GoogleMapsAPI = require('googlemaps');
 const geolib = require('geolib');
 Bluebird.promisifyAll(GoogleMapsAPI.prototype);
-let EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
-let FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
-let UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
+const EncounterResult = POGOProtos.Networking.Responses.EncounterResponse.Status;
+const FortSearchResult = POGOProtos.Networking.Responses.FortSearchResponse.Result;
+const UseIncubatorResult = POGOProtos.Networking.Responses.UseItemEggIncubatorResponse.Result;
 const api_1 = require("./api");
 const POKE_BALLS = [1, 2, 3, 4];
 /**
@@ -31,11 +31,10 @@ class Player {
      * @return {object} array of pokestop we can spin
      */
     findSpinnablePokestops() {
-        let pokestops = this.state.map.pokestops;
-        let range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
+        const pokestops = this.state.map.pokestops;
+        const range = this.state.download_settings.fort_settings.interaction_range_meters * 0.9;
         // get pokestops not in cooldown that are close enough to spin it
-        pokestops = _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms === 0 && this.distance(pk) < range);
-        return pokestops;
+        return _.filter(pokestops, pk => pk.cooldown_complete_timestamp_ms === 0 && this.distance(pk) < range);
     }
     /**
      * Spin all pokestops in an array
@@ -47,13 +46,13 @@ class Player {
             return;
         await Bluebird.map(pokestops, async (ps) => {
             logger.debug('Spin %s', ps.id);
-            let batch = this.state.client.batchStart();
+            const batch = this.state.client.batchStart();
             batch.fortSearch(ps.id, ps.latitude, ps.longitude);
-            let responses = await this.apihelper.always(batch).batchCall();
-            let info = this.apihelper.parse(responses);
+            const responses = await this.apihelper.always(batch).batchCall();
+            const info = this.apihelper.parse(responses);
             if (info.status === FortSearchResult.SUCCESS) {
-                let stops = this.state.map.pokestops;
-                let stop = _.find(stops, p => p.id === ps.id);
+                const stops = this.state.map.pokestops;
+                const stop = _.find(stops, p => p.id === ps.id);
                 stop.cooldown_complete_timestamp_ms = info.cooldown;
                 this.state.events.emit('spinned', stop);
             }
@@ -74,15 +73,15 @@ class Player {
         // take the first 3 only so we don't spend to much time in here
         pokemons = _.take(pokemons, 3);
         logger.debug('Start encounters...');
-        let client = this.state.client;
-        let result = await Bluebird.map(pokemons, async (pk) => {
+        const client = this.state.client;
+        const result = await Bluebird.map(pokemons, async (pk) => {
             await Bluebird.delay(this.config.delay.encounter * _.random(900, 1100));
             const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pk.pokemon_id);
             logger.debug('Encounter %s', name);
-            let batch = client.batchStart();
+            const batch = client.batchStart();
             batch.encounter(pk.encounter_id, pk.spawn_point_id);
-            let responses = await this.apihelper.always(batch).batchCall();
-            let info = this.apihelper.parse(responses);
+            const responses = await this.apihelper.always(batch).batchCall();
+            const info = this.apihelper.parse(responses);
             if (info.status === EncounterResult.POKEMON_INVENTORY_FULL) {
                 logger.warn('Pokemon bag full.');
                 return null;
@@ -95,14 +94,14 @@ class Player {
                 // encounter success
                 this.state.encountered.push(pk.encounter_id);
                 this.state.events.emit('encounter', info.pokemon);
-                let encounter = {
+                const encounter = {
                     encounter_id: pk.encounter_id,
                     spawn_point_id: pk.spawn_point_id,
                     pokemon_id: pk.pokemon_id,
                 };
                 if (this.config.behavior.catch) {
                     await Bluebird.delay(this.config.delay.catch * _.random(900, 1100));
-                    let pokemon = await this.catchPokemon(encounter);
+                    const pokemon = await this.catchPokemon(encounter);
                     await this.releaseIfNotGoodEnough(pokemon);
                 }
                 return encounter;
@@ -118,9 +117,9 @@ class Player {
      * @return {object} throw parameters
      */
     getThrowParameter(pokemonId) {
-        let ball = this.getPokeBallForPokemon(pokemonId);
-        let lancer = {
-            ball: ball,
+        const ball = this.getPokeBallForPokemon(pokemonId);
+        const lancer = {
+            ball,
             reticleSize: 1.25 + 0.70 * Math.random(),
             hit: true,
             spinModifier: (Math.random() < 0.3) ? 1 : 0,
@@ -151,18 +150,18 @@ class Player {
     async catchPokemon(encounter) {
         if (!encounter)
             return null;
-        let lancer = this.getThrowParameter(encounter.pokemon_id);
+        const lancer = this.getThrowParameter(encounter.pokemon_id);
         if (lancer.ball < 0) {
             logger.warn('No pokéball found for catching.');
             return null;
         }
-        let batch = this.state.client.batchStart();
+        const batch = this.state.client.batchStart();
         batch.catchPokemon(encounter.encounter_id, lancer.ball, lancer.reticleSize, encounter.spawn_point_id, lancer.hit, lancer.spinModifier, lancer.normalizedHitPosition);
-        let responses = await this.apihelper.always(batch).batchCall();
-        let info = this.apihelper.parse(responses);
+        const responses = await this.apihelper.always(batch).batchCall();
+        const info = this.apihelper.parse(responses);
         if (info.caught) {
-            let pokemons = this.state.inventory.pokemon;
-            let pokemon = _.find(pokemons, pk => pk.id === info.id);
+            const pokemons = this.state.inventory.pokemon;
+            const pokemon = _.find(pokemons, pk => pk.id === info.id);
             const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
             logger.info('Pokemon caught: %s.', name);
             this.state.events.emit('pokemon_caught', pokemon);
@@ -183,8 +182,8 @@ class Player {
         if (!pokemon || !this.config.behavior.autorelease)
             return;
         // find same pokemons, with better iv and better cp
-        let pokemons = this.state.inventory.pokemon;
-        let better = _.find(pokemons, pkm => {
+        const pokemons = this.state.inventory.pokemon;
+        const better = _.find(pokemons, pkm => {
             return pkm.pokemon_id === pokemon.pokemon_id &&
                 pkm.iv > pokemon.iv * 1.1 &&
                 pkm.cp > pokemon.cp * 0.8;
@@ -194,9 +193,9 @@ class Player {
             // release pokemon
             const name = _.findKey(POGOProtos.Enums.PokemonId, i => i === pokemon.pokemon_id);
             logger.info('Release pokemon %s', name);
-            let batch = this.state.client.batchStart();
+            const batch = this.state.client.batchStart();
             batch.releasePokemon(pokemon.id);
-            let responses = await this.apihelper.always(batch).batchCall();
+            const responses = await this.apihelper.always(batch).batchCall();
             this.apihelper.parse(responses);
         }
     }
@@ -206,10 +205,10 @@ class Player {
      * @return {int} id of pokemon
      */
     getPokeBallForPokemon(pokemondId) {
-        let items = this.state.inventory.items;
-        let balls = _.filter(items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
+        const items = this.state.inventory.items;
+        const balls = _.filter(items, i => i.count > 0 && _.includes(POKE_BALLS, i.item_id));
         if (balls.length) {
-            let ball = _.head(balls);
+            const ball = _.head(balls);
             ball.count--;
             return ball.item_id;
         }
@@ -224,20 +223,20 @@ class Player {
     async cleanInventory() {
         if (!this.config.inventory)
             return;
-        let limits = this.config.inventory;
-        let items = this.state.inventory.items;
-        let total = _.reduce(items, (sum, i) => sum + i.count, 0);
+        const limits = this.config.inventory;
+        const items = this.state.inventory.items;
+        const total = _.reduce(items, (sum, i) => sum + i.count, 0);
         if (total > 300) {
             logger.debug('Recycle inventory...');
-            for (let item of items) {
+            for (const item of items) {
                 if (_.has(limits, item.item_id)) {
-                    let drop = item.count - Math.min(item.count, limits[item.item_id]);
+                    const drop = item.count - Math.min(item.count, limits[item.item_id]);
                     if (drop > 0) {
                         logger.debug('Drop %d of %d', drop, item.item_id);
-                        let batch = this.state.client.batchStart();
+                        const batch = this.state.client.batchStart();
                         batch.recycleInventoryItem(item.item_id, drop);
-                        let responses = await this.apihelper.always(batch).batchCall();
-                        let info = this.apihelper.parse(responses);
+                        const responses = await this.apihelper.always(batch).batchCall();
+                        const info = this.apihelper.parse(responses);
                         if (info.result !== 1) {
                             logger.warn('Error dropping items', info);
                         }
@@ -254,16 +253,16 @@ class Player {
      * @return {Promise} Promise
      */
     async dispatchIncubators() {
-        let incubators = this.state.inventory.egg_incubators;
-        let eggs = this.state.inventory.eggs;
-        let freeIncubators = _.filter(incubators, i => i.pokemon_id === 0);
+        const incubators = this.state.inventory.egg_incubators;
+        const eggs = this.state.inventory.eggs;
+        const freeIncubators = _.filter(incubators, i => i.pokemon_id === 0);
         let freeEggs = _.filter(eggs, e => e.egg_incubator_id === '');
         if (freeIncubators.length > 0 && freeEggs.length > 0) {
             // we have some free eggs and some free incubators
             freeEggs = _.sortBy(freeEggs, e => e.egg_km_walked_target);
-            let infiniteOnes = _.filter(freeIncubators, i => i.item_id === 901);
-            let others = _.filter(freeIncubators, i => i.item_id !== 901);
-            let association = [];
+            const infiniteOnes = _.filter(freeIncubators, i => i.item_id === 901);
+            const others = _.filter(freeIncubators, i => i.item_id !== 901);
+            const association = [];
             _.each(_.take(freeEggs, infiniteOnes.length), (e, i) => {
                 // eggs to associate with infinite incubators
                 association.push({ egg: e.id, incubator: infiniteOnes[i].id });
@@ -273,10 +272,10 @@ class Player {
                 association.push({ egg: e.id, incubator: others[i].id });
             });
             await Bluebird.map(association, async (a) => {
-                let batch = this.state.client.batchStart();
+                const batch = this.state.client.batchStart();
                 batch.useItemEggIncubator(a.incubator, a.egg);
-                let responses = await this.apihelper.always(batch).batchCall();
-                let info = this.apihelper.parse(responses);
+                const responses = await this.apihelper.always(batch).batchCall();
+                const info = this.apihelper.parse(responses);
                 if (info.result !== UseIncubatorResult.SUCCESS) {
                     logger.warn('Error using incubator.', {
                         result: info.result,

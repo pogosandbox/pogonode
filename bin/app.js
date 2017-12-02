@@ -120,7 +120,7 @@ async function loginFlow() {
         apihelper.parse(responses);
         logger.debug('Download remote config...');
         batch = client.batchStart();
-        batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', +config.api.version);
+        batch.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', 'iPhone8,1', '', +config.api.version);
         responses = await apihelper.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
         apihelper.parse(responses);
         await fs.writeFile('data/download_settings.json', JSON.stringify(state.download_settings, null, 2), 'utf8');

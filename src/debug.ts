@@ -44,4 +44,13 @@ function testUK25() {
     console.log(uk25.toString());
 }
 
+async function testDecode() {
+    try {
+        let content = await fs.readFile('error_body.bin');
+        let response = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(content);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 testUK25();
