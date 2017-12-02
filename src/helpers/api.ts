@@ -51,10 +51,10 @@ export default class APIHelper {
     always(batch: pogobuf.Client, options?: any): pogobuf.Client {
         if (!options) options = {};
 
-        batch = batch.checkChallenge()
-                     .getHatchedEggs()
+        batch = batch.getHatchedEggs()
                      .getInventory(this.state.api.inventory_timestamp)
-                     .checkAwardedBadges();
+                     .checkAwardedBadges()
+                     .downloadSettings(this.state.api.settings_hash);
 
         if (options.settings) batch.downloadSettings(this.state.api.settings_hash);
 

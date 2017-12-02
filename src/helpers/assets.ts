@@ -46,7 +46,7 @@ export default class Assets {
 
     getFullIdFromId(id: string): string {
         const digest: any[] = this.state.api.asset_digest;
-        const asset = _.find(digest, d => d.asset_id.startsWith(id));
+        const asset: any = _.find(digest, d => d.asset_id.startsWith(id));
         return asset.asset_id;
     }
 
@@ -83,7 +83,7 @@ export default class Assets {
 
         const assets: string[] = [];
         for (const pokemon of pokemons) {
-            const asset = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon.toString(), 4, '0')));
+            const asset: any = _.find(digest, d => d.bundle_name.startsWith('pm' + _.padStart(pokemon.toString(), 4, '0')));
             const cached = this.cache[this.withoutVersion(asset.asset_id)];
             if (!cached || +cached !== asset.version) {
                 assets.push(asset.asset_id);
