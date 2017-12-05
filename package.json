@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.18",
-    "@types/lodash": "^4.14.86",
+    "@types/lodash": "^4.14.87",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.0.53",
+    "@types/node": "^8.0.54",
     "@types/request-promise": "^4.1.39",
     "@types/winston": "^2.3.7",
     "tslint": "^5.8.0",

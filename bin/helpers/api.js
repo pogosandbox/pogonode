@@ -574,9 +574,9 @@ class APIHelper {
             uri: 'https://pgorelease.nianticlabs.com/plfe/version',
             headers: {
                 'accept': '*/*',
-                'user-agent': 'pokemongo/1 CFNetwork/808.3 Darwin/16.3.0',
+                'user-agent': 'pokemongo/0 CFNetwork/811.5.4 Darwin/16.7.0',
                 'accept-language': 'en-us',
-                'x-unity-version': '5.5.1f1'
+                'x-unity-version': '2017.1.2f1'
             },
             gzip: true,
         };
