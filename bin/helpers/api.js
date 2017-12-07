@@ -45,7 +45,8 @@ class APIHelper {
     always(batch, options) {
         if (!options)
             options = {};
-        batch = batch.getHatchedEggs()
+        batch = batch.checkChallenge()
+            .getHatchedEggs()
             .getInventory(this.state.api.inventory_timestamp)
             .checkAwardedBadges()
             .downloadSettings(this.state.api.settings_hash);
