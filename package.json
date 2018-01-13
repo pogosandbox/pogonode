@@ -40,13 +40,13 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.19",
-    "@types/lodash": "^4.14.91",
+    "@types/lodash": "^4.14.92",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.31",
-    "@types/node": "^8.5.2",
+    "@types/node": "^8.5.8",
     "@types/request-promise": "^4.1.39",
     "@types/winston": "^2.3.7",
-    "tslint": "^5.8.0",
+    "tslint": "^5.9.1",
     "typescript": "^2.6.2"
   }
 }
