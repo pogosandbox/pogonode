@@ -316,7 +316,8 @@ async function mapRefresh() {
         batch.getMapObjects(cellIDs, Array(cellIDs.length).fill(0));
         const responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
-        if (!apihelper.maybeShadowBanned()) {
+        if (!state.api.notShadowbanned && !apihelper.maybeShadowBanned()) {
+            state.api.notShadowbanned = true;
             logger.warn('Not shadowbanned :)');
         }
         App.emit('saveState');

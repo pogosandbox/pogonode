@@ -351,7 +351,8 @@ async function mapRefresh(): Promise<void> {
         const responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
 
-        if (!apihelper.maybeShadowBanned()) {
+        if (!state.api.notShadowbanned && !apihelper.maybeShadowBanned()) {
+            state.api.notShadowbanned = true;
             logger.warn('Not shadowbanned :)');
         }
 
