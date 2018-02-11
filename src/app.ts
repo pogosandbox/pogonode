@@ -178,6 +178,21 @@ async function loginFlow() {
                                       new POGOProtos.Networking.Platform.Requests.GetStoreItemsRequest({}));
         responses = await batch.batchCall();
 
+        logger.debug('Get news...');
+        batch = client.batchStart();
+        client.fetchAllNews();
+        responses = await apihelper.always(batch, {settings: true}).batchCall();
+        const parsed = apihelper.parse(responses);
+        // if (parsed.news.news_articles.length > 0) {
+        //     logger.info(`${parsed.news.news_articles.length} news received, let's read them.`);
+
+        //     batch = client.batchStart();
+        //     const articles = parsed.news.news_articles as any[];
+        //     client.markReadNewsArticle(Array.from(articles, article => article.id));
+        //     responses = await apihelper.always(batch, {settings: true}).batchCall();
+        //     apihelper.parse(responses);
+        // }
+
     } catch (e) {
         if (e.name === 'ChallengeError') {
             resolveChallenge(e.url)

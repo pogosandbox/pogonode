@@ -540,6 +540,12 @@ class APIHelper {
                         logger.debug(r.inbox.notifications);
                     }
                     break;
+                case RequestType.FETCH_ALL_NEWS:
+                    info.news = r.current_news;
+                    break;
+                case RequestType.MARK_READ_NEWS_ARTICLE:
+                    info.result = r.result;
+                    break;
                 default:
                     logger.warn('Unhandled request: %s', r._requestType);
                     logger.debug(r);
