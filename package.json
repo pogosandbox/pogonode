@@ -6,47 +6,43 @@
   "author": "niico",
   "license": "MIT",
   "engines": {
-    "node": ">=7.0.0"
+    "node": ">=8.0.0"
   },
   "private": true,
   "dependencies": {
     "bluebird": "^3.5.1",
     "bluebird-retry": "^0.11.0",
     "cheerio": "^0.22.0",
-    "debug": "^2.6.9",
     "dotenv": "^4.0.0",
-    "electron": "^1.8.1",
-    "engine.io": "^3.1.4",
+    "electron": "^1.8.2",
     "events": "^1.1.1",
     "express": "^4.16.2",
     "geolib": "^2.0.24",
     "googlemaps": "^1.12.0",
     "js-yaml": "^3.10.0",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.5",
     "mime-types": "^2.1.17",
     "moment": "^2.20.1",
     "mz": "^2.7.0",
     "nightmare": "^2.10.0",
     "node-pogo-protos-vnext": "^2.19.0",
-    "pogobuf-signature": "^2.3.12",
+    "pogobuf-signature": "^2.3.13",
     "pogobuf-vnext": "github:pogosandbox/pogobuf#dev",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "semver-compare": "^1.0.0",
-    "simjs-random": "^0.2.6",
     "socket.io": "^2.0.4",
-    "socket.io-adapter": "^1.1.1",
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.19",
-    "@types/lodash": "^4.14.94",
+    "@types/bluebird": "^3.5.20",
+    "@types/lodash": "^4.14.102",
     "@types/long": "^3.0.32",
     "@types/mz": "^0.0.32",
-    "@types/node": "^9.3.0",
-    "@types/request-promise": "^4.1.40",
-    "@types/winston": "^2.3.7",
+    "@types/node": "^9.4.5",
+    "@types/request-promise": "^4.1.41",
+    "@types/winston": "^2.3.8",
     "tslint": "^5.9.1",
-    "typescript": "^2.6.2"
+    "typescript": "^2.7.1"
   }
 }
