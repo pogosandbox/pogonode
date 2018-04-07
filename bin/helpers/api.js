@@ -11,8 +11,6 @@ const vercmp = require('semver-compare');
 const util = require('util');
 /**
  * Throw that there is a challenge needed
- * @constructor
- * @param {string} url - Challenge url
  */
 function ChallengeError(url) {
     Error.captureStackTrace(this, this.constructor);
@@ -30,8 +28,6 @@ const CatchPokemonResult = POGOProtos.Networking.Responses.CatchPokemonResponse.
 class APIHelper {
     /**
      * @constructor
-     * @param {object} config - global config object
-     * @param {object} state - global state
      */
     constructor(config, state) {
         this.config = config;
@@ -39,28 +35,23 @@ class APIHelper {
     }
     /**
      * Once init flow is done, each call come with some other calls
-     * @param {Client} batch - pogobuf client
-     * @return {Client} current client in order to chain call
      */
     always(batch, options) {
         if (!options)
             options = {};
-        batch = batch.checkChallenge()
-            .getHatchedEggs()
+        // batch = batch.checkChallenge()
+        batch = batch.getHatchedEggs()
             .getInventory(this.state.api.inventory_timestamp)
             .checkAwardedBadges()
             .downloadSettings(this.state.api.settings_hash);
-        // if (options.settings) batch.downloadSettings(this.state.api.settings_hash);
         if (!options.nobuddy)
             batch.getBuddyWalked();
+        if (!options.noquest)
+            batch.getNewQuests();
         if (!options.noinbox)
             batch.getInbox(true, false, 0);
         return batch;
     }
-    /**
-     * Internal function to parse delta inventory responses
-     * @param {object} r - inventory responses
-     */
     parseInventoryDelta(r) {
         const split = pogobuf.Utils.splitInventory(r);
         if (split.pokemon.length > 0) {
@@ -110,7 +101,6 @@ class APIHelper {
     }
     /**
      * Generate a new avatar
-     * @return {object} avatar to pass to setAvatar()
      */
     generateAvatar() {
         const hair = _.random(0, 5);
@@ -135,7 +125,6 @@ class APIHelper {
     /**
      * Complete tutorial if needed, setting a random avatar
      * If not needed, do the minmum getPlayerProfile and registerBackgroundDevice
-     * @return {Promise<void>} Promise
      */
     async completeTutorial() {
         const tuto = this.state.player.tutorial_state || [];
@@ -241,8 +230,45 @@ class APIHelper {
         }
     }
     /**
+     * Check if asset digest need to be downloaded, and do it if needed.
+     */
+    async getAssetDigest() {
+        logger.debug('Checking if asset_digest need a refresh...');
+        let last = 0;
+        if (fs.existsSync('data/asset_digest.json')) {
+            const json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
+            const data = JSON.parse(json);
+            this.state.api.asset_digest = data.digest;
+            last = data.timestamp_ms || 0;
+        }
+        if (!last || last < this.state.api.asset_digest_timestamp) {
+            logger.info('Asset digest updating...');
+            const client = this.state.client;
+            let batch = client.batchStart();
+            batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
+            let responses = await this.always(batch, { nobuddy: true, noinbox: true, noquest: true }).batchCall();
+            let info = this.parse(responses);
+            let digest = info.digest;
+            while (info.page_offset !== 0) {
+                batch = client.batchStart();
+                batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true, info.page_offset, info.timestamp_ms);
+                responses = await this.always(batch, { nobuddy: true, noinbox: true, noquest: true }).batchCall();
+                info = this.parse(responses);
+                digest = digest.concat(info.digest);
+            }
+            _.each(digest, d => {
+                d.key = d.key.toString('base64');
+            });
+            this.state.api.asset_digest = digest;
+            const json = JSON.stringify({
+                digest,
+                timestamp_ms: info.timestamp_ms,
+            }, null, 2);
+            await fs.writeFile('data/asset_digest.json', json);
+        }
+    }
+    /**
      * Check if item templates need to be downloaded, and do it if needed.
-     * @return {Promise} when done
      */
     async getItemTemplates() {
         logger.debug('Checking if item_templates need a refresh...');
@@ -258,13 +284,13 @@ class APIHelper {
             const client = this.state.client;
             let batch = client.batchStart();
             batch.downloadItemTemplates(true);
-            let responses = await this.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
+            let responses = await this.always(batch, { nobuddy: true, noinbox: true, noquest: true }).batchCall();
             let info = this.parse(responses);
             let item_templates = info.item_templates;
             while (info.page_offset !== 0) {
                 batch = client.batchStart();
                 batch.downloadItemTemplates(true, info.page_offset, info.timestamp_ms);
-                responses = await this.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
+                responses = await this.always(batch, { nobuddy: true, noinbox: true, noquest: true }).batchCall();
                 info = this.parse(responses);
                 item_templates = item_templates.concat(info.item_templates);
             }
@@ -285,48 +311,7 @@ class APIHelper {
         }
     }
     /**
-     * Check if asset digest need to be downloaded, and do it if needed.
-     * @return {Promise} when done
-     */
-    async getAssetDigest() {
-        logger.debug('Checking if asset_digest need a refresh...');
-        let last = 0;
-        if (fs.existsSync('data/asset_digest.json')) {
-            const json = fs.readFileSync('data/asset_digest.json', { encoding: 'utf8' });
-            const data = JSON.parse(json);
-            this.state.api.asset_digest = data.digest;
-            last = data.timestamp_ms || 0;
-        }
-        if (!last || last < this.state.api.asset_digest_timestamp) {
-            logger.info('Asset digest updating...');
-            const client = this.state.client;
-            let batch = client.batchStart();
-            batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true);
-            let responses = await this.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
-            let info = this.parse(responses);
-            let digest = info.digest;
-            while (info.page_offset !== 0) {
-                batch = client.batchStart();
-                batch.getAssetDigest(POGOProtos.Enums.Platform.IOS, '', '', '', +this.config.api.version, true, info.page_offset, info.timestamp_ms);
-                responses = await this.always(batch, { settings: true, nobuddy: true, noinbox: true }).batchCall();
-                info = this.parse(responses);
-                digest = digest.concat(info.digest);
-            }
-            _.each(digest, d => {
-                d.key = d.key.toString('base64');
-            });
-            this.state.api.asset_digest = digest;
-            const json = JSON.stringify({
-                digest,
-                timestamp_ms: info.timestamp_ms,
-            }, null, 2);
-            await fs.writeFile('data/asset_digest.json', json);
-        }
-    }
-    /**
      * Parse reponse and update state accordingly
-     * @param {object} responses - response from pogobuf.batchCall()
-     * @return {object} information about api call (like status, depends of the call)
      */
     parse(responses) {
         if (!responses || responses.length === 0 || responses === true)
@@ -566,7 +551,6 @@ class APIHelper {
     }
     /**
      * Add an `iv` field to a pokemon
-     * @param {object} pokemon - pokemon to add iv field to
      */
     addIv(pokemon) {
         pokemon.iv = 100 * (pokemon.individual_attack + pokemon.individual_defense + pokemon.individual_stamina) / 45.0;
@@ -574,14 +558,13 @@ class APIHelper {
     }
     /**
      * Make a request to niantic /pfe/version to get minimum version
-     * @return {Promise<string>} Minimum app version
      */
     async getRpcVersion() {
         const options = {
             uri: 'https://pgorelease.nianticlabs.com/plfe/version',
             headers: {
                 'accept': '*/*',
-                'user-agent': 'pokemongo/0 CFNetwork/811.5.4 Darwin/16.7.0',
+                'user-agent': 'pokemongo/0 CFNetwork/894 Darwin/17.4.0',
                 'accept-language': 'en-us',
                 'x-unity-version': '2017.1.2f1'
             },
@@ -592,8 +575,6 @@ class APIHelper {
     }
     /**
      * Convert version string (like 5100) to iOS (like 1.21)
-     * @param {string} version - version string (in the form of 5100)
-     * @return {string} iOS version
      */
     versionToiOSVersion(version) {
         let ver = '1.' + ((+version - 3000) / 100).toFixed(0);
@@ -602,8 +583,6 @@ class APIHelper {
     }
     /**
      * Convert version string (like 5100) to client version (like 0.51.0)
-     * @param {string} version - version string (in the form of 5100)
-     * @return {string} client version (like 0.51.0)
      */
     versionToClientVersion(version) {
         let ver = '0.' + ((+version) / 100).toFixed(0);

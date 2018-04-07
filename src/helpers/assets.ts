@@ -72,7 +72,7 @@ export default class Assets {
 
         if (assets.length > 0) {
             logger.debug('Get translation urls...');
-            await this.downloadAssets(assets, { settings: true, nobuddy: true, noinbox: true });
+            await this.downloadAssets(assets, { nobuddy: true, noinbox: true, noquest: true });
         }
     }
 

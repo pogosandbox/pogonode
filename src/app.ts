@@ -95,7 +95,8 @@ async function loginFlow() {
             hashingKey: config.hashserver.key,
             includeRequestTypeInResponse: true,
             proxy: proxyhelper.proxy,
-            maxTries: 5,
+            maxTries: 1,
+            useLocFixTimer: false,
         });
 
         state.client = client;
@@ -118,28 +119,20 @@ async function loginFlow() {
         // init api (false = don't call anything yet')
         await client.init(false);
 
-        // first empty request
-        logger.debug('First empty request.');
+        logger.info('Starting initial flow...');
 
-        let responses = await client.batchStart().batchCall();
+        // initial player state
+        logger.debug('First get player info...');
+        let batch = client.batchStart();
+        batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
+        let responses = await client.batchCall();
         apihelper.parse(responses);
-
-        logger.info('Logged In.');
 
         if (config.hashserver.active) {
             const rateInfos = client.getSignatureRateInfo();
             const hashExpiration = moment.unix(+rateInfos['expiration']);
             logger.debug('Hashing key expiration', hashExpiration.format('LLL'));
         }
-
-        logger.info('Starting initial flow...');
-
-        // initial player state
-        logger.debug('Get player info...');
-        let batch = client.batchStart();
-        batch.getPlayer(config.api.country, config.api.language, config.api.timezone);
-        responses = await client.batchCall();
-        apihelper.parse(responses);
 
         logger.debug('Download remote config...');
         batch = client.batchStart();
@@ -162,14 +155,20 @@ async function loginFlow() {
             // tutorial already done, let's do a getPlayerProfile
             const batch = client.batchStart();
             batch.getPlayerProfile('');
-            const responses = await apihelper.always(batch, {settings: true, noinbox: true}).batchCall();
+            const responses = await apihelper.always(batch, {noinbox: true, noquest: true}).batchCall();
             apihelper.parse(responses);
         }
+
+        // logger.debug('Get quest details...');
+        // batch = client.batchStart();
+        // batch.levelUpRewards(state.inventory.player.level);
+        // responses = await apihelper.always(batch).batchCall();
+        // apihelper.parse(responses);
 
         logger.debug('Level up rewards...');
         batch = client.batchStart();
         batch.levelUpRewards(state.inventory.player.level);
-        responses = await apihelper.always(batch, {settings: true}).batchCall();
+        responses = await apihelper.always(batch).batchCall();
         apihelper.parse(responses);
 
         logger.debug('Get store...');
